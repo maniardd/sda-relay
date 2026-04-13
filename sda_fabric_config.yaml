@@ -1,0 +1,240 @@
+# ═══════════════════════════════════════════════════════════════════════
+# SDA Fabric Configuration — YAML Template
+# Based on BLNG production patterns (LISP+VXLAN+ISIS+BGP)
+# Compatible with Cisco IOS-XE 17.9.x+ on Catalyst 9000 Series
+# ═══════════════════════════════════════════════════════════════════════
+
+fabric:
+  name: "SJC23_SDA_Fabric"
+  site_name: "site_uci"
+  site_auth_key: "CiscoSDA123"       # LISP site authentication key
+  system_mtu: 9100
+  clns_mtu: 1400
+
+# ── DEVICES ──────────────────────────────────────────────────────────
+devices:
+  border:
+    hostname: "SJC23-BORDER-01"
+    management_ip: "192.168.128.9"    # RESTCONF target
+    platform: "C9500-32C"
+    username: "admin"                 # Overridden by .env
+    password: "CHANGE_ME"            # Overridden by .env
+    loopback0_ip: "10.255.255.1"
+    loopback0_mask: "255.255.255.255"
+    anycast_loopback_id: 60000
+    anycast_ip: "10.255.255.100"     # Shared with second border (if dual)
+    anycast_mask: "255.255.255.255"
+    router_id: "10.255.255.1"
+    isis_net: "49.0001.0102.5525.5001.00"
+
+  edge:
+    hostname: "SJC23-EDGE-01"
+    management_ip: "192.168.128.7"    # RESTCONF target
+    platform: "C9300X-48HXN"
+    username: "admin"
+    password: "CHANGE_ME"
+    loopback0_ip: "10.255.255.2"
+    loopback0_mask: "255.255.255.255"
+    router_id: "10.255.255.2"
+    isis_net: "49.0001.0102.5525.5002.00"
+
+# ── UNDERLAY ─────────────────────────────────────────────────────────
+underlay:
+  isis:
+    area_tag: "SDA-ISIS"
+    domain_password: "cisco"
+    metric_style: "wide"
+    bfd: true
+    nsf: true
+    log_adjacency: true
+
+  fabric_links:
+    - description: "Border-to-Edge P2P"
+      border_interface: "TwentyFiveGigE1/0/1"
+      border_ip: "10.255.0.0"
+      border_mask: "255.255.255.254"     # /31
+      edge_interface: "TenGigabitEthernet1/1/1"
+      edge_ip: "10.255.0.1"
+      edge_mask: "255.255.255.254"
+      isis: true
+      pim: true
+      bfd_interval: 100
+      bfd_min_rx: 100
+      bfd_multiplier: 3
+
+  multicast:
+    rp_address: "10.255.255.100"        # Anycast RP = border Loopback60000
+    pim_mode: "sparse-mode"
+    ssm_default: true
+
+# ── LISP CONTROL PLANE ───────────────────────────────────────────────
+lisp:
+  encapsulation: "vxlan"
+  sgt_enabled: true
+  source_locator: "Loopback0"
+
+  # Map-Server/Map-Resolver = Border nodes
+  map_servers:
+    - ip: "10.255.255.1"               # Border Loopback0
+      key_type: 0
+      key: "CiscoSDA123"
+      proxy_reply: true
+
+  locator_set_name: "rloc_fabric"
+
+  # Border-specific LISP roles
+  border_roles:
+    proxy_etr: true
+    proxy_itr: true                    # proxy-itr uses own Loopback0 IP
+    map_server: true
+    map_resolver: true
+    no_map_cache_away_eids: true
+
+  # Edge-specific LISP roles
+  edge_roles:
+    use_petr:                          # Edge PETRs = all border Loopback0
+      - "10.255.255.1"
+    proxy_itr: true                    # proxy-itr uses own Loopback0 IP
+
+# ── OVERLAY — VRFs ───────────────────────────────────────────────────
+vrfs:
+  - name: "CORP_VN"
+    instance_id: 4099
+    rd: "1:4099"
+    rt_import: "1:4099"
+    rt_export: "1:4099"
+    description: "Corporate Virtual Network"
+
+  - name: "GUEST_VN"
+    instance_id: 4100
+    rd: "1:4100"
+    rt_import: "1:4100"
+    rt_export: "1:4100"
+    description: "Guest Virtual Network"
+
+# ── OVERLAY — L3 VNI INSTANCES ───────────────────────────────────────
+# Instance ID 4097 = Default/Global routing table (always present)
+l3_instances:
+  - instance_id: 4097
+    name: "INFRA_VN"
+    eid_table: "default"              # Global routing table
+    description: "Infrastructure / Default Instance"
+
+  - instance_id: 4099
+    name: "CORP_VN"
+    eid_table: "vrf CORP_VN"
+    description: "Corporate L3 VNI"
+
+  - instance_id: 4100
+    name: "GUEST_VN"
+    eid_table: "vrf GUEST_VN"
+    description: "Guest L3 VNI"
+
+# ── OVERLAY — ACCESS VLANs + L2 VNI ─────────────────────────────────
+access_vlans:
+  - vlan_id: 100
+    name: "Corp_Data"
+    l2_instance_id: 8100
+    vrf: "CORP_VN"
+    l3_instance_id: 4099
+    svi:
+      ip: "10.30.100.1"
+      mask: "255.255.255.0"
+      mac_address: "0000.0c9f.f064"   # Anycast gateway MAC
+      dhcp_helpers:
+        - "10.10.10.1"
+    dynamic_eid:
+      name: "Corp_Data-IPV4"
+      prefix: "10.30.100.0/24"
+
+  - vlan_id: 200
+    name: "Guest_WiFi"
+    l2_instance_id: 8200
+    vrf: "GUEST_VN"
+    l3_instance_id: 4100
+    svi:
+      ip: "10.30.200.1"
+      mask: "255.255.255.0"
+      mac_address: "0000.0c9f.f0c8"
+      dhcp_helpers:
+        - "10.10.10.1"
+    dynamic_eid:
+      name: "Guest_WiFi-IPV4"
+      prefix: "10.30.200.0/24"
+
+# ── BGP ──────────────────────────────────────────────────────────────
+bgp:
+  local_as: 65001
+  graceful_restart: true
+  log_neighbor_changes: true
+  redistribute_lisp_metric: 10
+
+  # Fusion / External router peering (Border only)
+  # Disabled for simple 2-VN POC lab — no fusion router
+  fusion:
+    enabled: false
+    remote_as: 65535
+    handoff_vlans:
+      - vlan_id: 3001
+        name: "Handoff_CORP_VN"
+        vrf: "CORP_VN"
+        local_ip: "10.50.0.1"
+        remote_ip: "10.50.0.2"
+        mask: "255.255.255.252"
+
+      - vlan_id: 3002
+        name: "Handoff_GUEST_VN"
+        vrf: "GUEST_VN"
+        local_ip: "10.50.0.5"
+        remote_ip: "10.50.0.6"
+        mask: "255.255.255.252"
+
+      - vlan_id: 3003
+        name: "Handoff_Default"
+        vrf: null                     # Global table
+        local_ip: "10.50.0.9"
+        remote_ip: "10.50.0.10"
+        mask: "255.255.255.252"
+
+    # Border loopbacks per VRF (for DHCP relay from edge SVIs)
+    border_loopbacks:
+      - loopback_id: 201
+        vrf: "CORP_VN"
+        ip: "10.10.40.1"
+        mask: "255.255.255.255"
+
+      - loopback_id: 202
+        vrf: "GUEST_VN"
+        ip: "10.10.40.3"
+        mask: "255.255.255.255"
+
+# ── SECURITY (Optional — requires ISE) ──────────────────────────────
+security:
+  enabled: false                      # Set true when ISE is deployed
+  dot1x:
+    system_auth_control: true
+    auth_mode: "ClosedAuth"           # ClosedAuth | OpenAuth | LowImpact
+    tx_period: 7
+    max_reauth_req: 3
+  radius:
+    servers:
+      - ip: "10.10.30.11"
+        auth_port: 1812
+        acct_port: 1813
+        key: "RadiusKey123"
+        timeout: 4
+        retransmit: 3
+  device_tracking:
+    policy_name: "IPDT_POLICY"
+    tracking_enable: true
+  cts:
+    role_based_enforcement: true
+
+# ── EDGE ACCESS PORTS ────────────────────────────────────────────────
+edge_access_ports:
+  template: "DefaultWiredDot1xClosedAuth"
+  interfaces:
+    - range: "TenGigabitEthernet1/0/1-24"
+      access_vlan: 100
+      voice_vlan: null
+      description: "User Access Port"

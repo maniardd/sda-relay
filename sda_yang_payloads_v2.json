@@ -1,0 +1,1155 @@
+{
+  "_meta": {
+    "description": "Complete YANG/RESTCONF Payloads for SDA Fabric Deployment — All 6 Phases",
+    "ios_xe_version": "17.9.x+",
+    "models_used": [
+      "Cisco-IOS-XE-native",
+      "Cisco-IOS-XE-isis",
+      "Cisco-IOS-XE-lisp",
+      "Cisco-IOS-XE-nve",
+      "Cisco-IOS-XE-bgp",
+      "Cisco-IOS-XE-bfd",
+      "Cisco-IOS-XE-pim",
+      "Cisco-IOS-XE-dot1x",
+      "Cisco-IOS-XE-aaa"
+    ]
+  },
+
+  "phase1_underlay": {
+    "description": "ISIS + BFD + PIM + Loopbacks + P2P Links",
+
+    "system_mtu": {
+      "endpoint": "/Cisco-IOS-XE-native:native",
+      "method": "PATCH",
+      "targets": ["border", "edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:native": {
+          "system": {
+            "mtu": 9100
+          }
+        }
+      }
+    },
+
+    "loopback0_border": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=0",
+      "method": "PUT",
+      "targets": ["border"],
+      "payload": {
+        "Cisco-IOS-XE-native:Loopback": {
+          "name": 0,
+          "description": "SDA Fabric RLOC — Border",
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "{{border_loopback0_ip}}",
+                "mask": "255.255.255.255"
+              }
+            },
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
+          }
+        }
+      }
+    },
+
+    "loopback0_edge": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=0",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:Loopback": {
+          "name": 0,
+          "description": "SDA Fabric RLOC — Edge",
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "{{edge_loopback0_ip}}",
+                "mask": "255.255.255.255"
+              }
+            },
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
+          }
+        }
+      }
+    },
+
+    "loopback60000_border": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=60000",
+      "method": "PUT",
+      "targets": ["border"],
+      "payload": {
+        "Cisco-IOS-XE-native:Loopback": {
+          "name": 60000,
+          "description": "SDA Anycast RP / Anycast RLOC",
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "{{anycast_ip}}",
+                "mask": "255.255.255.255"
+              }
+            },
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
+          }
+        }
+      }
+    },
+
+    "p2p_link_border": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/TwentyFiveGigE={{border_p2p_intf_encoded}}",
+      "method": "PATCH",
+      "targets": ["border"],
+      "payload": {
+        "Cisco-IOS-XE-native:TwentyFiveGigE": {
+          "name": "{{border_p2p_intf}}",
+          "description": "SDA Fabric P2P Link to Edge",
+          "switchport-conf": {
+            "switchport": false
+          },
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "{{border_p2p_ip}}",
+                "mask": "255.255.255.254"
+              }
+            },
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS",
+            "Cisco-IOS-XE-isis:network": "point-to-point"
+          },
+          "Cisco-IOS-XE-bfd:bfd": {
+            "interval": 100,
+            "min_rx": 100,
+            "multiplier": 3
+          },
+          "mtu": 9100
+        }
+      }
+    },
+
+    "p2p_link_edge": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/TenGigabitEthernet={{edge_p2p_intf_encoded}}",
+      "method": "PATCH",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:TenGigabitEthernet": {
+          "name": "{{edge_p2p_intf}}",
+          "description": "SDA Fabric P2P Link to Border",
+          "switchport-conf": {
+            "switchport": false
+          },
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "{{edge_p2p_ip}}",
+                "mask": "255.255.255.254"
+              }
+            },
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS",
+            "Cisco-IOS-XE-isis:network": "point-to-point"
+          },
+          "Cisco-IOS-XE-bfd:bfd": {
+            "interval": 100,
+            "min_rx": 100,
+            "multiplier": 3
+          },
+          "mtu": 9100
+        }
+      }
+    },
+
+    "isis_process_border": {
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-isis:isis",
+      "method": "PUT",
+      "targets": ["border"],
+      "payload": {
+        "Cisco-IOS-XE-isis:isis": {
+          "tag": "SDA-ISIS",
+          "net": [
+            {
+              "tag": "{{border_isis_net}}"
+            }
+          ],
+          "is-type": "level-2-only",
+          "metric-style": {
+            "wide": [null]
+          },
+          "nsf": {
+            "cisco": [null]
+          },
+          "bfd": {
+            "all-interfaces": [null]
+          },
+          "log-adjacency-changes": [null],
+          "passive-interface": {
+            "interface": {
+              "Loopback": [0]
+            }
+          }
+        }
+      }
+    },
+
+    "isis_process_edge": {
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-isis:isis",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-isis:isis": {
+          "tag": "SDA-ISIS",
+          "net": [
+            {
+              "tag": "{{edge_isis_net}}"
+            }
+          ],
+          "is-type": "level-2-only",
+          "metric-style": {
+            "wide": [null]
+          },
+          "nsf": {
+            "cisco": [null]
+          },
+          "bfd": {
+            "all-interfaces": [null]
+          },
+          "log-adjacency-changes": [null],
+          "passive-interface": {
+            "interface": {
+              "Loopback": [0]
+            }
+          }
+        }
+      }
+    },
+
+    "pim_rp": {
+      "endpoint": "/Cisco-IOS-XE-native:native/ip/pim",
+      "method": "PUT",
+      "targets": ["border", "edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:pim": {
+          "Cisco-IOS-XE-multicast:rp-address": {
+            "address": "{{rp_address}}",
+            "override": true
+          },
+          "Cisco-IOS-XE-multicast:ssm": {
+            "default": [null]
+          }
+        }
+      }
+    }
+  },
+
+  "phase2_lisp": {
+    "description": "LISP Control Plane — Map-Server/Map-Resolver on Border, ITR/ETR on Edge",
+
+    "lisp_border": {
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp",
+      "method": "PUT",
+      "targets": ["border"],
+      "payload": {
+        "Cisco-IOS-XE-lisp:lisp": {
+          "locator-set": [
+            {
+              "name": "rloc_fabric",
+              "IPv4-interface": {
+                "Loopback": 0
+              }
+            }
+          ],
+          "service": {
+            "ipv4": {
+              "encapsulation": "vxlan",
+              "map-server": [null],
+              "map-resolver": [null],
+              "proxy-etr": [null],
+              "proxy-itr": {
+                "Loopback": 0
+              },
+              "sgt": [null],
+              "itr": {
+                "map-resolver": [
+                  {
+                    "ip-addr": "{{border_loopback0_ip}}"
+                  }
+                ]
+              },
+              "etr": {
+                "map-server": [
+                  {
+                    "ip-addr": "{{border_loopback0_ip}}",
+                    "auth-key": {
+                      "auth-key-type": 0,
+                      "auth-key-value": "{{site_auth_key}}"
+                    }
+                  }
+                ]
+              }
+            },
+            "ethernet": {
+              "map-server": [null],
+              "map-resolver": [null],
+              "itr": {
+                "map-resolver": [
+                  {
+                    "ip-addr": "{{border_loopback0_ip}}"
+                  }
+                ]
+              },
+              "etr": {
+                "map-server": [
+                  {
+                    "ip-addr": "{{border_loopback0_ip}}",
+                    "auth-key": {
+                      "auth-key-type": 0,
+                      "auth-key-value": "{{site_auth_key}}"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "site": [
+            {
+              "name": "{{site_name}}",
+              "authentication-key": {
+                "auth-key-type": 0,
+                "auth-key-value": "{{site_auth_key}}"
+              },
+              "description": "SDA Fabric Site"
+            }
+          ],
+          "ipv4": {
+            "source-locator": {
+              "Loopback": 0
+            }
+          },
+          "locator-table": "default"
+        }
+      }
+    },
+
+    "lisp_edge": {
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-lisp:lisp": {
+          "locator-set": [
+            {
+              "name": "rloc_fabric",
+              "IPv4-interface": {
+                "Loopback": 0
+              }
+            }
+          ],
+          "service": {
+            "ipv4": {
+              "encapsulation": "vxlan",
+              "proxy-itr": {
+                "Loopback": 0
+              },
+              "sgt": [null],
+              "itr": {
+                "map-resolver": [
+                  {
+                    "ip-addr": "{{border_loopback0_ip}}"
+                  }
+                ]
+              },
+              "etr": {
+                "map-server": [
+                  {
+                    "ip-addr": "{{border_loopback0_ip}}",
+                    "auth-key": {
+                      "auth-key-type": 0,
+                      "auth-key-value": "{{site_auth_key}}"
+                    }
+                  }
+                ]
+              },
+              "use-petr": [
+                {
+                  "locator-address": "{{border_loopback0_ip}}"
+                }
+              ]
+            },
+            "ethernet": {
+              "itr": {
+                "map-resolver": [
+                  {
+                    "ip-addr": "{{border_loopback0_ip}}"
+                  }
+                ]
+              },
+              "etr": {
+                "map-server": [
+                  {
+                    "ip-addr": "{{border_loopback0_ip}}",
+                    "auth-key": {
+                      "auth-key-type": 0,
+                      "auth-key-value": "{{site_auth_key}}"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ipv4": {
+            "source-locator": {
+              "Loopback": 0
+            }
+          },
+          "locator-table": "default"
+        }
+      }
+    }
+  },
+
+  "phase3_vxlan_vni": {
+    "description": "L3 VNI per VRF + L2 VNI per VLAN — LISP Instance Definitions",
+
+    "l3_instance_border_template": {
+      "description": "One per VRF on Border — creates LISP instance with EID-table mapping",
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp/instance-id={{instance_id}}",
+      "method": "PUT",
+      "targets": ["border"],
+      "payload_template": {
+        "Cisco-IOS-XE-lisp:instance-id": {
+          "iid": "{{instance_id}}",
+          "service": {
+            "ipv4": {
+              "eid-table": "{{eid_table}}",
+              "database-mapping": [
+                {
+                  "eid-prefix": "{{handoff_subnet}}",
+                  "locator-set": "rloc_fabric"
+                }
+              ],
+              "route-export": {
+                "site-registrations": [null]
+              },
+              "distance": {
+                "site-registrations": 250
+              },
+              "map-cache": {
+                "site-registration": [null]
+              }
+            }
+          }
+        }
+      },
+      "per_vrf_instances": [
+        {
+          "instance_id": 4097,
+          "eid_table": "default",
+          "handoff_subnet": "0.0.0.0/0",
+          "description": "INFRA_VN (default/global)"
+        },
+        {
+          "instance_id": 4099,
+          "eid_table": "vrf CORP_VN",
+          "handoff_subnet": "10.50.0.0/30",
+          "description": "CORP_VN L3 VNI"
+        },
+        {
+          "instance_id": 4100,
+          "eid_table": "vrf GUEST_VN",
+          "handoff_subnet": "10.50.0.4/30",
+          "description": "GUEST_VN L3 VNI"
+        }
+      ]
+    },
+
+    "l3_instance_edge_template": {
+      "description": "One per VRF on Edge — with dynamic-eid and map-cache 0/0",
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp/instance-id={{instance_id}}",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload_template": {
+        "Cisco-IOS-XE-lisp:instance-id": {
+          "iid": "{{instance_id}}",
+          "dynamic-eid": [
+            {
+              "name": "{{dynamic_eid_name}}",
+              "database-mapping": {
+                "eid-prefix": "{{subnet}}",
+                "locator-set": "rloc_fabric"
+              }
+            }
+          ],
+          "service": {
+            "ipv4": {
+              "eid-table": "{{eid_table}}",
+              "map-cache": {
+                "away-eids": {
+                  "send-map-request": [null]
+                }
+              }
+            }
+          }
+        }
+      },
+      "per_vrf_instances": [
+        {
+          "instance_id": 4099,
+          "eid_table": "vrf CORP_VN",
+          "dynamic_eid_name": "Corp_Data-IPV4",
+          "subnet": "10.30.100.0/24"
+        },
+        {
+          "instance_id": 4100,
+          "eid_table": "vrf GUEST_VN",
+          "dynamic_eid_name": "Guest_WiFi-IPV4",
+          "subnet": "10.30.200.0/24"
+        }
+      ]
+    },
+
+    "l2_instance_edge_template": {
+      "description": "One per VLAN on Edge — L2 VNI for MAC learning",
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp/instance-id={{l2_instance_id}}",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload_template": {
+        "Cisco-IOS-XE-lisp:instance-id": {
+          "iid": "{{l2_instance_id}}",
+          "service": {
+            "ethernet": {
+              "eid-table": "vlan {{vlan_id}}",
+              "database-mapping": {
+                "mac": [null],
+                "locator-set": "rloc_fabric"
+              },
+              "map-cache": {
+                "site-registration": [null]
+              }
+            }
+          }
+        }
+      },
+      "per_vlan_instances": [
+        {
+          "l2_instance_id": 8100,
+          "vlan_id": 100,
+          "description": "Corp_Data L2 VNI"
+        },
+        {
+          "l2_instance_id": 8200,
+          "vlan_id": 200,
+          "description": "Guest_WiFi L2 VNI"
+        }
+      ]
+    }
+  },
+
+  "phase4_vrf_bgp": {
+    "description": "VRF Definitions + BGP Routing + Fusion Handoff",
+
+    "vrf_definition_template": {
+      "endpoint": "/Cisco-IOS-XE-native:native/vrf/definition={{vrf_name}}",
+      "method": "PUT",
+      "targets": ["border", "edge"],
+      "payload_template": {
+        "Cisco-IOS-XE-native:definition": {
+          "name": "{{vrf_name}}",
+          "rd": "{{rd}}",
+          "address-family": {
+            "ipv4": {
+              "route-target": {
+                "export": [{"asn-ip": "{{rt_export}}"}],
+                "import": [{"asn-ip": "{{rt_import}}"}]
+              }
+            }
+          }
+        }
+      },
+      "vrfs": [
+        {"vrf_name": "CORP_VN", "rd": "1:4099", "rt_import": "1:4099", "rt_export": "1:4099"},
+        {"vrf_name": "GUEST_VN", "rd": "1:4100", "rt_import": "1:4100", "rt_export": "1:4100"}
+      ]
+    },
+
+    "handoff_svi_template": {
+      "description": "L3 Handoff SVIs on Border for Fusion peering",
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan={{vlan_id}}",
+      "method": "PUT",
+      "targets": ["border"],
+      "payload_template": {
+        "Cisco-IOS-XE-native:Vlan": {
+          "name": "{{vlan_id}}",
+          "description": "{{description}}",
+          "vrf": {
+            "forwarding": "{{vrf_name}}"
+          },
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "{{local_ip}}",
+                "mask": "{{mask}}"
+              }
+            }
+          },
+          "no-autostate": [null]
+        }
+      },
+      "handoff_vlans": [
+        {
+          "vlan_id": 3001,
+          "description": "Handoff_CORP_VN to Fusion",
+          "vrf_name": "CORP_VN",
+          "local_ip": "10.50.0.1",
+          "mask": "255.255.255.252"
+        },
+        {
+          "vlan_id": 3002,
+          "description": "Handoff_GUEST_VN to Fusion",
+          "vrf_name": "GUEST_VN",
+          "local_ip": "10.50.0.5",
+          "mask": "255.255.255.252"
+        },
+        {
+          "vlan_id": 3003,
+          "description": "Handoff Default to Fusion",
+          "vrf_name": null,
+          "local_ip": "10.50.0.9",
+          "mask": "255.255.255.252"
+        }
+      ]
+    },
+
+    "bgp_border": {
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-bgp:bgp",
+      "method": "PUT",
+      "targets": ["border"],
+      "payload": {
+        "Cisco-IOS-XE-bgp:bgp": {
+          "id": "{{bgp_as}}",
+          "bgp": {
+            "router-id": "{{border_router_id}}",
+            "log-neighbor-changes": [null],
+            "graceful-restart": [null]
+          },
+          "address-family": {
+            "no-vrf": {
+              "ipv4": [
+                {
+                  "af-name": "unicast",
+                  "redistribute": {
+                    "lisp": {
+                      "route-map": null,
+                      "metric": "{{redistribute_lisp_metric}}"
+                    }
+                  }
+                }
+              ]
+            },
+            "with-vrf": {
+              "ipv4": [
+                {
+                  "af-name": "unicast",
+                  "vrf": {
+                    "name": "CORP_VN",
+                    "redistribute": {
+                      "lisp": {"metric": "{{redistribute_lisp_metric}}"}
+                    },
+                    "neighbor": [
+                      {
+                        "id": "{{fusion_remote_ip_corp}}",
+                        "remote-as": "{{fusion_as}}",
+                        "activate": [null],
+                        "description": "Fusion Router — CORP_VN"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "af-name": "unicast",
+                  "vrf": {
+                    "name": "GUEST_VN",
+                    "redistribute": {
+                      "lisp": {"metric": "{{redistribute_lisp_metric}}"}
+                    },
+                    "neighbor": [
+                      {
+                        "id": "{{fusion_remote_ip_guest}}",
+                        "remote-as": "{{fusion_as}}",
+                        "activate": [null],
+                        "description": "Fusion Router — GUEST_VN"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+
+    "border_vrf_loopback_template": {
+      "description": "Border loopbacks per VRF — used as DHCP relay source",
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback={{loopback_id}}",
+      "method": "PUT",
+      "targets": ["border"],
+      "payload_template": {
+        "Cisco-IOS-XE-native:Loopback": {
+          "name": "{{loopback_id}}",
+          "description": "Border Loopback for {{vrf_name}} DHCP Relay",
+          "vrf": {
+            "forwarding": "{{vrf_name}}"
+          },
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "{{ip}}",
+                "mask": "255.255.255.255"
+              }
+            }
+          }
+        }
+      },
+      "loopbacks": [
+        {"loopback_id": 201, "vrf_name": "CORP_VN", "ip": "10.10.40.1"},
+        {"loopback_id": 202, "vrf_name": "GUEST_VN", "ip": "10.10.40.3"}
+      ]
+    }
+  },
+
+  "phase5_access": {
+    "description": "VLANs + SVIs + Device Tracking + Access Port Templates on Edge",
+
+    "vlan_creation_template": {
+      "endpoint": "/Cisco-IOS-XE-native:native/vlan/Cisco-IOS-XE-vlan:vlan-list={{vlan_id}}",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload_template": {
+        "Cisco-IOS-XE-vlan:vlan-list": {
+          "id": "{{vlan_id}}",
+          "name": "{{vlan_name}}"
+        }
+      },
+      "vlans": [
+        {"vlan_id": 100, "vlan_name": "Corp_Data"},
+        {"vlan_id": 200, "vlan_name": "Guest_WiFi"}
+      ]
+    },
+
+    "svi_template": {
+      "description": "SVI with anycast MAC, VRF, DHCP helper, LISP mobility",
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan={{vlan_id}}",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload_template": {
+        "Cisco-IOS-XE-native:Vlan": {
+          "name": "{{vlan_id}}",
+          "description": "{{vlan_name}} SVI — SDA Anycast Gateway",
+          "mac-address": "{{anycast_mac}}",
+          "vrf": {
+            "forwarding": "{{vrf_name}}"
+          },
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "{{gateway_ip}}",
+                "mask": "{{mask}}"
+              }
+            },
+            "helper-address": "{{dhcp_helpers}}",
+            "Cisco-IOS-XE-lisp:lisp": {
+              "mobility": {
+                "dynamic-eid": {
+                  "dynamic-eid-name": "{{dynamic_eid_name}}"
+                },
+                "liveness": {
+                  "test": false
+                }
+              }
+            }
+          },
+          "Cisco-IOS-XE-switch:ip-device": {
+            "tracking": {
+              "attach-policy": "IPDT_POLICY"
+            }
+          }
+        }
+      },
+      "svis": [
+        {
+          "vlan_id": 100,
+          "vlan_name": "Corp_Data",
+          "anycast_mac": "0000.0c9f.f064",
+          "vrf_name": "CORP_VN",
+          "gateway_ip": "10.30.100.1",
+          "mask": "255.255.255.0",
+          "dhcp_helpers": ["10.10.10.1"],
+          "dynamic_eid_name": "Corp_Data-IPV4"
+        },
+        {
+          "vlan_id": 200,
+          "vlan_name": "Guest_WiFi",
+          "anycast_mac": "0000.0c9f.f0c8",
+          "vrf_name": "GUEST_VN",
+          "gateway_ip": "10.30.200.1",
+          "mask": "255.255.255.0",
+          "dhcp_helpers": ["10.10.10.1"],
+          "dynamic_eid_name": "Guest_WiFi-IPV4"
+        }
+      ]
+    },
+
+    "device_tracking_policy": {
+      "endpoint": "/Cisco-IOS-XE-native:native/device-tracking/policy=IPDT_POLICY",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:policy": {
+          "word": "IPDT_POLICY",
+          "tracking": {
+            "enable": [null]
+          },
+          "security-level": {
+            "glean": [null]
+          }
+        }
+      }
+    },
+
+    "dhcp_snooping": {
+      "endpoint": "/Cisco-IOS-XE-native:native/ip/dhcp/Cisco-IOS-XE-dhcp:snooping",
+      "method": "PATCH",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-dhcp:snooping": {
+          "vlan": [
+            {"id": "100"},
+            {"id": "200"}
+          ]
+        }
+      }
+    }
+  },
+
+  "phase6_security": {
+    "description": "AAA + RADIUS + dot1x + Interface Templates (Optional — requires ISE)",
+
+    "aaa_new_model": {
+      "endpoint": "/Cisco-IOS-XE-native:native/aaa",
+      "method": "PATCH",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:aaa": {
+          "Cisco-IOS-XE-aaa:new-model": [null],
+          "Cisco-IOS-XE-aaa:authentication": {
+            "dot1x": {
+              "default": {
+                "group": "ISE_RADIUS"
+              }
+            }
+          },
+          "Cisco-IOS-XE-aaa:authorization": {
+            "network": [
+              {
+                "id": "default",
+                "local": [null],
+                "a1": {
+                  "group": "ISE_RADIUS"
+                }
+              }
+            ]
+          },
+          "Cisco-IOS-XE-aaa:accounting": {
+            "dot1x": {
+              "default": {
+                "start-stop": {
+                  "group-config": {
+                    "group": "ISE_RADIUS"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "radius_server_template": {
+      "endpoint": "/Cisco-IOS-XE-native:native/radius/server={{server_name}}",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload_template": {
+        "Cisco-IOS-XE-native:server": {
+          "id": "{{server_name}}",
+          "address": {
+            "ipv4": {
+              "host": "{{radius_ip}}",
+              "auth-port": "{{auth_port}}",
+              "acct-port": "{{acct_port}}"
+            }
+          },
+          "key": {
+            "key": "{{radius_key}}"
+          },
+          "timeout": "{{timeout}}",
+          "retransmit": "{{retransmit}}"
+        }
+      },
+      "servers": [
+        {
+          "server_name": "ISE-PSN-1",
+          "radius_ip": "10.10.30.11",
+          "auth_port": 1812,
+          "acct_port": 1813,
+          "radius_key": "RadiusKey123",
+          "timeout": 4,
+          "retransmit": 3
+        }
+      ]
+    },
+
+    "dot1x_system": {
+      "endpoint": "/Cisco-IOS-XE-native:native/dot1x",
+      "method": "PATCH",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:dot1x": {
+          "Cisco-IOS-XE-dot1x:system-auth-control": [null],
+          "Cisco-IOS-XE-dot1x:credentials": {
+            "profile-name": "SDA_DOT1X_PROFILE"
+          }
+        }
+      }
+    },
+
+    "cts_enforcement": {
+      "endpoint": "/Cisco-IOS-XE-native:native/cts",
+      "method": "PATCH",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:cts": {
+          "Cisco-IOS-XE-cts:role-based": {
+            "enforcement": [null]
+          }
+        }
+      }
+    },
+
+    "access_port_template": {
+      "description": "Interface template for closed-auth dot1x access ports",
+      "endpoint": "/Cisco-IOS-XE-native:native/template/Cisco-IOS-XE-template:template_details={{template_name}}",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-template:template_details": {
+          "template_name": "DefaultWiredDot1xClosedAuth",
+          "switchport": {
+            "access": {
+              "vlan": "{{access_vlan}}"
+            },
+            "mode": {
+              "access": [null]
+            }
+          },
+          "spanning-tree": {
+            "portfast": [null],
+            "bpduguard": {
+              "enable": [null]
+            }
+          },
+          "dot1x": {
+            "pae": "authenticator",
+            "timeout": {
+              "tx-period": 7
+            },
+            "max-reauth-req": 3
+          },
+          "authentication": {
+            "host-mode": "multi-auth",
+            "order": ["dot1x", "mab"],
+            "priority": ["dot1x", "mab"],
+            "port-control": "auto",
+            "periodic": [null],
+            "violation": {
+              "restrict": [null]
+            }
+          },
+          "mab": [null],
+          "ip": {
+            "device": {
+              "tracking": {
+                "attach-policy": "IPDT_POLICY"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "rollback": {
+    "description": "DELETE operations in reverse order to clean up all fabric config",
+
+    "phase6_rollback": [
+      {"endpoint": "/Cisco-IOS-XE-native:native/cts", "method": "DELETE", "targets": ["edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/dot1x", "method": "DELETE", "targets": ["edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/radius", "method": "DELETE", "targets": ["edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/aaa", "method": "DELETE", "targets": ["edge"]}
+    ],
+
+    "phase5_rollback": [
+      {"endpoint": "/Cisco-IOS-XE-native:native/device-tracking/policy=IPDT_POLICY", "method": "DELETE", "targets": ["edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan=100", "method": "DELETE", "targets": ["edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan=200", "method": "DELETE", "targets": ["edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/vlan/Cisco-IOS-XE-vlan:vlan-list=100", "method": "DELETE", "targets": ["edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/vlan/Cisco-IOS-XE-vlan:vlan-list=200", "method": "DELETE", "targets": ["edge"]}
+    ],
+
+    "phase4_rollback": [
+      {"endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-bgp:bgp", "method": "DELETE", "targets": ["border"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan=3001", "method": "DELETE", "targets": ["border"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan=3002", "method": "DELETE", "targets": ["border"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan=3003", "method": "DELETE", "targets": ["border"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=201", "method": "DELETE", "targets": ["border"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=202", "method": "DELETE", "targets": ["border"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/vrf/definition=CORP_VN", "method": "DELETE", "targets": ["border", "edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/vrf/definition=GUEST_VN", "method": "DELETE", "targets": ["border", "edge"]}
+    ],
+
+    "phase3_rollback": [
+      {"endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp/instance-id=8100", "method": "DELETE", "targets": ["edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp/instance-id=8200", "method": "DELETE", "targets": ["edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp/instance-id=4099", "method": "DELETE", "targets": ["border", "edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp/instance-id=4100", "method": "DELETE", "targets": ["border", "edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp/instance-id=4097", "method": "DELETE", "targets": ["border"]}
+    ],
+
+    "phase2_rollback": [
+      {"endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-lisp:lisp", "method": "DELETE", "targets": ["border", "edge"]}
+    ],
+
+    "phase1_rollback": [
+      {"endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-isis:isis", "method": "DELETE", "targets": ["border", "edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/ip/pim", "method": "DELETE", "targets": ["border", "edge"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=60000", "method": "DELETE", "targets": ["border"]},
+      {"endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=0", "method": "DELETE", "targets": ["border", "edge"]}
+    ]
+  },
+
+  "precheck_endpoints": {
+    "description": "RESTCONF GET endpoints used for pre-deployment health checks",
+    "checks": [
+      {
+        "name": "restconf_reachable",
+        "endpoint": "/Cisco-IOS-XE-native:native/hostname",
+        "method": "GET",
+        "targets": ["border", "edge"],
+        "pass_criteria": "HTTP 200 + hostname returned"
+      },
+      {
+        "name": "ios_xe_version",
+        "endpoint": "/Cisco-IOS-XE-native:native/version",
+        "method": "GET",
+        "targets": ["border", "edge"],
+        "pass_criteria": "Version >= 17.9"
+      },
+      {
+        "name": "memory_check",
+        "endpoint": "/Cisco-IOS-XE-memory-oper:memory-statistics",
+        "method": "GET",
+        "targets": ["border", "edge"],
+        "pass_criteria": "Free memory > 500 MB"
+      },
+      {
+        "name": "interface_status",
+        "endpoint": "/Cisco-IOS-XE-native:native/interface",
+        "method": "GET",
+        "targets": ["border", "edge"],
+        "pass_criteria": "P2P uplink interface status = up"
+      },
+      {
+        "name": "no_existing_lisp",
+        "endpoint": "/Cisco-IOS-XE-lisp:lisp",
+        "method": "GET",
+        "targets": ["border", "edge"],
+        "pass_criteria": "HTTP 404 (not configured) or skip if force=true"
+      },
+      {
+        "name": "no_existing_nve",
+        "endpoint": "/Cisco-IOS-XE-nve:nve",
+        "method": "GET",
+        "targets": ["border", "edge"],
+        "pass_criteria": "HTTP 404 (not configured) or skip if force=true"
+      },
+      {
+        "name": "ntp_configured",
+        "endpoint": "/Cisco-IOS-XE-native:native/ntp",
+        "method": "GET",
+        "targets": ["border", "edge"],
+        "pass_criteria": "NTP server configured"
+      }
+    ]
+  },
+
+  "postcheck_endpoints": {
+    "description": "RESTCONF GET endpoints used for post-deployment validation (22 checks)",
+    "checks": {
+      "underlay": [
+        {"name": "isis_neighbor_up", "endpoint": "/Cisco-IOS-XE-isis-oper:isis-oper-data", "pass": ">= 1 neighbor UP"},
+        {"name": "isis_route_to_peer", "endpoint": "/Cisco-IOS-XE-isis-oper:isis-oper-data", "pass": "Peer loopback in DB"},
+        {"name": "bfd_session_up", "endpoint": "/Cisco-IOS-XE-bfd-oper:bfd-state", "pass": "All sessions UP"},
+        {"name": "pim_neighbor", "endpoint": "/Cisco-IOS-XE-native:native/ip/pim", "pass": ">= 1 PIM neighbor"},
+        {"name": "rp_registered", "endpoint": "/Cisco-IOS-XE-native:native/ip/pim", "pass": "RP = anycast address"}
+      ],
+      "lisp": [
+        {"name": "lisp_session_up", "endpoint": "/Cisco-IOS-XE-lisp-oper:lisp-state", "pass": "Sessions UP"},
+        {"name": "map_server_active", "endpoint": "/Cisco-IOS-XE-lisp-oper:lisp-state", "pass": "Site registered"},
+        {"name": "map_resolver_responding", "endpoint": "/Cisco-IOS-XE-lisp-oper:lisp-state", "pass": ">= 1 map-cache entry"},
+        {"name": "etr_registration", "endpoint": "/Cisco-IOS-XE-lisp-oper:lisp-state", "pass": "Accepted"},
+        {"name": "petr_reachable", "endpoint": "/Cisco-IOS-XE-lisp-oper:lisp-state", "pass": "PETR enabled"}
+      ],
+      "vxlan": [
+        {"name": "l3_vni_per_vrf", "endpoint": "/Cisco-IOS-XE-lisp:lisp", "pass": "EID-table matches VRF"},
+        {"name": "l2_vni_per_vlan", "endpoint": "/Cisco-IOS-XE-lisp:lisp", "pass": "EID-table matches VLAN"},
+        {"name": "encapsulation_vxlan", "endpoint": "/Cisco-IOS-XE-lisp:lisp", "pass": "Encapsulation = vxlan"}
+      ],
+      "bgp": [
+        {"name": "ibgp_peer_up", "endpoint": "/Cisco-IOS-XE-bgp-oper:bgp-state-data", "pass": "Neighbor established"},
+        {"name": "ebgp_fusion_up", "endpoint": "/Cisco-IOS-XE-bgp-oper:bgp-state-data", "pass": "Neighbor established"},
+        {"name": "lisp_routes_in_bgp", "endpoint": "/Cisco-IOS-XE-bgp-oper:bgp-state-data", "pass": "Redistribute lisp visible"},
+        {"name": "per_vrf_af_active", "endpoint": "/Cisco-IOS-XE-bgp-oper:bgp-state-data", "pass": "AF configured per VRF"}
+      ],
+      "access": [
+        {"name": "svi_created_correct_ip", "endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan", "pass": "IP matches config"},
+        {"name": "anycast_mac_applied", "endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan", "pass": "MAC = 0000.0c9f.xxxx"},
+        {"name": "dhcp_helper_configured", "endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan", "pass": ">= 1 helper per SVI"},
+        {"name": "lisp_mobility_configured", "endpoint": "/Cisco-IOS-XE-native:native/interface/Vlan", "pass": "Mobility pool present"}
+      ],
+      "security": [
+        {"name": "port_template_applied", "endpoint": "/Cisco-IOS-XE-native:native/interface", "pass": "Source template present"}
+      ]
+    }
+  }
+}
