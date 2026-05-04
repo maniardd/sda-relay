@@ -452,6 +452,7 @@ def deploy_phase1(form_data: dict) -> Dict[str, Any]:
         ("pim_rp", "PIM RP config"),
     ]
 
+    import time as _t
     for key, desc in step_order:
         cfg = yang_phase.get(key)
         if not cfg:
@@ -462,12 +463,19 @@ def deploy_phase1(form_data: dict) -> Dict[str, Any]:
         targets = cfg.get("targets", ["border"])
 
         for target in targets:
+            # ISIS process PUT collides with existing config → delete first
+            if key.startswith("isis_process_"):
+                ip, user, pw = _device_creds(target)
+                restconf_request(ip, user, pw, endpoint, method="DELETE")
+                _t.sleep(0.5)
             result = _push_payload(target, endpoint, method, payload)
             result["step"] = f"{desc} ({target})"
             steps.append(result)
             _log(phase, desc, result)
             if not result["success"]:
                 all_ok = False
+            # Pace between ops to avoid IOS-XE config-lock 409s
+            _t.sleep(0.5)
 
     return {
         "status": "pass" if all_ok else "fail",
