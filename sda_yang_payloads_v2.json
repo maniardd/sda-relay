@@ -223,12 +223,16 @@
         "Cisco-IOS-XE-native:Loopback": {
           "name": 0,
           "ip": {
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
+            "pim": {
+              "Cisco-IOS-XE-multicast:pim-mode-choice-cfg": {
+                "sparse-mode": {}
+              }
+            },
+            "router": {
+              "Cisco-IOS-XE-isis:isis": {
+                "tag": "SDA-ISIS"
+              }
             }
-          },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
           }
         }
       }
@@ -242,12 +246,16 @@
         "Cisco-IOS-XE-native:Loopback": {
           "name": 0,
           "ip": {
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
+            "pim": {
+              "Cisco-IOS-XE-multicast:pim-mode-choice-cfg": {
+                "sparse-mode": {}
+              }
+            },
+            "router": {
+              "Cisco-IOS-XE-isis:isis": {
+                "tag": "SDA-ISIS"
+              }
             }
-          },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
           }
         }
       }
@@ -261,12 +269,16 @@
         "Cisco-IOS-XE-native:Loopback": {
           "name": 60000,
           "ip": {
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
+            "pim": {
+              "Cisco-IOS-XE-multicast:pim-mode-choice-cfg": {
+                "sparse-mode": {}
+              }
+            },
+            "router": {
+              "Cisco-IOS-XE-isis:isis": {
+                "tag": "SDA-ISIS"
+              }
             }
-          },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
           }
         }
       }
@@ -279,19 +291,22 @@
       "payload": {
         "Cisco-IOS-XE-native:TwentyFiveGigE": {
           "name": "{{border_p2p_intf}}",
-          "ip": {
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
+          "isis": {
+            "Cisco-IOS-XE-isis:network": {
+              "point-to-point": true
             }
           },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS",
-            "Cisco-IOS-XE-isis:network": "point-to-point"
-          },
-          "Cisco-IOS-XE-bfd:bfd": {
-            "interval": 100,
-            "min_rx": 100,
-            "multiplier": 3
+          "ip": {
+            "pim": {
+              "Cisco-IOS-XE-multicast:pim-mode-choice-cfg": {
+                "sparse-mode": {}
+              }
+            },
+            "router": {
+              "Cisco-IOS-XE-isis:isis": {
+                "tag": "SDA-ISIS"
+              }
+            }
           }
         }
       }
@@ -304,19 +319,22 @@
       "payload": {
         "Cisco-IOS-XE-native:GigabitEthernet": {
           "name": "{{edge_p2p_intf}}",
-          "ip": {
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
+          "isis": {
+            "Cisco-IOS-XE-isis:network": {
+              "point-to-point": true
             }
           },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS",
-            "Cisco-IOS-XE-isis:network": "point-to-point"
-          },
-          "Cisco-IOS-XE-bfd:bfd": {
-            "interval": 100,
-            "min_rx": 100,
-            "multiplier": 3
+          "ip": {
+            "pim": {
+              "Cisco-IOS-XE-multicast:pim-mode-choice-cfg": {
+                "sparse-mode": {}
+              }
+            },
+            "router": {
+              "Cisco-IOS-XE-isis:isis": {
+                "tag": "SDA-ISIS"
+              }
+            }
           }
         }
       }
