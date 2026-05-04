@@ -20,6 +20,9 @@ if [ "$LOCAL" != "$REMOTE" ]; then
 
     # Restore exec bits (git on Linux preserves them, but be safe)
     chmod +x /opt/sda-relay/scripts/*.sh 2>/dev/null || true
+    # Ensure ~/doit.sh and ~/diag.sh always point at the latest in-repo scripts
+    ln -sf /opt/sda-relay/scripts/doit.sh /home/sdaadmin/doit.sh 2>/dev/null || true
+    ln -sf /opt/sda-relay/scripts/diag.sh /home/sdaadmin/diag.sh 2>/dev/null || true
 
     # Restart gunicorn
     pkill -f 'gunicorn.*sda_relay_server_v2' || true
