@@ -18,6 +18,9 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     echo "[$(date)] New commit detected: $LOCAL -> $REMOTE" >> /tmp/auto-pull.log
     git reset --hard origin/main >> /tmp/auto-pull.log 2>&1
 
+    # Restore exec bits (git on Linux preserves them, but be safe)
+    chmod +x /opt/sda-relay/scripts/*.sh 2>/dev/null || true
+
     # Restart gunicorn
     pkill -f 'gunicorn.*sda_relay_server_v2' || true
     sleep 2
