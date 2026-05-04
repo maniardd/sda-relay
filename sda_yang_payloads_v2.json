@@ -16,7 +16,7 @@
   },
 
   "phase1_underlay": {
-    "description": "ISIS + BFD + PIM + Loopbacks + P2P Links",
+    "description": "ISIS + BFD + PIM + Loopbacks + P2P",
 
     "system_mtu": {
       "endpoint": "/Cisco-IOS-XE-native:native",
@@ -27,6 +27,17 @@
           "system": {
             "mtu": 9100
           }
+        }
+      }
+    },
+
+    "multicast_routing": {
+      "endpoint": "/Cisco-IOS-XE-native:native/ip/multicast-routing",
+      "method": "PUT",
+      "targets": ["border", "edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:multicast-routing": {
+          "Cisco-IOS-XE-multicast:distributed": [null]
         }
       }
     },
@@ -45,13 +56,7 @@
                 "address": "{{border_loopback0_ip}}",
                 "mask": "255.255.255.255"
               }
-            },
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
             }
-          },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
           }
         }
       }
@@ -71,13 +76,7 @@
                 "address": "{{edge_loopback0_ip}}",
                 "mask": "255.255.255.255"
               }
-            },
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
             }
-          },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
           }
         }
       }
@@ -97,13 +96,7 @@
                 "address": "{{anycast_ip}}",
                 "mask": "255.255.255.255"
               }
-            },
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
             }
-          },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
           }
         }
       }
@@ -126,19 +119,7 @@
                 "address": "{{border_p2p_ip}}",
                 "mask": "255.255.255.254"
               }
-            },
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
             }
-          },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS",
-            "Cisco-IOS-XE-isis:network": "point-to-point"
-          },
-          "Cisco-IOS-XE-bfd:bfd": {
-            "interval": 100,
-            "min_rx": 100,
-            "multiplier": 3
           },
           "mtu": 9100
         }
@@ -146,11 +127,11 @@
     },
 
     "p2p_link_edge": {
-      "endpoint": "/Cisco-IOS-XE-native:native/interface/TenGigabitEthernet={{edge_p2p_intf_encoded}}",
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/GigabitEthernet={{edge_p2p_intf_encoded}}",
       "method": "PATCH",
       "targets": ["edge"],
       "payload": {
-        "Cisco-IOS-XE-native:TenGigabitEthernet": {
+        "Cisco-IOS-XE-native:GigabitEthernet": {
           "name": "{{edge_p2p_intf}}",
           "description": "SDA Fabric P2P Link to Border",
           "switchport-conf": {
@@ -162,19 +143,7 @@
                 "address": "{{edge_p2p_ip}}",
                 "mask": "255.255.255.254"
               }
-            },
-            "Cisco-IOS-XE-pim:pim": {
-              "sparse-mode": [null]
             }
-          },
-          "Cisco-IOS-XE-isis:isis": {
-            "Cisco-IOS-XE-isis:tag": "SDA-ISIS",
-            "Cisco-IOS-XE-isis:network": "point-to-point"
-          },
-          "Cisco-IOS-XE-bfd:bfd": {
-            "interval": 100,
-            "min_rx": 100,
-            "multiplier": 3
           },
           "mtu": 9100
         }
@@ -257,6 +226,113 @@
           },
           "Cisco-IOS-XE-multicast:ssm": {
             "default": [null]
+          }
+        }
+      }
+    },
+
+    "loopback0_augment_border": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=0",
+      "method": "PATCH",
+      "targets": ["border"],
+      "payload": {
+        "Cisco-IOS-XE-native:Loopback": {
+          "name": 0,
+          "ip": {
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
+          }
+        }
+      }
+    },
+
+    "loopback0_augment_edge": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=0",
+      "method": "PATCH",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:Loopback": {
+          "name": 0,
+          "ip": {
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
+          }
+        }
+      }
+    },
+
+    "loopback60000_augment_border": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/Loopback=60000",
+      "method": "PATCH",
+      "targets": ["border"],
+      "payload": {
+        "Cisco-IOS-XE-native:Loopback": {
+          "name": 60000,
+          "ip": {
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS"
+          }
+        }
+      }
+    },
+
+    "p2p_augment_border": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/TwentyFiveGigE={{border_p2p_intf_encoded}}",
+      "method": "PATCH",
+      "targets": ["border"],
+      "payload": {
+        "Cisco-IOS-XE-native:TwentyFiveGigE": {
+          "name": "{{border_p2p_intf}}",
+          "ip": {
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS",
+            "Cisco-IOS-XE-isis:network": "point-to-point"
+          },
+          "Cisco-IOS-XE-bfd:bfd": {
+            "interval": 100,
+            "min_rx": 100,
+            "multiplier": 3
+          }
+        }
+      }
+    },
+
+    "p2p_augment_edge": {
+      "endpoint": "/Cisco-IOS-XE-native:native/interface/GigabitEthernet={{edge_p2p_intf_encoded}}",
+      "method": "PATCH",
+      "targets": ["edge"],
+      "payload": {
+        "Cisco-IOS-XE-native:GigabitEthernet": {
+          "name": "{{edge_p2p_intf}}",
+          "ip": {
+            "Cisco-IOS-XE-pim:pim": {
+              "sparse-mode": [null]
+            }
+          },
+          "Cisco-IOS-XE-isis:isis": {
+            "Cisco-IOS-XE-isis:tag": "SDA-ISIS",
+            "Cisco-IOS-XE-isis:network": "point-to-point"
+          },
+          "Cisco-IOS-XE-bfd:bfd": {
+            "interval": 100,
+            "min_rx": 100,
+            "multiplier": 3
           }
         }
       }
@@ -848,6 +924,50 @@
             {"id": "100"},
             {"id": "200"}
           ]
+        }
+      }
+    },
+
+    "dhcp_excluded_template": {
+      "description": "Exclude gateway + infra IPs from DHCP pool",
+      "endpoint": "/Cisco-IOS-XE-native:native/ip/dhcp/Cisco-IOS-XE-dhcp:excluded-address",
+      "method": "PATCH",
+      "targets": ["edge"],
+      "payload_template": {
+        "Cisco-IOS-XE-dhcp:excluded-address": [
+          {
+            "low-address": "{{excluded_start}}",
+            "high-address": "{{excluded_end}}"
+          }
+        ]
+      }
+    },
+
+    "dhcp_pool_template": {
+      "description": "Local DHCP pool per VLAN — reads from YAML dhcp_pool section",
+      "endpoint": "/Cisco-IOS-XE-native:native/ip/dhcp/Cisco-IOS-XE-dhcp:pool={{pool_name}}",
+      "method": "PUT",
+      "targets": ["edge"],
+      "payload_template": {
+        "Cisco-IOS-XE-dhcp:pool": {
+          "id": "{{pool_name}}",
+          "vrf": "{{vrf_name}}",
+          "network": {
+            "number": "{{pool_network}}",
+            "mask": "{{pool_mask}}"
+          },
+          "default-router": {
+            "default-router-address": "{{pool_default_router}}"
+          },
+          "dns-server": {
+            "dns-server-address": "{{pool_dns_server}}"
+          },
+          "lease-config": {
+            "lease": {
+              "days": "{{pool_lease_days}}",
+              "hours": "{{pool_lease_hours}}"
+            }
+          }
         }
       }
     }

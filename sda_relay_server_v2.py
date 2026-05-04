@@ -203,6 +203,18 @@ def _log(phase: str, step: str, result: Dict[str, Any]):
     })
 
 
+def _intf_numeric(name: str) -> str:
+    """Strip the interface type prefix and return only the numeric portion.
+    Example: 'TwentyFiveGigE1/0/2' -> '1/0/2'. Used as the YANG list-key value.
+    The type prefix appears in the URL path segment (e.g. /interface/TwentyFiveGigE=...)
+    and the 'name' leaf inside the IOS-XE native YANG payload, both of which want
+    only the numeric key, not the full human name.
+    """
+    import re
+    m = re.search(r"\d.*$", name or "")
+    return m.group(0) if m else name
+
+
 def _build_variables(form_data: dict) -> dict:
     """Merge YAML config + form overrides into a variable dict for templates."""
     dev = FABRIC.get("devices", {})
@@ -215,6 +227,11 @@ def _build_variables(form_data: dict) -> dict:
     lisp_cfg = FABRIC.get("lisp", {})
     fabric_cfg = FABRIC.get("fabric", {})
 
+    border_intf_full = links.get("border_interface", "TwentyFiveGigE1/0/2")
+    edge_intf_full = links.get("edge_interface", "GigabitEthernet1/0/2")
+    border_intf_num = _intf_numeric(border_intf_full)
+    edge_intf_num = _intf_numeric(edge_intf_full)
+
     variables = {
         "fabric_name": form_data.get("fabric_name", fabric_cfg.get("name", "")),
         "site_name": form_data.get("site_name", fabric_cfg.get("site_name", "site_uci")),
@@ -224,10 +241,10 @@ def _build_variables(form_data: dict) -> dict:
         "anycast_ip": form_data.get("rp_address", border.get("anycast_ip")),
         "border_p2p_ip": form_data.get("border_p2p_ip", links.get("border_ip")),
         "edge_p2p_ip": form_data.get("edge_p2p_ip", links.get("edge_ip")),
-        "border_p2p_intf": links.get("border_interface", "TwentyFiveGigE1/0/1"),
-        "border_p2p_intf_encoded": links.get("border_interface", "TwentyFiveGigE1/0/1").replace("/", "%2F"),
-        "edge_p2p_intf": links.get("edge_interface", "TenGigabitEthernet1/1/1"),
-        "edge_p2p_intf_encoded": links.get("edge_interface", "TenGigabitEthernet1/1/1").replace("/", "%2F"),
+        "border_p2p_intf": border_intf_num,
+        "border_p2p_intf_encoded": border_intf_num.replace("/", "%2F"),
+        "edge_p2p_intf": edge_intf_num,
+        "edge_p2p_intf_encoded": edge_intf_num.replace("/", "%2F"),
         "border_isis_net": form_data.get("border_isis_net", border.get("isis_net")),
         "edge_isis_net": form_data.get("edge_isis_net", edge.get("isis_net")),
         "rp_address": form_data.get("rp_address", mc.get("rp_address")),
@@ -404,16 +421,24 @@ def deploy_phase1(form_data: dict) -> Dict[str, Any]:
     steps: List[Dict] = []
     all_ok = True
 
-    # Order of operations from the design doc
+    # Order matters: enable global features (multicast, ISIS process) FIRST,
+    # then create base interfaces (no YANG augments), then attach ISIS/PIM
+    # augments to interfaces (parents must already exist), finally PIM RP.
     step_order = [
         ("system_mtu", "System MTU 9100"),
-        ("loopback0_border", "Border Loopback0"),
-        ("loopback0_edge", "Edge Loopback0"),
-        ("loopback60000_border", "Border Loopback60000 Anycast"),
-        ("p2p_link_border", "Border P2P link"),
-        ("p2p_link_edge", "Edge P2P link"),
+        ("multicast_routing", "Enable IP multicast-routing distributed"),
         ("isis_process_border", "Border ISIS process"),
         ("isis_process_edge", "Edge ISIS process"),
+        ("loopback0_border", "Border Loopback0 (base)"),
+        ("loopback0_edge", "Edge Loopback0 (base)"),
+        ("loopback60000_border", "Border Loopback60000 Anycast (base)"),
+        ("p2p_link_border", "Border P2P link (base)"),
+        ("p2p_link_edge", "Edge P2P link (base)"),
+        ("loopback0_augment_border", "Border Loopback0 ISIS+PIM augment"),
+        ("loopback0_augment_edge", "Edge Loopback0 ISIS+PIM augment"),
+        ("loopback60000_augment_border", "Border Loopback60000 ISIS+PIM augment"),
+        ("p2p_augment_border", "Border P2P ISIS+PIM+BFD augment"),
+        ("p2p_augment_edge", "Edge P2P ISIS+PIM+BFD augment"),
         ("pim_rp", "PIM RP config"),
     ]
 
@@ -767,6 +792,55 @@ def deploy_phase5(form_data: dict) -> Dict[str, Any]:
         _log(phase, result["step"], result)
         if not result["success"]:
             all_ok = False
+
+    # DHCP excluded addresses
+    dhcp_excl_tmpl = yang_phase.get("dhcp_excluded_template", {})
+    if dhcp_excl_tmpl:
+        access_vlans = FABRIC.get("access_vlans", [])
+        excl_entries = []
+        for vlan in access_vlans:
+            pool = vlan.get("dhcp_pool", {})
+            if pool and pool.get("excluded_start") and pool.get("excluded_end"):
+                excl_entries.append({
+                    "low-address": pool["excluded_start"],
+                    "high-address": pool["excluded_end"],
+                })
+        if excl_entries:
+            payload = {"Cisco-IOS-XE-dhcp:excluded-address": excl_entries}
+            result = _push_payload("edge", dhcp_excl_tmpl["endpoint"], dhcp_excl_tmpl["method"], payload)
+            result["step"] = f"DHCP excluded addresses ({len(excl_entries)} ranges)"
+            steps.append(result)
+            _log(phase, result["step"], result)
+            if not result["success"]:
+                all_ok = False
+
+    # DHCP pools (from YAML access_vlans[].dhcp_pool)
+    dhcp_pool_tmpl = yang_phase.get("dhcp_pool_template", {})
+    if dhcp_pool_tmpl:
+        access_vlans = FABRIC.get("access_vlans", [])
+        for vlan in access_vlans:
+            pool = vlan.get("dhcp_pool", {})
+            if not pool or not pool.get("pool_name"):
+                continue
+            pool_vars = {
+                **variables,
+                "pool_name": pool["pool_name"],
+                "vrf_name": vlan.get("vrf", ""),
+                "pool_network": pool["network"],
+                "pool_mask": pool["network_mask"],
+                "pool_default_router": pool["default_router"],
+                "pool_dns_server": pool.get("dns_server", "8.8.8.8"),
+                "pool_lease_days": str(pool.get("lease_days", 1)),
+                "pool_lease_hours": str(pool.get("lease_hours", 0)),
+            }
+            endpoint = _resolve_template(dhcp_pool_tmpl["endpoint"], pool_vars)
+            payload = _resolve_payload(dhcp_pool_tmpl.get("payload_template", {}), pool_vars)
+            result = _push_payload("edge", endpoint, dhcp_pool_tmpl["method"], payload)
+            result["step"] = f"DHCP pool {pool['pool_name']} (VLAN {vlan['vlan_id']} / {vlan.get('vrf', 'global')})"
+            steps.append(result)
+            _log(phase, result["step"], result)
+            if not result["success"]:
+                all_ok = False
 
     return {
         "status": "pass" if all_ok else "fail",
