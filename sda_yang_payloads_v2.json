@@ -166,7 +166,6 @@
               ],
               "is-type": { "levels": "level-2-only" },
               "metric-style": { "wide": {} },
-              "log-adjacency-changes": {},
               "passive-interface": {
                 "interface": ["Loopback0"]
               }
@@ -190,7 +189,6 @@
               ],
               "is-type": { "levels": "level-2-only" },
               "metric-style": { "wide": {} },
-              "log-adjacency-changes": {},
               "passive-interface": {
                 "interface": ["Loopback0"]
               }
