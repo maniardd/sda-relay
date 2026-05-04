@@ -117,34 +117,43 @@ def restconf_request(
         "verify": False,
         "timeout": timeout,
     }
-    try:
-        if method == "GET":
-            r = requests.get(url, **kwargs)
-        elif method == "PUT":
-            r = requests.put(url, json=payload, **kwargs)
-        elif method == "PATCH":
-            r = requests.patch(url, json=payload, **kwargs)
-        elif method == "DELETE":
-            r = requests.delete(url, **kwargs)
-        elif method == "POST":
-            r = requests.post(url, json=payload, **kwargs)
-        else:
-            return 400, None, f"Unsupported method: {method}"
+    # Retry on 409 lock-denied (concurrent RESTCONF lock contention)
+    import time as _t
+    max_attempts = 4 if method in ("PUT", "PATCH", "DELETE", "POST") else 1
+    for attempt in range(1, max_attempts + 1):
+        try:
+            if method == "GET":
+                r = requests.get(url, **kwargs)
+            elif method == "PUT":
+                r = requests.put(url, json=payload, **kwargs)
+            elif method == "PATCH":
+                r = requests.patch(url, json=payload, **kwargs)
+            elif method == "DELETE":
+                r = requests.delete(url, **kwargs)
+            elif method == "POST":
+                r = requests.post(url, json=payload, **kwargs)
+            else:
+                return 400, None, f"Unsupported method: {method}"
 
-        logger.info(f"RESTCONF {method} {device_ip} {xpath} → {r.status_code}")
-        if r.status_code in (200, 201, 204):
-            data = r.json() if r.text.strip() else {}
-            return r.status_code, data, None
-        return r.status_code, None, r.text[:500]
-    except requests.exceptions.Timeout:
-        logger.error(f"RESTCONF {method} {device_ip} {xpath} — TIMEOUT")
-        return 504, None, "Connection timed out"
-    except requests.exceptions.ConnectionError as exc:
-        logger.error(f"RESTCONF {method} {device_ip} {xpath} — CONN ERROR: {exc}")
-        return 502, None, f"Connection error: {exc}"
-    except Exception as exc:
-        logger.error(f"RESTCONF {method} {device_ip} {xpath} — ERROR: {exc}")
-        return 500, None, str(exc)
+            logger.info(f"RESTCONF {method} {device_ip} {xpath} → {r.status_code} (attempt {attempt})")
+            if r.status_code in (200, 201, 204):
+                data = r.json() if r.text.strip() else {}
+                return r.status_code, data, None
+            # Retry on lock-denied / in-use
+            if r.status_code == 409 and attempt < max_attempts:
+                _t.sleep(1.5 * attempt)
+                continue
+            return r.status_code, None, r.text[:500]
+        except requests.exceptions.Timeout:
+            logger.error(f"RESTCONF {method} {device_ip} {xpath} — TIMEOUT")
+            return 504, None, "Connection timed out"
+        except requests.exceptions.ConnectionError as exc:
+            logger.error(f"RESTCONF {method} {device_ip} {xpath} — CONN ERROR: {exc}")
+            return 502, None, f"Connection error: {exc}"
+        except Exception as exc:
+            logger.error(f"RESTCONF {method} {device_ip} {xpath} — ERROR: {exc}")
+            return 500, None, str(exc)
+    return 500, None, "max retries exhausted"
 
 
 def _device_creds(target: str) -> Tuple[str, str, str]:

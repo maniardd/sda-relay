@@ -165,10 +165,7 @@
                 { "tag": "{{border_isis_net}}" }
               ],
               "is-type": { "levels": "level-2-only" },
-              "metric-style": { "wide": {} },
-              "passive-interface": {
-                "interface": ["Loopback0"]
-              }
+              "metric-style": { "wide": {} }
             }
           ]
         }
@@ -188,10 +185,7 @@
                 { "tag": "{{edge_isis_net}}" }
               ],
               "is-type": { "levels": "level-2-only" },
-              "metric-style": { "wide": {} },
-              "passive-interface": {
-                "interface": ["Loopback0"]
-              }
+              "metric-style": { "wide": {} }
             }
           ]
         }
