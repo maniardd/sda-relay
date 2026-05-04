@@ -116,31 +116,50 @@ echo "=========================================="
 echo "## Uploading to Gist..."
 echo "=========================================="
 
-# Build JSON payload safely
-CONTENT=$(jq -Rs . < "$LOG")
 DESC="SDA diag $ACTION $(hostname) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-PAYLOAD=$(cat <<EOF
-{
-  "description": "$DESC",
-  "public": false,
-  "files": {
-    "diag-$(basename $LOG)": { "content": $CONTENT }
-  }
+FNAME="diag-$(basename $LOG)"
+
+# Build payload using Python (no jq needed) and post in one shot
+URL=$(python3 - <<PYEOF
+import json, os, sys, urllib.request
+
+with open("$LOG", "r", errors="replace") as f:
+    content = f.read()
+
+payload = {
+    "description": "$DESC",
+    "public": False,
+    "files": {"$FNAME": {"content": content}},
 }
-EOF
+data = json.dumps(payload).encode("utf-8")
+
+req = urllib.request.Request(
+    "https://api.github.com/gists",
+    data=data,
+    headers={
+        "Authorization": "Bearer ${GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json",
+        "Content-Type": "application/json",
+        "User-Agent": "sda-diag/1.0",
+    },
+    method="POST",
+)
+try:
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        body = json.load(resp)
+    print(body.get("html_url", ""))
+except urllib.error.HTTPError as e:
+    sys.stderr.write("HTTP %s: %s\n" % (e.code, e.read().decode("utf-8", "replace")[:500]))
+    sys.exit(2)
+except Exception as e:
+    sys.stderr.write("ERR: %s\n" % e)
+    sys.exit(2)
+PYEOF
 )
 
-RESP=$(curl -s -X POST https://api.github.com/gists \
-    -H "Authorization: Bearer $GITHUB_TOKEN" \
-    -H "Accept: application/vnd.github+json" \
-    -d "$PAYLOAD")
-
-URL=$(echo "$RESP" | jq -r '.html_url // empty')
 if [ -z "$URL" ]; then
-    echo "GIST UPLOAD FAILED:"
-    echo "$RESP" | head -50
     echo ""
-    echo "Local log saved at: $LOG"
+    echo "GIST UPLOAD FAILED. Local log saved at: $LOG"
     exit 2
 fi
 
