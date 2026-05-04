@@ -25,19 +25,21 @@
       "payload": {
         "Cisco-IOS-XE-native:native": {
           "system": {
-            "mtu": 9100
+            "Cisco-IOS-XE-switch:mtu": {
+              "size": 9100
+            }
           }
         }
       }
     },
 
     "multicast_routing": {
-      "endpoint": "/Cisco-IOS-XE-native:native/ip/multicast-routing",
+      "endpoint": "/Cisco-IOS-XE-native:native/ip/Cisco-IOS-XE-multicast:mcr-conf",
       "method": "PUT",
       "targets": ["border", "edge"],
       "payload": {
-        "Cisco-IOS-XE-native:multicast-routing": {
-          "Cisco-IOS-XE-multicast:distributed": [null]
+        "Cisco-IOS-XE-multicast:mcr-conf": {
+          "multicast-routing": [null]
         }
       }
     },
@@ -151,65 +153,49 @@
     },
 
     "isis_process_border": {
-      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-isis:isis",
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-isis:isis-container",
       "method": "PUT",
       "targets": ["border"],
       "payload": {
-        "Cisco-IOS-XE-isis:isis": {
-          "tag": "SDA-ISIS",
-          "net": [
+        "Cisco-IOS-XE-isis:isis-container": {
+          "isis": [
             {
-              "tag": "{{border_isis_net}}"
+              "area-tag": "SDA-ISIS",
+              "net": [
+                { "tag": "{{border_isis_net}}" }
+              ],
+              "is-type": { "levels": "level-2-only" },
+              "metric-style": { "wide": {} },
+              "log-adjacency-changes": {},
+              "passive-interface": {
+                "interface": ["Loopback0"]
+              }
             }
-          ],
-          "is-type": "level-2-only",
-          "metric-style": {
-            "wide": [null]
-          },
-          "nsf": {
-            "cisco": [null]
-          },
-          "bfd": {
-            "all-interfaces": [null]
-          },
-          "log-adjacency-changes": [null],
-          "passive-interface": {
-            "interface": {
-              "Loopback": [0]
-            }
-          }
+          ]
         }
       }
     },
 
     "isis_process_edge": {
-      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-isis:isis",
+      "endpoint": "/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-isis:isis-container",
       "method": "PUT",
       "targets": ["edge"],
       "payload": {
-        "Cisco-IOS-XE-isis:isis": {
-          "tag": "SDA-ISIS",
-          "net": [
+        "Cisco-IOS-XE-isis:isis-container": {
+          "isis": [
             {
-              "tag": "{{edge_isis_net}}"
+              "area-tag": "SDA-ISIS",
+              "net": [
+                { "tag": "{{edge_isis_net}}" }
+              ],
+              "is-type": { "levels": "level-2-only" },
+              "metric-style": { "wide": {} },
+              "log-adjacency-changes": {},
+              "passive-interface": {
+                "interface": ["Loopback0"]
+              }
             }
-          ],
-          "is-type": "level-2-only",
-          "metric-style": {
-            "wide": [null]
-          },
-          "nsf": {
-            "cisco": [null]
-          },
-          "bfd": {
-            "all-interfaces": [null]
-          },
-          "log-adjacency-changes": [null],
-          "passive-interface": {
-            "interface": {
-              "Loopback": [0]
-            }
-          }
+          ]
         }
       }
     },
@@ -220,9 +206,9 @@
       "targets": ["border", "edge"],
       "payload": {
         "Cisco-IOS-XE-native:pim": {
-          "Cisco-IOS-XE-multicast:rp-address": {
+          "Cisco-IOS-XE-multicast:rp-address-conf": {
             "address": "{{rp_address}}",
-            "override": true
+            "override": [null]
           },
           "Cisco-IOS-XE-multicast:ssm": {
             "default": [null]

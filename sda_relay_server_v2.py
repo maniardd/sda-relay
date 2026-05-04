@@ -424,9 +424,17 @@ def deploy_phase1(form_data: dict) -> Dict[str, Any]:
     # Order matters: enable global features (multicast, ISIS process) FIRST,
     # then create base interfaces (no YANG augments), then attach ISIS/PIM
     # augments to interfaces (parents must already exist), finally PIM RP.
+    #
+    # NOTE 2026-05-04: augment templates (loopback*_augment_*, p2p_augment_*)
+    # use unverified YANG schema and currently fail with 400. They are
+    # intentionally OMITTED from step_order until we harvest their real schema
+    # via /api/v2/discover. After Phase 1 base + globals are confirmed working,
+    # add them back in. Workaround: ISIS adjacency still requires
+    # `ip router isis SDA-ISIS` on each interface — this will be a follow-up
+    # fix once schema is verified for IOS-XE 17.18.
     step_order = [
         ("system_mtu", "System MTU 9100"),
-        ("multicast_routing", "Enable IP multicast-routing distributed"),
+        ("multicast_routing", "Enable IP multicast-routing"),
         ("isis_process_border", "Border ISIS process"),
         ("isis_process_edge", "Edge ISIS process"),
         ("loopback0_border", "Border Loopback0 (base)"),
@@ -434,11 +442,6 @@ def deploy_phase1(form_data: dict) -> Dict[str, Any]:
         ("loopback60000_border", "Border Loopback60000 Anycast (base)"),
         ("p2p_link_border", "Border P2P link (base)"),
         ("p2p_link_edge", "Edge P2P link (base)"),
-        ("loopback0_augment_border", "Border Loopback0 ISIS+PIM augment"),
-        ("loopback0_augment_edge", "Edge Loopback0 ISIS+PIM augment"),
-        ("loopback60000_augment_border", "Border Loopback60000 ISIS+PIM augment"),
-        ("p2p_augment_border", "Border P2P ISIS+PIM+BFD augment"),
-        ("p2p_augment_edge", "Edge P2P ISIS+PIM+BFD augment"),
         ("pim_rp", "PIM RP config"),
     ]
 
