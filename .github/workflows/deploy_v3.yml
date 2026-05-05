@@ -1,0 +1,109 @@
+name: SDA Deploy v3 (CLI/Netmiko)
+
+# Auto-deploys sda_relay_server_v3.py on push to main when v3 files change.
+# Requires a self-hosted runner labelled [self-hosted, sda-relay] on the VM.
+# Manual trigger also available via Actions tab → Run workflow.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sda_relay_server_v3.py'
+      - 'sda_cli_templates.py'
+      - 'sda_fabric_config.yaml'
+      - 'requirements.txt'
+      - 'scripts/deploy_v3.sh'
+      - '.github/workflows/deploy_v3.yml'
+  workflow_dispatch:
+    inputs:
+      run_curl_test:
+        description: 'After deploy, curl /api/v3/precheck and /api/v3/deploy/phase1-underlay'
+        required: false
+        default: 'precheck-only'
+        type: choice
+        options:
+          - 'precheck-only'
+          - 'precheck-and-phase1'
+          - 'no-test'
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, sda-relay]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync repo to /opt/sda-relay and (re)start v3 relay
+        id: deploy
+        run: |
+          set -e
+          rsync -a --delete \
+            --exclude='.git' --exclude='.github' --exclude='backups' \
+            --exclude='*.log' --exclude='venv' \
+            "$GITHUB_WORKSPACE/" /opt/sda-relay/
+          chmod +x /opt/sda-relay/scripts/*.sh
+          bash /opt/sda-relay/scripts/deploy_v3.sh 2>&1 | tee /tmp/deploy_v3.log
+          echo "---"
+          echo "HEALTH:"
+          curl -sS http://localhost:5000/health || true
+
+      - name: Optional curl tests
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_curl_test != 'no-test' }}
+        run: |
+          set +e
+          echo "==> precheck"
+          curl -sS -X POST http://localhost:5000/api/v3/precheck | tee /tmp/precheck.json
+          echo
+          if [ "${{ github.event.inputs.run_curl_test }}" = "precheck-and-phase1" ]; then
+            echo "==> deploy/phase1-underlay"
+            curl -sS -X POST http://localhost:5000/api/v3/deploy/phase1-underlay \
+                 -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase1.json
+            echo
+            echo "==> verify/phase1-underlay"
+            curl -sS -X POST http://localhost:5000/api/v3/verify/phase1-underlay | tee /tmp/verify1.json
+          fi
+
+      - name: Update LATEST_V3_RESULT.md
+        if: always()
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          {
+            echo "# Latest SDA v3 Deploy Result"
+            echo
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "- Trigger: ${{ github.event_name }}"
+            echo
+            echo "## /health"
+            echo '```json'
+            curl -sS http://localhost:5000/health 2>/dev/null || echo "(unreachable)"
+            echo
+            echo '```'
+            if [ -f /tmp/precheck.json ]; then
+              echo "## /api/v3/precheck"
+              echo '```json'
+              cat /tmp/precheck.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/phase1.json ]; then
+              echo "## /api/v3/deploy/phase1-underlay"
+              echo '```json'
+              cat /tmp/phase1.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/verify1.json ]; then
+              echo "## /api/v3/verify/phase1-underlay"
+              echo '```json'
+              cat /tmp/verify1.json
+              echo
+              echo '```'
+            fi
+          } > LATEST_V3_RESULT.md
+          git config user.email "actions@github.com"
+          git config user.name "sda-runner-v3"
+          git add LATEST_V3_RESULT.md
+          git commit -m "ci: v3 result for ${{ github.sha }} [skip ci]" || echo "no changes"
+          git push origin main || echo "push failed (non-fatal)"
