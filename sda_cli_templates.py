@@ -133,8 +133,6 @@ def phase2_lisp(fabric: Dict[str, Any], target: str) -> List[Block]:
             f" site {fab.get('site_name','site_uci')}",
             f"  authentication-key {fab.get('site_auth_key','CiscoSDA123')}",
             "  description SDA fabric site",
-            "  eid-record-provider instance-id 4099 0.0.0.0/0 accept-more-specifics",
-            "  eid-record-provider instance-id 4100 0.0.0.0/0 accept-more-specifics",
             "  exit-site",
             " exit-router-lisp",
         ]))
@@ -320,7 +318,7 @@ VERIFY_CMDS = {
         ("show ip interface brief Loopback0", ["up"]),
     ],
     "phase2-lisp": [
-        ("show lisp site",               ["site_uci"]),
+        ("show lisp instance-id 4099 ipv4 server", ["site"]),
         ("show lisp session",            ["up"]),
     ],
     "phase3-overlay": [
