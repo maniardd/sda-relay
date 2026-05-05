@@ -10,24 +10,17 @@ permissions:
 on:
   push:
     branches: [main]
-    paths:
-      - 'sda_relay_server_v3.py'
-      - 'sda_cli_templates.py'
-      - 'sda_fabric_config.yaml'
-      - 'requirements.txt'
-      - 'scripts/deploy_v3.sh'
-      - '.github/workflows/deploy_v3.yml'
-      - 'RUN_NEXT.txt'
   workflow_dispatch:
     inputs:
       run_curl_test:
-        description: 'After deploy, curl /api/v3/precheck and /api/v3/deploy/phase1-underlay'
+        description: 'Action to run after deploy'
         required: false
         default: 'precheck-only'
         type: choice
         options:
           - 'precheck-only'
           - 'precheck-and-phase1'
+          - 'phase-all'
           - 'no-test'
 
 jobs:
@@ -97,6 +90,26 @@ jobs:
             phase4)
               curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase4-access \
                    -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase4.json
+              ;;
+            phase-all)
+              echo "==> deploy/phase1-underlay"
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase1-underlay -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase1.json ; echo
+              sleep 3
+              echo "==> verify/phase1-underlay"
+              curl -sS --max-time 120 -X POST http://localhost:5000/api/v3/verify/phase1-underlay | tee /tmp/verify1.json ; echo
+              echo "==> deploy/phase2-lisp"
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase2-lisp -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase2.json ; echo
+              sleep 3
+              echo "==> verify/phase2-lisp"
+              curl -sS --max-time 120 -X POST http://localhost:5000/api/v3/verify/phase2-lisp | tee /tmp/verify2.json ; echo
+              echo "==> deploy/phase3-overlay"
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase3-overlay -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase3.json ; echo
+              sleep 3
+              echo "==> deploy/phase4-access"
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase4-access -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase4.json ; echo
+              echo "==> show edge running-config (LISP+SVI sections)"
+              curl -sS "http://localhost:5000/api/v3/show?target=edge&cmd=show+run+%7C+sec+router+lisp" | tee /tmp/show_lisp_edge.json ; echo
+              curl -sS "http://localhost:5000/api/v3/show?target=border&cmd=show+run+%7C+sec+router+lisp" | tee /tmp/show_lisp_border.json ; echo
               ;;
             show-border-isis)
               curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=border&cmd=show+run+%7C+sec+router+isis" | tee /tmp/show.json
@@ -178,6 +191,20 @@ jobs:
               echo "## /api/v3/show"
               echo '```json'
               cat /tmp/show.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/show_lisp_border.json ]; then
+              echo "## show run | sec router lisp (BORDER)"
+              echo '```json'
+              cat /tmp/show_lisp_border.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/show_lisp_edge.json ]; then
+              echo "## show run | sec router lisp (EDGE)"
+              echo '```json'
+              cat /tmp/show_lisp_edge.json
               echo
               echo '```'
             fi

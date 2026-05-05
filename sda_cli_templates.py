@@ -37,9 +37,7 @@ def phase1_underlay(fabric: Dict[str, Any], target: str) -> List[Block]:
 
     blocks: List[Block] = []
 
-    blocks.append(("hostname", [
-        f"hostname {dev['hostname']}",
-    ]))
+    # NOTE: hostname change is appended LAST so prior blocks finish before prompt mutates.
 
     blocks.append(("system_mtu", [
         f"system mtu {fabric['fabric'].get('system_mtu', 9100)}",
@@ -57,7 +55,6 @@ def phase1_underlay(fabric: Dict[str, Any], target: str) -> List[Block]:
         f" ip address {dev['loopback0_ip']} {dev['loopback0_mask']}",
         " ip pim sparse-mode",
         f" ip router isis {isis['area_tag']}",
-        " isis network point-to-point",
         " no shutdown",
     ]))
 
@@ -82,7 +79,6 @@ def phase1_underlay(fabric: Dict[str, Any], target: str) -> List[Block]:
         f" ip router isis {isis['area_tag']}",
         " isis network point-to-point",
         f" bfd interval {link.get('bfd_interval',100)} min_rx {link.get('bfd_min_rx',100)} multiplier {link.get('bfd_multiplier',3)}",
-        " mtu 9100",
         " no shutdown",
     ]))
 
@@ -100,6 +96,11 @@ def phase1_underlay(fabric: Dict[str, Any], target: str) -> List[Block]:
     blocks.append(("pim_rp", [
         f"ip pim rp-address {mc['rp_address']}",
         "ip pim ssm default" if mc.get("ssm_default") else "",
+    ]))
+
+    # Apply hostname LAST (changes the prompt; safer to do after other blocks)
+    blocks.append(("hostname", [
+        f"hostname {dev['hostname']}",
     ]))
 
     return blocks
