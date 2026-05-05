@@ -91,6 +91,14 @@ jobs:
               curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase4-access \
                    -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase4.json
               ;;
+            datapath)
+              echo "==> deploy/phase4-access (re-push to apply DHCP-on-border move)"
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase4-access \
+                   -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase4.json ; echo
+              sleep 5
+              echo "==> datapath-test"
+              curl -sS --max-time 240 -X POST http://localhost:5000/api/v3/datapath-test | tee /tmp/datapath.json ; echo
+              ;;
             phase-all)
               echo "==> deploy/phase1-underlay"
               curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase1-underlay -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase1.json ; echo
@@ -205,6 +213,13 @@ jobs:
               echo "## show run | sec router lisp (EDGE)"
               echo '```json'
               cat /tmp/show_lisp_edge.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/datapath.json ]; then
+              echo "## /api/v3/datapath-test"
+              echo '```json'
+              cat /tmp/datapath.json
               echo
               echo '```'
             fi

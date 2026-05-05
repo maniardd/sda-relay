@@ -224,12 +224,41 @@ def phase3_vrf_overlay(fabric: Dict[str, Any], target: str) -> List[Block]:
 
 # ─────────────────────────────────────────────────────────────────────
 # PHASE 4 — Access VLANs / Anycast SVIs / L2 VNI / dynamic-EID  (EDGE)
+#           DHCP server pools live on BORDER (real SDA pattern), edge
+#           SVIs use ip helper-address pointing at border Loopback0.
 # ─────────────────────────────────────────────────────────────────────
 def phase4_access(fabric: Dict[str, Any], target: str) -> List[Block]:
-    if target != "edge":
-        return []
     blocks: List[Block] = []
+    border = fabric["devices"]["border"]
+    border_lo0 = border["loopback0_ip"]
 
+    # ── BORDER: DHCP server pools per VRF ─────────────────────────────
+    if target == "border":
+        # DHCP server needs to be reachable inside each VRF; we put pools
+        # in the VRF and rely on the helper-address from edge to reach us
+        # via the LISP/VXLAN fabric (border Loopback0 = 10.255.255.1).
+        for v in fabric.get("access_vlans", []):
+            if not v.get("dhcp_pool"):
+                continue
+            p = v["dhcp_pool"]
+            blocks.append((f"dhcp_pool_border_{v['vlan_id']}", [
+                f"ip dhcp excluded-address vrf {v['vrf']} {p['excluded_start']} {p['excluded_end']}",
+                f"no ip dhcp pool {p['pool_name']}",         # idempotent: clear stale pool first
+                f"ip dhcp pool {p['pool_name']}",
+                f" vrf {v['vrf']}",
+                f" network {p['network']} {p['network_mask']}",
+                f" default-router {p['default_router']}",
+                f" dns-server {p['dns_server']}",
+                f" lease {p.get('lease_days',1)} {p.get('lease_hours',0)} 0",
+            ]))
+        # Service that lets the DHCP process serve relayed requests across VRFs
+        blocks.append(("dhcp_service", [
+            "ip dhcp relay information trust-all",
+            "ip dhcp snooping",     # harmless; useful later
+        ]))
+        return blocks
+
+    # ── EDGE: VLANs, anycast SVIs (with helper-address), IPDT, L2 VNI ─
     for v in fabric.get("access_vlans", []):
         blocks.append((f"vlan_{v['vlan_id']}", [
             f"vlan {v['vlan_id']}",
@@ -237,7 +266,10 @@ def phase4_access(fabric: Dict[str, Any], target: str) -> List[Block]:
         ]))
 
         svi = v["svi"]
-        blocks.append((f"svi_{v['vlan_id']}", [
+        # Edge anycast SVI: helper-address points at border Loopback0.
+        # Because the SVI is in the VRF, the helper resolves through the
+        # fabric (LISP map-cache → VXLAN encap → border).
+        svi_lines = [
             f"interface Vlan{v['vlan_id']}",
             f" description Anycast SVI {v['name']}",
             f" vrf forwarding {v['vrf']}",
@@ -245,10 +277,12 @@ def phase4_access(fabric: Dict[str, Any], target: str) -> List[Block]:
             f" mac-address {svi['mac_address']}",
             " no ip redirects",
             " ip route-cache same-interface",
+            f" ip helper-address vrf {v['vrf']} {border_lo0}",
             " no shutdown",
-        ]))
+        ]
+        blocks.append((f"svi_{v['vlan_id']}", svi_lines))
 
-        # IPDT policy attached at VLAN-config level (NOT on SVI — invalid in 17.x)
+        # IPDT policy attached at VLAN-config level
         blocks.append((f"ipdt_{v['vlan_id']}", [
             f"device-tracking policy IPDT_POLICY_{v['vlan_id']}",
             " tracking enable",
@@ -276,18 +310,17 @@ def phase4_access(fabric: Dict[str, Any], target: str) -> List[Block]:
             " exit-router-lisp",
         ]))
 
-        # DHCP local pool on Edge (POC simplification)
-        if v.get("dhcp_pool"):
-            p = v["dhcp_pool"]
-            blocks.append((f"dhcp_pool_{v['vlan_id']}", [
-                f"ip dhcp excluded-address vrf {v['vrf']} {p['excluded_start']} {p['excluded_end']}",
-                f"ip dhcp pool {p['pool_name']}",
-                f" vrf {v['vrf']}",
-                f" network {p['network']} {p['network_mask']}",
-                f" default-router {p['default_router']}",
-                f" dns-server {p['dns_server']}",
-                f" lease {p.get('lease_days',1)} {p.get('lease_hours',0)} 0",
-            ]))
+    # Endpoint test port — Gi1/0/3 in VLAN 100 (CORP_VN), portfast for fast DHCP
+    blocks.append(("endpoint_test_port", [
+        "interface GigabitEthernet1/0/3",
+        " description SDA Endpoint Test Port (CORP_VN VLAN 100)",
+        " switchport mode access",
+        " switchport access vlan 100",
+        " spanning-tree portfast",
+        " spanning-tree bpduguard enable",
+        " no shutdown",
+    ]))
+
     return blocks
 
 

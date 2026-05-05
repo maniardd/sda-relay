@@ -278,6 +278,60 @@ def status():
     return jsonify(STATE)
 
 
+@app.route("/api/v3/datapath-test", methods=["POST", "GET"])
+def datapath_test():
+    """Run a curated set of show commands on both switches that prove the
+    SDA data plane is alive: LISP database/map-cache, NVE peers, DHCP bindings,
+    ARP for endpoints, route table per VRF, ISIS adjacencies, BFD sessions.
+    Returns one big JSON the runner commits back so we can read it from CI.
+    """
+    cmds_per_target = {
+        "border": [
+            "show isis neighbors",
+            "show ip route vrf CORP_VN",
+            "show ip route vrf GUEST_VN",
+            "show lisp instance-id 4099 ipv4 server",
+            "show lisp instance-id 4099 ipv4 database",
+            "show lisp instance-id 4099 ipv4 map-cache",
+            "show lisp session",
+            "show nve peers",
+            "show nve interface",
+            "show ip dhcp pool",
+            "show ip dhcp binding",
+            "show running-config | section ip dhcp pool",
+        ],
+        "edge": [
+            "show isis neighbors",
+            "show ip route vrf CORP_VN",
+            "show lisp instance-id 4099 ipv4 database",
+            "show lisp instance-id 4099 ipv4 map-cache",
+            "show lisp instance-id 8100 ethernet database",
+            "show lisp session",
+            "show nve peers",
+            "show interfaces Vlan100",
+            "show ip arp vrf CORP_VN",
+            "show device-tracking database",
+            "show mac address-table vlan 100",
+            "show running-config interface GigabitEthernet1/0/3",
+        ],
+    }
+    out = {"timestamp": datetime.utcnow().isoformat()+"Z", "targets": {}}
+    for tgt, cmds in cmds_per_target.items():
+        try:
+            conn = _connect(tgt)
+            try: conn.enable()
+            except Exception: pass
+            results = []
+            for c in cmds:
+                txt = _show(conn, c)
+                results.append({"cmd": c, "output": txt})
+            conn.disconnect()
+            out["targets"][tgt] = {"results": results}
+        except Exception as e:
+            out["targets"][tgt] = {"error": str(e)}
+    return jsonify(out)
+
+
 if __name__ == "__main__":
     port = int(os.getenv("RELAY_PORT", 5000))
     app.run(host="0.0.0.0", port=port)
