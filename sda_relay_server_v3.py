@@ -77,7 +77,8 @@ STATE: Dict[str, Any] = {"status":"idle", "phases":{}, "last_run":None}
 def _connect(target: str):
     cfg = DEVS[target]
     if not cfg["password"]:
-        raise RuntimeError(f"No password for {target} (set {target.upper()}_PASS in .env)")
+        envvar = "C9500_PASS" if target == "border" else "C9300_PASS"
+        raise RuntimeError(f"No password for {target} (set {envvar} in /opt/sda-relay/.env)")
     return ConnectHandler(**cfg)
 
 

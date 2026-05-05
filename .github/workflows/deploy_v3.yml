@@ -4,6 +4,9 @@ name: SDA Deploy v3 (CLI/Netmiko)
 # Requires a self-hosted runner labelled [self-hosted, sda-relay] on the VM.
 # Manual trigger also available via Actions tab → Run workflow.
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [main]
