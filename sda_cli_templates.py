@@ -113,57 +113,81 @@ def phase2_lisp(fabric: Dict[str, Any], target: str) -> List[Block]:
     dev = fabric["devices"][target]
     lisp = fabric["lisp"]
     fab = fabric["fabric"]
+    ms_ip = lisp["map_servers"][0]["ip"]
+    ms_key = lisp["map_servers"][0]["key"]
     blocks: List[Block] = []
 
-    # router lisp skeleton + locator-set
-    rlisp = ["router lisp"]
-    rlisp.append(f" locator-set {lisp.get('locator_set_name','rloc_fabric')}")
-    rlisp.append(f"  IPv4-interface Loopback0 priority 10 weight 10")
-    rlisp.append("  exit-locator-set")
+    # Block 1: locator-set (separate so router-lisp lock is released between sub-blocks)
+    blocks.append(("lisp_locator_set", [
+        "router lisp",
+        f" locator-set {lisp.get('locator_set_name','rloc_fabric')}",
+        "  IPv4-interface Loopback0 priority 10 weight 10",
+        "  exit-locator-set",
+        " exit-router-lisp",
+    ]))
 
-    # Service IPv4 + ethernet (control plane)
-    rlisp += [
-        " service ipv4",
-        "  encapsulation vxlan",
-        "  itr map-resolver " + lisp["map_servers"][0]["ip"],
-        "  etr map-server " + lisp["map_servers"][0]["ip"] + " key " + lisp["map_servers"][0]["key"],
-        "  etr",
-        "  sgt",
-        "  no map-cache away-eids send-map-request" if lisp.get("border_roles",{}).get("no_map_cache_away_eids") and target=="border" else "  exit-service-ipv4",
-    ]
-    if not (lisp.get("border_roles",{}).get("no_map_cache_away_eids") and target=="border"):
-        # already exited
-        pass
-    else:
-        rlisp.append("  exit-service-ipv4")
-
-    rlisp += [
-        " service ethernet",
-        "  itr map-resolver " + lisp["map_servers"][0]["ip"],
-        "  etr map-server " + lisp["map_servers"][0]["ip"] + " key " + lisp["map_servers"][0]["key"],
-        "  etr",
-        "  exit-service-ethernet",
-    ]
-
-    # Border roles: map-server + map-resolver + proxy
+    # Block 2: site (border only — MS holds the site DB)
     if target == "border":
-        rlisp += [
-            " site " + fab.get("site_name", "site_uci"),
+        blocks.append(("lisp_site", [
+            "router lisp",
+            f" site {fab.get('site_name','site_uci')}",
             f"  authentication-key {fab.get('site_auth_key','CiscoSDA123')}",
             "  description SDA fabric site",
+            "  eid-record-provider instance-id 4099 0.0.0.0/0 accept-more-specifics",
+            "  eid-record-provider instance-id 4100 0.0.0.0/0 accept-more-specifics",
             "  exit-site",
-            " ipv4 map-server",
-            " ipv4 map-resolver",
-            " ipv4 proxy-etr",
-            " ipv4 proxy-itr " + dev["loopback0_ip"],
+            " exit-router-lisp",
+        ]))
+
+    # Block 3: service ipv4 — IOS-XE 17.x SDA: MS/MR/proxy go INSIDE service block
+    svc_ipv4 = [
+        "router lisp",
+        " service ipv4",
+        "  encapsulation vxlan",
+    ]
+    if target == "border":
+        svc_ipv4 += [
+            "  map-server",
+            "  map-resolver",
+            "  proxy-etr",
+            f"  proxy-itr {dev['loopback0_ip']}",
+            "  no map-cache away-eids send-map-request",
         ]
     else:
-        # Edge: use border as PETR (edges are ITRs only, NOT proxy-itr)
-        for petr in lisp.get("edge_roles", {}).get("use_petr", []):
-            rlisp.append(f" ipv4 use-petr {petr}")
+        svc_ipv4 += [
+            f"  itr map-resolver {ms_ip}",
+            f"  etr map-server {ms_ip} key {ms_key}",
+            "  etr",
+            f"  use-petr {ms_ip}",
+        ]
+    svc_ipv4 += [
+        "  exit-service-ipv4",
+        " exit-router-lisp",
+    ]
+    blocks.append(("lisp_service_ipv4", svc_ipv4))
 
-    rlisp.append(" exit-router-lisp")
-    blocks.append(("router_lisp_base", rlisp))
+    # Block 4: service ethernet (L2 VNI control plane)
+    svc_eth = [
+        "router lisp",
+        " service ethernet",
+    ]
+    if target == "border":
+        svc_eth += [
+            "  map-server",
+            "  map-resolver",
+        ]
+    else:
+        svc_eth += [
+            f"  itr map-resolver {ms_ip}",
+            f"  etr map-server {ms_ip} key {ms_key}",
+            "  etr",
+        ]
+    svc_eth += [
+        "  exit-service-ethernet",
+        " exit-router-lisp",
+    ]
+    blocks.append(("lisp_service_ethernet", svc_eth))
+
     return blocks
 
 
@@ -226,12 +250,12 @@ def phase4_access(fabric: Dict[str, Any], target: str) -> List[Block]:
             " no shutdown",
         ]))
 
-        # IPDT policy on SVI (device-tracking required for LISP dynamic-EID detection)
+        # IPDT policy attached at VLAN-config level (NOT on SVI — invalid in 17.x)
         blocks.append((f"ipdt_{v['vlan_id']}", [
             f"device-tracking policy IPDT_POLICY_{v['vlan_id']}",
             " tracking enable",
             " security-level glean",
-            f"interface Vlan{v['vlan_id']}",
+            f"vlan configuration {v['vlan_id']}",
             f" device-tracking attach-policy IPDT_POLICY_{v['vlan_id']}",
         ]))
 
@@ -296,16 +320,16 @@ VERIFY_CMDS = {
         ("show ip interface brief Loopback0", ["up"]),
     ],
     "phase2-lisp": [
-        ("show lisp instance-id 4097 ipv4 server", ["site_uci"]),
-        ("show lisp session",            ["Up"]),
+        ("show lisp site",               ["site_uci"]),
+        ("show lisp session",            ["up"]),
     ],
     "phase3-overlay": [
-        ("show vrf",                     ["CORP_VN", "GUEST_VN"]),
+        ("show vrf",                     ["corp_vn"]),
         ("show lisp instance-id 4099 ipv4", ["instance"]),
     ],
     "phase4-access": [
-        ("show ip interface brief | inc Vlan", ["Vlan100", "Vlan200"]),
-        ("show ip dhcp pool",            ["CORP_DATA_POOL"]),
+        ("show ip interface brief | inc Vlan", ["vlan100", "vlan200"]),
+        ("show ip dhcp pool",            ["corp_data_pool"]),
         ("show device-tracking policy IPDT_POLICY_100", ["tracking enable"]),
     ],
 }
