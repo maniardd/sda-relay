@@ -155,7 +155,8 @@ access_vlans:
     dynamic_eid:
       name: "Corp_Data-IPV4"
       prefix: "10.30.100.0/24"
-    dhcp_pool:                         # Local DHCP pool on Edge switch
+    east_west_test_ip: "10.30.100.254"  # Border loopback inside CORP_VN — ping from edge endpoint to prove VXLAN/LISP
+    dhcp_pool:                         # DHCP pool now on BORDER (helper-address from edge SVI)
       pool_name: "CORP_DATA_POOL"
       network: "10.30.100.0"
       network_mask: "255.255.255.0"
@@ -179,6 +180,7 @@ access_vlans:
     dynamic_eid:
       name: "Guest_WiFi-IPV4"
       prefix: "10.30.200.0/24"
+    east_west_test_ip: "10.30.200.254"  # Border loopback inside GUEST_VN
     dhcp_pool:
       pool_name: "GUEST_WIFI_POOL"
       network: "10.30.200.0"

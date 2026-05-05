@@ -1,0 +1,261 @@
+═══════════════════════════════════════════════════════════════════════════════
+  SDA FABRIC — TESTING & VALIDATION GUIDE
+  Lab: SJC23-BORDER-01 (C9500 17.18.02) + SJC23-EDGE-01 (C9300-24P 17.18.03)
+═══════════════════════════════════════════════════════════════════════════════
+
+TOPOLOGY
+────────
+                       ┌──────────────────────┐
+                       │  SJC23-BORDER-01     │
+                       │  C9500 IOS-XE 17.18  │
+                       │  Lo0 = 10.255.255.1  │  ← MS/MR/pETR/pITR + DHCP server
+                       │  AnycastRP=10.255.255.100
+                       └──────────┬───────────┘
+                                  │ Twe1/0/2 ─ 10.255.0.0/31 ─ Gi1/0/2
+                                  │ ISIS L2  ─ BFD on
+                       ┌──────────┴───────────┐
+                       │  SJC23-EDGE-01       │
+                       │  C9300-24P 17.18.03  │
+                       │  Lo0 = 10.255.255.2  │  ← ITR/ETR + dynamic-EID
+                       │  Gi1/0/3 = test port │
+                       └──────────────────────┘
+                                  │
+                                  └─── Laptop (DHCP) → 10.30.100.x
+
+VRFs / VNs
+──────────
+  CORP_VN   instance-id 4099   VLAN 100   10.30.100.0/24   GW 10.30.100.1
+            L2 VNI 8100        DHCP pool CORP_DATA_POOL on Border
+            East-West target: 10.30.100.254  (Loopback4099 on Border in CORP_VN)
+  GUEST_VN  instance-id 4100   VLAN 200   10.30.200.0/24   GW 10.30.200.1
+            L2 VNI 8200        DHCP pool GUEST_WIFI_POOL on Border
+            East-West target: 10.30.200.254  (Loopback4100 on Border in GUEST_VN)
+
+CREDENTIALS (lab only)
+──────────────────────
+  Border:  ssh admin@10.40.0.129   pw: C1scolab123!
+  Edge:    ssh admin@10.40.2.150   pw: C1scolab123!
+
+═══════════════════════════════════════════════════════════════════════════════
+  TEST CASE 1 — ENDPOINT GETS DHCP IP (proves DHCP relay over fabric)
+═══════════════════════════════════════════════════════════════════════════════
+Setup:
+  1. Plug laptop NIC → Edge switch port Gi1/0/3
+  2. Laptop set to DHCP (default Windows / macOS / Linux)
+  3. Wait 30 seconds
+
+Expected on laptop (Windows: `ipconfig /all`):
+  IPv4 Address ........ 10.30.100.11 (or .12, .13)
+  Subnet Mask ......... 255.255.255.0
+  Default Gateway ..... 10.30.100.1
+  DHCP Server ......... 10.255.255.1
+  DNS Servers ......... 8.8.8.8
+
+Verification on Border:
+  show ip dhcp binding
+  show ip dhcp pool CORP_DATA_POOL
+
+Verification on Edge:
+  show interfaces Vlan100              ← line protocol must be UP
+  show interfaces Gi1/0/3 status       ← connected, vlan 100
+  show device-tracking database        ← laptop MAC visible
+  show mac address-table vlan 100      ← laptop MAC visible
+
+PASS: Laptop has 10.30.100.x address.
+FAIL: 169.254.x.x → see "Troubleshooting DHCP" section.
+
+═══════════════════════════════════════════════════════════════════════════════
+  TEST CASE 2 — PING THE GATEWAY (proves local SVI + ARP)
+═══════════════════════════════════════════════════════════════════════════════
+From laptop:
+  ping 10.30.100.1
+
+Expected: 4 replies, <5 ms.
+Verifies: SVI up, IPDT working, anycast MAC responding.
+
+═══════════════════════════════════════════════════════════════════════════════
+  TEST CASE 3 — EAST-WEST: PING ACROSS THE FABRIC (proves LISP + VXLAN)
+═══════════════════════════════════════════════════════════════════════════════
+This is THE test. Forces edge to do LISP map-request → border map-reply →
+edge VXLAN-encaps the packet → fabric link → border decaps → reply path.
+
+From laptop:
+  ping 10.30.100.254
+
+Expected: First 1-2 pings may drop (LISP cache miss → map-request), then replies.
+PASS: Replies received → SDA datapath PROVEN END-TO-END.
+
+Verification on Edge (after the ping):
+  show lisp instance-id 4099 ipv4 map-cache
+      → must show entry: 10.30.100.254/32  via Locator 10.255.255.1
+  show lisp instance-id 4099 ipv4 map-cache 10.30.100.254
+      → detailed view: state complete, encap vxlan
+  show platform software fed switch active ip route vrf CORP_VN
+  show ip cef vrf CORP_VN 10.30.100.254
+      → next-hop should resolve to LISP0 / locator 10.255.255.1
+
+Verification on Border:
+  show lisp instance-id 4099 ipv4 server
+      → site site_uci registered, EID 10.30.100.254/32 from 10.255.255.2
+  show lisp instance-id 4099 ipv4 database
+      → 10.30.100.254/32 locally configured
+  show ip arp vrf CORP_VN
+      → laptop's IP 10.30.100.x learned via LISP/VXLAN
+
+═══════════════════════════════════════════════════════════════════════════════
+  TEST CASE 4 — VXLAN ENCAPSULATION VISIBLE
+═══════════════════════════════════════════════════════════════════════════════
+While ping 10.30.100.254 is running on laptop:
+
+On Edge:
+  show platform software fed switch active vxlan tunnel
+  show platform hardware fed switch active fwd-asic resource tcam utilization
+  debug platform condition feature lisp dataplane controlplane both level info
+      (use sparingly — production-safe show-only is preferred)
+
+Quick check (no debug):
+  show interfaces Gi1/0/2 | inc rate
+      → packet rate should bump during ping (VXLAN-encapsulated traffic
+        leaves on the fabric link)
+
+═══════════════════════════════════════════════════════════════════════════════
+  TEST CASE 5 — ISIS UNDERLAY HEALTH
+═══════════════════════════════════════════════════════════════════════════════
+On both Border and Edge:
+  show isis neighbors
+      → Type L2, State UP, Holdtime > 0
+  show ip route isis
+      → /32 routes for both Loopback0s + Anycast RP
+  show bfd neighbors
+      → IPv4 session UP for fabric link peer
+  show ip pim rp mapping
+      → RP 10.255.255.100
+
+═══════════════════════════════════════════════════════════════════════════════
+  TEST CASE 6 — LISP CONTROL PLANE HEALTH
+═══════════════════════════════════════════════════════════════════════════════
+On Border (MS/MR):
+  show lisp session                          ← peer 10.255.255.2 should be Up
+  show lisp site                             ← site_uci, last register time recent
+  show lisp instance-id 4099 ipv4 server     ← EIDs registered from edge
+  show running-config | section router lisp
+
+On Edge (xTR):
+  show lisp session                          ← peer 10.255.255.1 should be Up
+  show lisp instance-id 4099 ipv4 database   ← dynamic-EID prefix listed
+  show lisp instance-id 8100 ethernet database
+  show lisp instance-id 4099 ipv4 statistics
+
+═══════════════════════════════════════════════════════════════════════════════
+  TEST CASE 7 — ONE-SHOT DATAPATH SUITE (via relay)
+═══════════════════════════════════════════════════════════════════════════════
+From your laptop / dev box:
+  curl -X POST https://underling-conclude-gluten.ngrok-free.dev/api/v3/datapath-test
+
+Returns JSON with all key show commands from both switches in one call.
+Same data is committed back to GitHub as LATEST_V3_RESULT.md whenever
+RUN_NEXT.txt = "datapath" and you push.
+
+═══════════════════════════════════════════════════════════════════════════════
+  TROUBLESHOOTING — DHCP fails (laptop gets 169.254.x.x)
+═══════════════════════════════════════════════════════════════════════════════
+Step 1 — confirm laptop is sending DISCOVER
+  Edge: debug ip dhcp server packet detail
+  (you should see DISCOVER from 0.0.0.0; remember to "undebug all" after)
+
+Step 2 — confirm helper-address present
+  Edge: show running-config interface Vlan100 | inc helper
+  Expected: "ip helper-address vrf CORP_VN 10.255.255.1"
+
+Step 3 — confirm edge can reach border in VRF
+  Edge: ping vrf CORP_VN 10.255.255.1 source Loopback0
+  → if this fails, LISP map-cache for 10.255.255.1 is missing.
+     Check:  show lisp instance-id 4099 ipv4 map-cache
+     Check:  show lisp session     (must be Up)
+
+Step 4 — confirm DHCP pool on border serves the VRF
+  Border: show ip dhcp pool CORP_DATA_POOL
+  Border: show running-config | section ip dhcp pool
+
+Step 5 — confirm border DHCP relay accepts cross-VRF
+  Border: show running-config | inc dhcp
+  Expected: "ip dhcp relay information trust-all"
+
+═══════════════════════════════════════════════════════════════════════════════
+  TROUBLESHOOTING — LISP session DOWN
+═══════════════════════════════════════════════════════════════════════════════
+On Border:
+  show lisp session     ← shows local sessions
+If peer 10.255.255.2 is "Down":
+  1. ping 10.255.255.2 source Loopback0  (must succeed; ISIS underlay)
+  2. show ip route 10.255.255.2          (must be /32 via ISIS)
+  3. show running-config | section router lisp
+     → confirm "site site_uci" exists with correct authentication-key
+  4. On Edge: show running-config | section router lisp
+     → confirm "etr map-server 10.255.255.1 key CiscoSDA123"
+     → key MUST match border's site authentication-key
+  5. clear lisp session on both sides; re-check after 30s
+
+═══════════════════════════════════════════════════════════════════════════════
+  TROUBLESHOOTING — Ping 10.30.100.254 fails
+═══════════════════════════════════════════════════════════════════════════════
+1. From Border: ping vrf CORP_VN 10.30.100.254 source Loopback4099
+   → must succeed (proves the loopback exists and VRF routing local)
+
+2. From Border: ping vrf CORP_VN 10.30.100.<laptop-ip>
+   → if fails, border has no LISP entry for laptop. Check:
+     show lisp instance-id 4099 ipv4 server
+     → laptop /32 should be registered from 10.255.255.2
+   If missing, on Edge: show device-tracking database
+     → laptop must be tracked first (IPDT triggers LISP register)
+
+3. From Edge: show lisp instance-id 4099 ipv4 map-cache 10.30.100.254
+   → if "no entry", LISP control-plane is broken (see Troubleshooting LISP)
+
+4. Verify VXLAN encap path: show ip cef vrf CORP_VN 10.30.100.254 detail
+   → must show Locator 10.255.255.1, encap vxlan
+
+═══════════════════════════════════════════════════════════════════════════════
+  USEFUL ONE-LINERS
+═══════════════════════════════════════════════════════════════════════════════
+# Health snapshot in one shot (copy-paste either switch)
+  show isis neighbors | show lisp session | show nve peers | show ip route isis | inc /32
+
+# Watch laptop DHCP lease appear
+  Border: show ip dhcp binding         (run repeatedly; row appears in <30s of plugin)
+
+# Force LISP cache refresh (after config change)
+  clear lisp instance-id 4099 ipv4 map-cache *
+  clear lisp session
+
+# Pull config diff after a deploy
+  Compare LATEST_V3_RESULT.md in git history (each deploy commits one)
+
+═══════════════════════════════════════════════════════════════════════════════
+  RELAY API — quick reference
+═══════════════════════════════════════════════════════════════════════════════
+Base URL: https://underling-conclude-gluten.ngrok-free.dev
+
+GET  /health
+POST /api/v3/precheck
+POST /api/v3/deploy/phase1-underlay
+POST /api/v3/deploy/phase2-lisp
+POST /api/v3/deploy/phase3-overlay
+POST /api/v3/deploy/phase4-access
+POST /api/v3/verify/phase1-underlay      (also phase2/phase3)
+POST /api/v3/deploy/all                  (runs precheck + all phases)
+POST /api/v3/datapath-test               (full east-west health JSON)
+GET  /api/v3/show?target=edge&cmd=show%20ip%20route%20vrf%20CORP_VN
+
+═══════════════════════════════════════════════════════════════════════════════
+  GITHUB AUTO-DEPLOY — quick reference
+═══════════════════════════════════════════════════════════════════════════════
+Edit RUN_NEXT.txt with one of:
+   precheck-only | precheck-and-phase1 | phase1 | phase2 | phase3 | phase4
+   phase-all     | datapath           | show-border-isis | show-edge-isis
+
+git add . && git commit -m "<msg>" && git push
+→ self-hosted runner picks up, runs against the live switches,
+  commits result back as LATEST_V3_RESULT.md
+
+═══════════════════════════════════════════════════════════════════════════════

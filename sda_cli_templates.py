@@ -256,6 +256,31 @@ def phase4_access(fabric: Dict[str, Any], target: str) -> List[Block]:
             "ip dhcp relay information trust-all",
             "ip dhcp snooping",     # harmless; useful later
         ]))
+        # ── East-West test targets: per-VN loopback inside the VRF.
+        # Edge endpoints can ping these to prove LISP map-cache + VXLAN
+        # encap across the fabric link (no second laptop needed).
+        for v in fabric.get("access_vlans", []):
+            test_ip = v.get("east_west_test_ip")
+            if not test_ip:
+                continue
+            iid = v["l3_instance_id"]
+            blocks.append((f"ew_test_loopback_{iid}", [
+                f"interface Loopback{iid}",
+                f" description East-West test target {v['vrf']}",
+                f" vrf forwarding {v['vrf']}",
+                f" ip address {test_ip} 255.255.255.255",
+                " no shutdown",
+            ]))
+            # Register this /32 as a static EID so LISP advertises it
+            blocks.append((f"ew_test_lisp_{iid}", [
+                "router lisp",
+                f" instance-id {iid}",
+                "  service ipv4",
+                f"   database-mapping {test_ip}/32 locator-set " + fabric["lisp"].get("locator_set_name","rloc_fabric"),
+                "   exit-service-ipv4",
+                "  exit-instance-id",
+                " exit-router-lisp",
+            ]))
         return blocks
 
     # ── EDGE: VLANs, anycast SVIs (with helper-address), IPDT, L2 VNI ─
