@@ -212,7 +212,13 @@ def verify_phase(phase):
     cmds = T.VERIFY_CMDS.get(phase, [])
     if not cmds:
         return jsonify({"phase":phase,"status":"no-verify-defined"}), 200
-    out = {"phase": phase, "targets": {}}
+    # Allow caller to ask for a settle delay (default 25s for control-plane convergence)
+    form = request.get_json(silent=True) or {}
+    settle = int(form.get("settle_seconds", 25))
+    if settle > 0:
+        log.info(f"verify({phase}) sleeping {settle}s for convergence...")
+        time.sleep(settle)
+    out = {"phase": phase, "settle_seconds": settle, "targets": {}}
     overall = True
     for tgt in ("border", "edge"):
         try:
@@ -222,7 +228,8 @@ def verify_phase(phase):
             checks = []
             for cmd, expect in cmds:
                 txt = _show(conn, cmd)
-                ok = all(kw in txt for kw in expect) if expect else bool(txt.strip())
+                txt_l = txt.lower()
+                ok = all(kw.lower() in txt_l for kw in expect) if expect else bool(txt.strip())
                 checks.append({"cmd":cmd,"expect":expect,"pass":ok,
                                "output":txt[-800:]})
                 if not ok: overall = False

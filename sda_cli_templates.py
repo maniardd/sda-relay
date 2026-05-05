@@ -158,10 +158,9 @@ def phase2_lisp(fabric: Dict[str, Any], target: str) -> List[Block]:
             " ipv4 proxy-itr " + dev["loopback0_ip"],
         ]
     else:
-        # Edge: use border as PETR
+        # Edge: use border as PETR (edges are ITRs only, NOT proxy-itr)
         for petr in lisp.get("edge_roles", {}).get("use_petr", []):
             rlisp.append(f" ipv4 use-petr {petr}")
-        rlisp.append(f" ipv4 proxy-itr {dev['loopback0_ip']}")
 
     rlisp.append(" exit-router-lisp")
     blocks.append(("router_lisp_base", rlisp))
@@ -222,7 +221,6 @@ def phase4_access(fabric: Dict[str, Any], target: str) -> List[Block]:
             f" vrf forwarding {v['vrf']}",
             f" ip address {svi['ip']} {svi['mask']}",
             f" mac-address {svi['mac_address']}",
-            " ip helper-address " + " ".join(svi.get("dhcp_helpers", [])) if svi.get("dhcp_helpers") else " no shutdown",
             " no ip redirects",
             " ip route-cache same-interface",
             " no shutdown",
