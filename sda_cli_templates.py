@@ -1,5 +1,6 @@
 """
 SDA CLI Templates — generates IOS-XE CLI blocks per phase from sda_fabric_config.yaml.
+Build tag: v3.0.1-ci-trigger-2
 
 Why CLI not YANG: Cisco's own Catalyst Center pushes raw CLI templates for SDA
 features (LISP fabric mode, L2/L3 VNI, anycast SVI, IPDT, dynamic-EID) because the
