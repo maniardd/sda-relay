@@ -44,6 +44,7 @@ jobs:
           set -e
           rsync -a --delete \
             --exclude='.git' --exclude='.github' --exclude='backups' \
+            --exclude='.env' --exclude='ngrok.log' \
             --exclude='*.log' --exclude='venv' \
             "$GITHUB_WORKSPACE/" /opt/sda-relay/
           chmod +x /opt/sda-relay/scripts/*.sh
