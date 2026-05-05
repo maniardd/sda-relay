@@ -17,6 +17,7 @@ on:
       - 'requirements.txt'
       - 'scripts/deploy_v3.sh'
       - '.github/workflows/deploy_v3.yml'
+      - 'RUN_NEXT.txt'
   workflow_dispatch:
     inputs:
       run_curl_test:
@@ -52,20 +53,60 @@ jobs:
           curl -sS http://localhost:5000/health || true
 
       - name: Optional curl tests
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_curl_test != 'no-test' }}
+        if: always()
         run: |
           set +e
-          echo "==> precheck"
-          curl -sS -X POST http://localhost:5000/api/v3/precheck | tee /tmp/precheck.json
-          echo
-          if [ "${{ github.event.inputs.run_curl_test }}" = "precheck-and-phase1" ]; then
-            echo "==> deploy/phase1-underlay"
-            curl -sS -X POST http://localhost:5000/api/v3/deploy/phase1-underlay \
-                 -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase1.json
-            echo
-            echo "==> verify/phase1-underlay"
-            curl -sS -X POST http://localhost:5000/api/v3/verify/phase1-underlay | tee /tmp/verify1.json
+          # Determine action: workflow_dispatch input wins; else read RUN_NEXT.txt; else default precheck-only
+          ACTION=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ACTION="${{ github.event.inputs.run_curl_test }}"
+          elif [ -f RUN_NEXT.txt ]; then
+            ACTION="$(tr -d '[:space:]' < RUN_NEXT.txt)"
+          else
+            ACTION="precheck-only"
           fi
+          echo "ACTION=$ACTION"
+          [ "$ACTION" = "no-test" ] && exit 0
+
+          echo "==> precheck"
+          curl -sS --max-time 60 -X POST http://localhost:5000/api/v3/precheck | tee /tmp/precheck.json
+          echo
+
+          case "$ACTION" in
+            phase1|precheck-and-phase1)
+              echo "==> deploy/phase1-underlay"
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase1-underlay \
+                   -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase1.json
+              echo
+              echo "==> verify/phase1-underlay"
+              curl -sS --max-time 120 -X POST http://localhost:5000/api/v3/verify/phase1-underlay | tee /tmp/verify1.json
+              ;;
+            phase2)
+              echo "==> deploy/phase2-lisp"
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase2-lisp \
+                   -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase2.json
+              echo
+              echo "==> verify/phase2-lisp"
+              curl -sS --max-time 120 -X POST http://localhost:5000/api/v3/verify/phase2-lisp | tee /tmp/verify2.json
+              ;;
+            phase3)
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase3-overlay \
+                   -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase3.json
+              ;;
+            phase4)
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase4-access \
+                   -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase4.json
+              ;;
+            show-border-isis)
+              curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=border&cmd=show+run+%7C+sec+router+isis" | tee /tmp/show.json
+              ;;
+            show-edge-isis)
+              curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=edge&cmd=show+run+%7C+sec+router+isis" | tee /tmp/show.json
+              ;;
+            precheck-only|*)
+              ;;
+          esac
+          true
 
       - name: Update LATEST_V3_RESULT.md
         if: always()
@@ -101,6 +142,41 @@ jobs:
               echo "## /api/v3/verify/phase1-underlay"
               echo '```json'
               cat /tmp/verify1.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/phase2.json ]; then
+              echo "## /api/v3/deploy/phase2-lisp"
+              echo '```json'
+              cat /tmp/phase2.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/verify2.json ]; then
+              echo "## /api/v3/verify/phase2-lisp"
+              echo '```json'
+              cat /tmp/verify2.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/phase3.json ]; then
+              echo "## /api/v3/deploy/phase3-overlay"
+              echo '```json'
+              cat /tmp/phase3.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/phase4.json ]; then
+              echo "## /api/v3/deploy/phase4-access"
+              echo '```json'
+              cat /tmp/phase4.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/show.json ]; then
+              echo "## /api/v3/show"
+              echo '```json'
+              cat /tmp/show.json
               echo
               echo '```'
             fi
