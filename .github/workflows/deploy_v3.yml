@@ -103,6 +103,27 @@ jobs:
             list-flash)
               curl -sS --max-time 60 http://localhost:5000/api/v3/list-flash | tee /tmp/list_flash.json
               ;;
+            kill-relay)
+              echo "==> killing stale relay processes on VM"
+              sudo pkill -9 -f gunicorn || true
+              sudo pkill -9 -f sda_relay || true
+              sleep 2
+              echo "==> remaining relay processes (should be empty):"
+              ps aux | grep -E 'gunicorn|sda_relay' | grep -v grep | tee /tmp/kill_relay.txt || true
+              echo "==> restarting via deploy_v3.sh"
+              bash /opt/sda-relay/scripts/deploy_v3.sh 2>&1 | tail -40 | tee -a /tmp/kill_relay.txt
+              echo "==> health after restart:"
+              sleep 3
+              curl -sS http://localhost:5000/health | tee -a /tmp/kill_relay.txt
+              ;;
+            shell)
+              echo "==> arbitrary shell command from RUN_SHELL.txt"
+              if [ -f RUN_SHELL.txt ]; then
+                bash RUN_SHELL.txt 2>&1 | tee /tmp/shell.txt
+              else
+                echo "no RUN_SHELL.txt found"
+              fi
+              ;;
             endpoint-map)
               curl -sS --max-time 30 http://localhost:5000/api/v3/endpoint-map | tee /tmp/endpoint_map.json
               ;;
