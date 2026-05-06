@@ -125,6 +125,16 @@ jobs:
             show-edge-isis)
               curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=edge&cmd=show+run+%7C+sec+router+isis" | tee /tmp/show.json
               ;;
+            show-lisp)
+              echo "==> BORDER: router lisp + lisp session + lisp site"
+              curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=border&cmd=show+run+%7C+sec+router+lisp" | tee /tmp/show_lisp_border.json ; echo
+              curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=border&cmd=show+lisp+session" | tee /tmp/show_lisp_session_border.json ; echo
+              curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=border&cmd=show+lisp+instance-id+4099+ipv4+server" | tee /tmp/show_lisp_server_border.json ; echo
+              echo "==> EDGE: router lisp + lisp session + cef + map-cache"
+              curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=edge&cmd=show+run+%7C+sec+router+lisp" | tee /tmp/show_lisp_edge.json ; echo
+              curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=edge&cmd=show+lisp+session" | tee /tmp/show_lisp_session_edge.json ; echo
+              curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=edge&cmd=show+ip+cef+10.255.255.1" | tee /tmp/show_cef_edge.json ; echo
+              ;;
             precheck-only|*)
               ;;
           esac
@@ -213,6 +223,34 @@ jobs:
               echo "## show run | sec router lisp (EDGE)"
               echo '```json'
               cat /tmp/show_lisp_edge.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/show_lisp_session_border.json ]; then
+              echo "## show lisp session (BORDER)"
+              echo '```json'
+              cat /tmp/show_lisp_session_border.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/show_lisp_session_edge.json ]; then
+              echo "## show lisp session (EDGE)"
+              echo '```json'
+              cat /tmp/show_lisp_session_edge.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/show_lisp_server_border.json ]; then
+              echo "## show lisp instance-id 4099 ipv4 server (BORDER)"
+              echo '```json'
+              cat /tmp/show_lisp_server_border.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/show_cef_edge.json ]; then
+              echo "## show ip cef 10.255.255.1 (EDGE)"
+              echo '```json'
+              cat /tmp/show_cef_edge.json
               echo
               echo '```'
             fi
