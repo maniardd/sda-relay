@@ -28,8 +28,23 @@ jobs:
     runs-on: [self-hosted, sda-relay]
     timeout-minutes: 30
     steps:
-      - name: Checkout
+      - name: Pre-clean stale runner state (avoids checkout hang)
+        run: |
+          set +e
+          # Kill any stale Worker/git from previous hung runs (own user only — no sudo)
+          pkill -9 -u "$USER" -f 'git fetch' 2>/dev/null || true
+          pkill -9 -u "$USER" -f 'git-remote' 2>/dev/null || true
+          # Wipe stale .git in the deploy_v3 work dir so checkout does fresh clone
+          rm -rf "$RUNNER_WORKSPACE/sda-relay/.git" 2>/dev/null || true
+          rm -rf "$RUNNER_WORKSPACE/_temp"/* 2>/dev/null || true
+          echo "pre-clean done"
+
+      - name: Checkout (shallow, clean)
         uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 1
+          show-progress: false
 
       - name: Sync repo to /opt/sda-relay and (re)start v3 relay
         id: deploy
