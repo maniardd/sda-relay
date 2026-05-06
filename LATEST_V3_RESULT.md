@@ -1,17 +1,16 @@
 # Latest SDA v3 Deploy Result
 
-- Commit: `50de6f0c6dd4969900f2ed375a21480a18f05e96`
-- Time: 2026-05-06T04:39:44Z
+- Commit: `23e6a8d3ba074a1a743018fe6ad6938714ade215`
+- Time: 2026-05-06T12:25:23Z
 - Trigger: push
 
 ## /health
 ```json
-{"deployment_status":"idle","endpoints":7,"status":"relay_running","transport":"netmiko-cli","version":"3.0"}
+(unreachable)
 
 ```
 ## /api/v3/precheck
 ```json
-{"checks":{"border":{"hostname":"hostname SJC23-BORDER-01","status":"pass","version":"Cisco IOS XE Software, Version 17.18.02\nCisco IOS Software [IOSXE], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.18.2, RELEASE SOFTWARE (fc3)\nCisco IOS-XE software, Copyright (c) 2005-2025 by cisco Systems, Inc.\nAll rights reserved.  Certain components of Cisco IOS-XE software are\ndocumentation or \"License Notice\" file accompanying the IOS-XE software,\nor the applicable URL provided on the flyer accompanying the IOS-XE\nROM: IOS-XE ROMMONBOOTLDR: System Bootstrap, Version 17.8.1r[FC1], RELEASE SOFTWARE (P)"},"edge":{"hostname":"hostname SJC23-EDGE-01","status":"pass","version":"Cisco IOS XE Software, Version 17.18.03\nCisco IOS Software [IOSXE], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.18.3, RELEASE SOFTWARE (fc5)\nCisco IOS-XE software, Copyright (c) 2005-2026 by cisco Systems, Inc.\nAll rights reserved.  Certain components of Cisco IOS-XE software are\ndocumentation or \"License Notice\" file accompanying the IOS-XE software,\nor the applicable URL provided on the flyer accompanying the IOS-XE\nROM: IOS-XE ROMMONBOOTLDR: System Bootstrap, Version 26.1.1r[FC1], RELEASE SOFTWARE (P)\n*    1 41    C9300-24P          17.18.03          CAT9K_IOSXE           INSTALL"}},"overall":"pass","timestamp":"2026-05-06T04:39:22.544507Z"}
 
 ```
 ## /api/v3/deploy/phase1-underlay
@@ -46,32 +45,26 @@
 ```
 ## show run | sec router lisp (BORDER)
 ```json
-{"cmd":"show run | sec router lisp","output":"router lisp\n locator-set rloc_fabric\n  IPv4-interface Loopback0 priority 10 weight 10\n  exit-locator-set\n !\n service ipv4\n  encapsulation vxlan\n  itr map-resolver 10.255.255.1\n  etr map-server 10.255.255.1 key CiscoSDA123\n  etr\n  sgt\n  no map-cache away-eids send-map-request\n  proxy-etr\n  proxy-itr 10.255.255.1\n  map-server\n  map-resolver\n  exit-service-ipv4\n !\n service ethernet\n  itr map-resolver 10.255.255.1\n  etr map-server 10.255.255.1 key CiscoSDA123\n  etr\n  map-server\n  map-resolver\n  exit-service-ethernet\n !\n instance-id 4099\n  service ipv4\n   eid-table vrf CORP_VN\n   database-mapping 10.30.100.254/32 locator-set rloc_fabric\n   database-mapping limit dynamic 5000\n   exit-service-ipv4\n  !\n  exit-instance-id\n !\n instance-id 4100\n  service ipv4\n   eid-table vrf GUEST_VN\n   database-mapping 10.30.200.254/32 locator-set rloc_fabric\n   database-mapping limit dynamic 5000\n   exit-service-ipv4\n  !\n  exit-instance-id\n !\n site site_uci\n  description SDA fabric site\n  authentication-key CiscoSDA123\n  exit-site\n !\n exit-router-lisp","target":"border"}
 
 ```
 ## show run | sec router lisp (EDGE)
 ```json
-{"cmd":"show run | sec router lisp","output":"router lisp\n locator-set rloc_fabric\n  IPv4-interface Loopback0 priority 10 weight 10\n  exit-locator-set\n !\n service ipv4\n  encapsulation vxlan\n  itr map-resolver 10.255.255.1\n  etr map-server 10.255.255.1 key CiscoSDA123\n  etr\n  use-petr 10.255.255.1\n  exit-service-ipv4\n !\n service ethernet\n  itr map-resolver 10.255.255.1\n  etr map-server 10.255.255.1 key CiscoSDA123\n  etr\n  exit-service-ethernet\n !\n instance-id 4099\n  dynamic-eid Corp_Data-IPV4\n   database-mapping 10.30.100.0/24 locator-set rloc_fabric\n   exit-dynamic-eid\n  !\n  service ipv4\n   eid-table vrf CORP_VN\n   database-mapping limit dynamic 5000\n   exit-service-ipv4\n  !\n  exit-instance-id\n !\n instance-id 4100\n  dynamic-eid Guest_WiFi-IPV4\n   database-mapping 10.30.200.0/24 locator-set rloc_fabric\n   exit-dynamic-eid\n  !\n  service ipv4\n   eid-table vrf GUEST_VN\n   database-mapping limit dynamic 5000\n   exit-service-ipv4\n  !\n  exit-instance-id\n !\n instance-id 8100\n  service ethernet\n   eid-table vlan 100\n   broadcast-underlay 232.0.0.1\n   database-mapping mac locator-set rloc_fabric\n   exit-service-ethernet\n  !\n  exit-instance-id\n !\n instance-id 8200\n  service ethernet\n   eid-table vlan 200\n   broadcast-underlay 232.0.0.1\n   database-mapping mac locator-set rloc_fabric\n   exit-service-ethernet\n  !\n  exit-instance-id\n !\n exit-router-lisp","target":"edge"}
 
 ```
 ## show lisp session (BORDER)
 ```json
-{"cmd":"show lisp session","output":"\nSessions for VRF default, total: 1, established: 0\nPeer               State      Up/Down        In/Out    Users\n10.255.255.1:4342  Down       never           0/0      4","target":"border"}
 
 ```
 ## show lisp session (EDGE)
 ```json
-{"cmd":"show lisp session","output":"\nSessions for VRF default, total: 1, established: 0\nPeer               State      Up/Down        In/Out    Users\n10.255.255.1:4342  Down       never           0/0      10","target":"edge"}
 
 ```
 ## show lisp instance-id 4099 ipv4 server (BORDER)
 ```json
-{"cmd":"show lisp instance-id 4099 ipv4 server","output":"LISP Site Registration Information\n","target":"border"}
 
 ```
 ## show ip cef 10.255.255.1 (EDGE)
 ```json
-{"cmd":"show ip cef 10.255.255.1","output":"10.255.255.1/32\n  nexthop 10.255.0.0 GigabitEthernet1/0/2","target":"edge"}
 
 ```
 ## /api/v3/datapath-test
