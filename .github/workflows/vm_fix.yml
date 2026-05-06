@@ -1,0 +1,153 @@
+name: VM Diagnose & Fix (no checkout)
+
+# Runs raw bash on the self-hosted runner WITHOUT actions/checkout,
+# because checkout is hanging on git fetch (TLS / network issue on VM).
+# Diagnoses connectivity, attempts common fixes, uploads report.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/vm_fix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fix:
+    runs-on: [self-hosted, sda-relay]
+    timeout-minutes: 10
+    steps:
+      - name: Diagnose VM network/TLS state
+        id: diag
+        run: |
+          set +e
+          REPORT=/tmp/vm_fix_report.txt
+          : > "$REPORT"
+          {
+            echo "=== uname / date / uptime ==="
+            uname -a
+            date -u
+            uptime
+            echo
+            echo "=== /etc/resolv.conf ==="
+            cat /etc/resolv.conf 2>/dev/null
+            echo
+            echo "=== ping github.com (3 packets, 5s timeout) ==="
+            ping -c 3 -W 2 github.com
+            echo
+            echo "=== nslookup github.com ==="
+            nslookup github.com 2>&1 | head -20
+            echo
+            echo "=== curl -v https://github.com (10s) ==="
+            timeout 10 curl -sSv https://github.com 2>&1 | head -40
+            echo
+            echo "=== curl -v https://api.github.com (10s) ==="
+            timeout 10 curl -sSv https://api.github.com 2>&1 | head -30
+            echo
+            echo "=== git --version ==="
+            git --version
+            echo
+            echo "=== git config --global --list (filter http/proxy/ssl) ==="
+            git config --global --list 2>/dev/null | grep -iE 'http|proxy|ssl|core' || echo "(none)"
+            echo
+            echo "=== env (proxy vars) ==="
+            env | grep -iE 'proxy|github' | sort
+            echo
+            echo "=== systemctl is-active systemd-timesyncd ==="
+            systemctl is-active systemd-timesyncd 2>&1
+            echo
+            echo "=== timedatectl ==="
+            timedatectl 2>&1 | head -15
+            echo
+            echo "=== existing CA bundles ==="
+            ls -la /etc/ssl/certs/ca-certificates.crt 2>&1
+            ls -la /usr/local/share/ca-certificates/ 2>&1 | head -20
+            echo
+            echo "=== runner work dir size ==="
+            du -sh /home/sdaadmin/actions-runner/_work 2>/dev/null
+            echo
+            echo "=== relay process state ==="
+            ps -ef | grep -E 'gunicorn|sda_relay|runner' | grep -v grep | head -20
+            echo
+            echo "=== port 5000 ==="
+            ss -ltnp 2>/dev/null | grep 5000 || echo "(not listening)"
+            echo
+            echo "=== local relay /health ==="
+            curl -sS --max-time 5 http://localhost:5000/health || echo "(unreachable)"
+          } | tee -a "$REPORT"
+          true
+
+      - name: Attempt fixes
+        if: always()
+        run: |
+          set +e
+          REPORT=/tmp/vm_fix_report.txt
+          {
+            echo
+            echo "==============================================="
+            echo "===           ATTEMPTING FIXES              ==="
+            echo "==============================================="
+
+            echo
+            echo ">>> Fix 1: clean stale runner work tree (forces fresh git clone next run)"
+            sudo rm -rf /home/sdaadmin/actions-runner/_work/sda-relay/sda-relay/.git 2>&1 | head -10
+            sudo rm -rf /home/sdaadmin/actions-runner/_work/_temp/* 2>&1 | head -5
+            echo "  -> done"
+
+            echo
+            echo ">>> Fix 2: time sync (TLS hates clock skew)"
+            sudo systemctl restart systemd-timesyncd 2>&1
+            sleep 2
+            timedatectl set-ntp true 2>&1
+            timedatectl 2>&1 | head -10
+
+            echo
+            echo ">>> Fix 3: kill any stale git/curl processes from hung runs"
+            sudo pkill -9 -f 'git fetch' 2>&1
+            sudo pkill -9 -f 'git-remote' 2>&1
+            sudo pkill -9 -f 'actions-runner.*Worker' 2>&1 || true
+            echo "  -> done"
+
+            echo
+            echo ">>> Fix 4: refresh CA bundle"
+            sudo update-ca-certificates --fresh 2>&1 | tail -10
+
+            echo
+            echo ">>> Fix 5: configure git for IPv4 only + larger buffer (helps with corp MITM)"
+            sudo -u sdaadmin git config --global http.postBuffer 524288000
+            sudo -u sdaadmin git config --global http.lowSpeedLimit 1000
+            sudo -u sdaadmin git config --global http.lowSpeedTime 30
+            sudo -u sdaadmin git config --global core.compression 0
+            echo "  -> applied"
+
+            echo
+            echo ">>> Fix 6: kill stale relay procs"
+            sudo pkill -9 -f gunicorn 2>&1
+            sudo pkill -9 -f sda_relay 2>&1
+            sleep 1
+            echo "  remaining:"
+            ps -ef | grep -E 'gunicorn|sda_relay' | grep -v grep || echo "  (none)"
+
+            echo
+            echo ">>> Fix 7: re-test github reachability after fixes"
+            timeout 15 curl -sSv https://github.com 2>&1 | head -10
+            echo
+            timeout 15 git ls-remote https://github.com/maniardd/sda-relay.git HEAD 2>&1 | head -5
+
+            echo
+            echo "==============================================="
+            echo "===              DONE                       ==="
+            echo "==============================================="
+          } | tee -a "$REPORT"
+          cp "$REPORT" $HOME/vm_fix_report.txt
+          true
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vm-fix-report
+          path: /tmp/vm_fix_report.txt
+          if-no-files-found: warn
+          retention-days: 7
