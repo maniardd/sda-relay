@@ -96,9 +96,9 @@ jobs:
                    -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase5.json
               ;;
             rollback)
-              echo "==> rollback to flash:pre-sda-backup.cfg on both switches"
+              echo "==> rollback to flash:pre-sda-backup-20260502.cfg on both switches"
               curl -sS --max-time 240 -X POST http://localhost:5000/api/v3/rollback \
-                   -H 'Content-Type: application/json' -d '{"file":"pre-sda-backup.cfg"}' | tee /tmp/rollback.json
+                   -H 'Content-Type: application/json' -d '{"file":"pre-sda-backup-20260502.cfg"}' | tee /tmp/rollback.json
               ;;
             list-flash)
               curl -sS --max-time 60 http://localhost:5000/api/v3/list-flash | tee /tmp/list_flash.json

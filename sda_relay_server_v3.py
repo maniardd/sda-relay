@@ -284,7 +284,7 @@ def status():
 # which is non-disruptive (no reload) and atomic. After restore,
 # fabric/LISP/VRFs/SVIs are gone and the switch is back to the pre-SDA
 # baseline (mgmt + RESTCONF + service meraki connect still present).
-DEFAULT_ROLLBACK_FILE = os.getenv("ROLLBACK_FILE", "pre-sda-backup.cfg")
+DEFAULT_ROLLBACK_FILE = os.getenv("ROLLBACK_FILE", "pre-sda-backup-20260502.cfg")
 
 
 @app.route("/api/v3/rollback", methods=["POST"])
