@@ -1,0 +1,1843 @@
+login as: sdaadmin
+Keyboard-interactive authentication prompts from server:
+| Password:
+End of keyboard-interactive prompts from server
+    +----------------------------------------------------------------------+
+    ¦                 • MobaXterm Personal Edition v25.1 •                 ¦
+    ¦               (SSH client, X server and network tools)               ¦
+    ¦                                                                      ¦
+    ¦ ? SSH session to sdaadmin@10.40.0.130                                ¦
+    ¦   • Direct SSH      :  ?                                             ¦
+    ¦   • SSH compression :  ?  (disabled or not supported by server)      ¦
+    ¦   • SSH-browser     :  ?  (disabled for Cisco compatibility)         ¦
+    ¦   • X11-forwarding  :  ?  (disabled for Cisco compatibility)         ¦
+    ¦                                                                      ¦
+    ¦ ? For more info, ctrl+click on help or visit our website.            ¦
+    +----------------------------------------------------------------------+
+
+--------------------------------------------------------------------------------
+WARNING! This device is the property of BLNG and can be
+accessed only by authorized users. Unauthorized use of this system is strictly
+prohibited and may be subject to criminal prosecution.
+--------------------------------------------------------------------------------
+
+
+BNLMTLNGBN202#
+BNLMTLNGBN202#
+BNLMTLNGBN202#ter len 0
+BNLMTLNGBN202#
+BNLMTLNGBN202#
+BNLMTLNGBN202#sh run
+Building configuration...
+
+Current configuration : 47648 bytes
+!
+! Last configuration change at 14:59:23 BNT Wed Jan 28 2026 by sdaadmin
+! NVRAM config last updated at 14:59:23 BNT Wed Jan 28 2026 by sdaadmin
+!
+version 17.12
+service timestamps debug datetime msec localtime year
+service timestamps log datetime msec localtime year
+service password-encryption
+service internal
+service call-home
+no platform punt-keepalive disable-kernel-core
+!
+hostname BNLMTLNGBN202
+!
+!
+vrf definition CORP_VN
+ rd 1:4099
+ !
+ address-family ipv4
+  route-target export 1:4099
+  route-target import 1:4099
+ exit-address-family
+!
+vrf definition DEFAULT_VN
+ rd 1:4098
+ !
+ address-family ipv4
+  route-target export 1:4098
+  route-target import 1:4098
+ exit-address-family
+!
+vrf definition GUEST_VN
+ rd 1:4100
+ !
+ address-family ipv4
+  route-target export 1:4100
+  route-target import 1:4100
+ exit-address-family
+!
+vrf definition INTELATRAC_VN
+ rd 1:4101
+ !
+ address-family ipv4
+  route-target export 1:4101
+  route-target import 1:4101
+ exit-address-family
+!
+vrf definition Mgmt-vrf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+aaa new-model
+!
+!
+aaa group server radius dnac-client-radius-group
+ server name dnac-radius_10.10.30.11
+ server name dnac-radius_10.10.30.12
+ ip radius source-interface Loopback0
+!
+aaa group server tacacs+ dnac-network-tacacs-group
+ server name dnac-tacacs_10.10.30.11
+ server name dnac-tacacs_10.10.30.12
+!
+aaa authentication login default local
+aaa authentication login dnac-cts-list group dnac-client-radius-group local
+aaa authentication login VTY_authen group dnac-network-tacacs-group local
+aaa authentication dot1x default group dnac-client-radius-group
+aaa authorization config-commands
+aaa authorization exec default local
+aaa authorization exec VTY_author group dnac-network-tacacs-group local
+aaa authorization commands 0 VTY_author group dnac-network-tacacs-group local if-authenticated
+aaa authorization commands 1 VTY_author group dnac-network-tacacs-group local if-authenticated
+aaa authorization commands 15 VTY_author group dnac-network-tacacs-group local if-authenticated
+aaa authorization network default group dnac-client-radius-group
+aaa authorization network dnac-cts-list group dnac-client-radius-group
+aaa accounting update newinfo periodic 2880
+aaa accounting identity default start-stop group dnac-client-radius-group
+aaa accounting exec default start-stop group dnac-network-tacacs-group
+aaa accounting commands 0 VTY_authen start-stop group dnac-network-tacacs-group
+aaa accounting commands 1 VTY_authen start-stop group dnac-network-tacacs-group
+aaa accounting commands 15 VTY_authen start-stop group dnac-network-tacacs-group
+!
+!
+aaa server radius dynamic-author
+ client 10.10.30.11 server-key 7 082340400E39564644
+ client 10.10.30.12 server-key 7 020408550C265C701A
+!
+aaa session-id common
+clock timezone BNT 8 0
+boot system bootflash:packages.conf
+!
+ip multicast-routing
+ip host bnlmtlngdnac.blng.shell.bn 10.10.30.1
+ip name-server 158.161.174.11 192.168.21.1
+ip domain lookup source-interface Loopback0
+ip domain name blng.shell.bn
+!
+!
+!
+login on-success log
+vtp domain BLNG
+vtp mode transparent
+!
+!
+!
+!
+!
+!
+!
+mpls label mode all-vrfs protocol all-afs per-vrf
+!
+access-session mac-move deny
+!
+crypto pki trustpoint TP-self-signed-3661210606
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-3661210606
+ revocation-check none
+ rsakeypair TP-self-signed-3661210606
+ hash sha512
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment terminal
+ revocation-check crl
+ hash sha512
+!
+crypto pki trustpoint DNAC-CA
+ enrollment mode ra
+ enrollment terminal
+ usage ssl-client
+ revocation-check crl none
+ source interface Loopback0
+ hash sha512
+!
+!
+crypto pki certificate chain TP-self-signed-3661210606
+ certificate self-signed 01
+  30820330 30820218 A0030201 02020101 300D0609 2A864886 F70D0101 05050030
+  31312F30 2D060355 04031326 494F532D 53656C66 2D536967 6E65642D 43657274
+  69666963 6174652D 33363631 32313036 3036301E 170D3139 31323131 30363238
+  32315A17 0D333030 31303130 30303030 305A3031 312F302D 06035504 03132649
+  4F532D53 656C662D 5369676E 65642D43 65727469 66696361 74652D33 36363132
+  31303630 36308201 22300D06 092A8648 86F70D01 01010500 0382010F 00308201
+  0A028201 0100BCEE FD129BB1 FD10F3E2 165622A8 6A5D8621 4319725C 0FB8DB61
+  C175D418 B2097C66 791938FC 59DA89A2 39BCC8E2 E3997B53 439B5D37 7CAC03C0
+  6BD4F317 061DD486 595D2297 FDD8972E DBB52E29 D1215C98 5B885C6F 9FA396F6
+  93A5349F 9BC1924C 7C44207F 46B3922C 918DA3A0 B214876E 7F6EAB31 7EBC0CC2
+  DBEC1890 B0791B72 40C5BB68 253C0AA8 E6679309 C2C26F4A E9A53313 C3266886
+  B2255A9A 04A4FC69 0DE6754E 848608B3 26458817 162F46AC 72397207 9027F310
+  E6974294 91EECD22 7A973DD9 60E24A9B 48B2E1EF 89811060 CAB99F70 5ADFAF3E
+  B986576D 01432FDE 5C282959 6035492F 0005ED47 BDE2961F EAF94513 A0FEB378
+  77579BAB 29210203 010001A3 53305130 0F060355 1D130101 FF040530 030101FF
+  301F0603 551D2304 18301680 149ADDFB F1A29619 B8FBE4C7 1DB1587A B0BEAFB6
+  29301D06 03551D0E 04160414 9ADDFBF1 A29619B8 FBE4C71D B1587AB0 BEAFB629
+  300D0609 2A864886 F70D0101 05050003 82010100 8A961814 4CD511AA 9F753A90
+  B34FCF9F D66DFC66 54144485 AC4D2F70 548D42E9 E31B31E7 DF92A7F2 40E0EF7E
+  F2035AD2 256173CA 63480C31 05587C2B 8589120C EB808373 86A87EE2 378E52E1
+  77D89007 0F5BA518 F40D8EAC 4A45FB18 26413980 9ECE49A7 3A161598 F8BF00F3
+  AC91F896 7CC64A40 5CFC500D 2CBDD213 71835CAF 9E67496D B7507C4B 76DC73C7
+  8AF446F8 DB94AC90 6CD2C0BC 40DD3D59 0CFEAE07 108226AE D246DC88 4A3AC535
+  0F3C63E3 CD775F0B 030BE035 ED3199D8 4BA780D1 1E066734 E11748F6 A3117913
+  5BC01533 844B8796 DC82414F 68D33A45 7A61F6FD E2BA19F7 B7362A06 E0E18D36
+  FD34AF0E D942AA94 3F715F60 D2333DEC 66EF7CCE
+        quit
+crypto pki certificate chain SLA-TrustPoint
+ certificate ca 01
+  30820321 30820209 A0030201 02020101 300D0609 2A864886 F70D0101 0B050030
+  32310E30 0C060355 040A1305 43697363 6F312030 1E060355 04031317 43697363
+  6F204C69 63656E73 696E6720 526F6F74 20434130 1E170D31 33303533 30313934
+  3834375A 170D3338 30353330 31393438 34375A30 32310E30 0C060355 040A1305
+  43697363 6F312030 1E060355 04031317 43697363 6F204C69 63656E73 696E6720
+  526F6F74 20434130 82012230 0D06092A 864886F7 0D010101 05000382 010F0030
+  82010A02 82010100 A6BCBD96 131E05F7 145EA72C 2CD686E6 17222EA1 F1EFF64D
+  CBB4C798 212AA147 C655D8D7 9471380D 8711441E 1AAF071A 9CAE6388 8A38E520
+  1C394D78 462EF239 C659F715 B98C0A59 5BBB5CBD 0CFEBEA3 700A8BF7 D8F256EE
+  4AA4E80D DB6FD1C9 60B1FD18 FFC69C96 6FA68957 A2617DE7 104FDC5F EA2956AC
+  7390A3EB 2B5436AD C847A2C5 DAB553EB 69A9A535 58E9F3E3 C0BD23CF 58BD7188
+  68E69491 20F320E7 948E71D7 AE3BCC84 F10684C7 4BC8E00F 539BA42B 42C68BB7
+  C7479096 B4CB2D62 EA2F505D C7B062A4 6811D95B E8250FC4 5D5D5FB8 8F27D191
+  C55F0D76 61F9A4CD 3D992327 A8BB03BD 4E6D7069 7CBADF8B DF5F4368 95135E44
+  DFC7C6CF 04DD7FD1 02030100 01A34230 40300E06 03551D0F 0101FF04 04030201
+  06300F06 03551D13 0101FF04 05300301 01FF301D 0603551D 0E041604 1449DC85
+  4B3D31E5 1B3E6A17 606AF333 3D3B4C73 E8300D06 092A8648 86F70D01 010B0500
+  03820101 00507F24 D3932A66 86025D9F E838AE5C 6D4DF6B0 49631C78 240DA905
+  604EDCDE FF4FED2B 77FC460E CD636FDB DD44681E 3A5673AB 9093D3B1 6C9E3D8B
+  D98987BF E40CBD9E 1AECA0C2 2189BB5C 8FA85686 CD98B646 5575B146 8DFC66A8
+  467A3DF4 4D565700 6ADF0F0D CF835015 3C04FF7C 21E878AC 11BA9CD2 55A9232C
+  7CA7B7E6 C1AF74F6 152E99B7 B1FCF9BB E973DE7F 5BDDEB86 C71E3B49 1765308B
+  5FB0DA06 B92AFE7F 494E8A9E 07B85737 F3A58BE1 1A48A229 C37C1E69 39F08678
+  80DDCD16 D6BACECA EEBC7CF9 8428787B 35202CDC 60E4616A B623CDBD 230E3AFB
+  418616A9 4093E049 4D10AB75 27E86F73 932E35B5 8862FDAE 0275156F 719BB2F0
+  D697DF7F 28
+        quit
+crypto pki certificate chain DNAC-CA
+ certificate ca 5678A7618BE58C2DD1D3970039D5B5D323F981B0
+  308203A5 3082028D A0030201 02021456 78A7618B E58C2DD1 D3970039 D5B5D323
+  F981B030 0D06092A 864886F7 0D01010B 05003062 312D302B 06035504 030C2464
+  61383731 6533312D 37343433 2D383630 352D3239 63302D65 33663839 35636465
+  31613431 16301406 0355040A 0C0D4369 73636F20 53797374 656D7331 19301706
+  0355040B 0C104369 73636F20 444E4120 43656E74 6572301E 170D3235 30343139
+  30353534 34385A17 0D323830 31313430 35353434 385A3062 312D302B 06035504
+  030C2464 61383731 6533312D 37343433 2D383630 352D3239 63302D65 33663839
+  35636465 31613431 16301406 0355040A 0C0D4369 73636F20 53797374 656D7331
+  19301706 0355040B 0C104369 73636F20 444E4120 43656E74 65723082 0122300D
+  06092A86 4886F70D 01010105 00038201 0F003082 010A0282 010100CE 026B797F
+  01F7ABB9 D9EFBDA7 0EA4008A 8ED2DE5A 592E0D41 9DE72D66 89DD67C1 10B38D22
+  783BB553 5F8AA0FF DB92FA2B B8495165 6BD89F22 0981472E B3884483 34A4F5AC
+  92D14AF0 6124A37A AA2E226D 9C37570F 83BEEB69 054E94AF 1EC11C63 15AF2B29
+  22541A72 21DD348D 763E34A6 5DD3C00B C10BE8A5 1A35B61E F19D4DF5 E93B92A8
+  D67910A3 5F7AB3D3 A40EDE75 EB48F79A 9111825A F6926A12 8922592F A9930A81
+  7BFD2B66 ADEA1688 E7D54C68 4DC86726 B564E85E 0B8F0330 1376B8C0 C8119AC5
+  B4B037A9 2DA102B1 664B3051 D1CD22E7 EF5E2A39 BB7D3B3B B62DC859 9F78CDE8
+  0C9F289D DBED3399 E7CC1A1C B3291534 91BFF6E4 4A1EA107 D21A0102 03010001
+  A3533051 301D0603 551D0E04 160414F4 2047BB77 47C497CC CE21761A 60F005E1
+  27A3E030 1F060355 1D230418 30168014 F42047BB 7747C497 CCCE2176 1A60F005
+  E127A3E0 300F0603 551D1301 01FF0405 30030101 FF300D06 092A8648 86F70D01
+  010B0500 03820101 0097FA65 49DABEF9 0DFEFBBB 42416F90 9008F267 ECC6C9A6
+  0C22B0D2 7C7EFE48 BE7FE0EE A33F8F52 DC7B6EFC B7BCCBC0 82307F3D 4364B7ED
+  C74F2919 77695314 AFC60934 76550D1C C16CF570 30A95565 87BFD998 CDF62A92
+  38E03401 2E98FD51 EB7B8C28 CD991C49 A8AA4EA2 D5F28F6B E0A54810 C0B16F0C
+  68A0755F CD40B916 D9FA7641 7D15D5F2 C812ADFB 842820D4 3DF018B4 6125085F
+  DBD7A083 531D891D CF189C7D 324C0519 EF45D619 3D4944C0 1FD57AE5 A35CBDE7
+  9729FE78 C9D89C82 072C5738 C8B6945B 8C7EC00B 2D4D7585 C516BDBC 5E3216E3
+  4C133DFD BAF3E195 C5AB286E EE3D0547 FB651E36 BD0BF16E 0A7974FB C2CB305C
+  CD0E605F F40CA590 F7
+        quit
+!
+cts authorization list dnac-cts-list
+!
+cts sxp enable
+cts sxp default password 7 112B150B1032585D52
+cts sxp connection peer 10.10.30.11 source 10.10.40.2 password default mode local listener hold-time 0 0 vrf CORP_VN
+cts sxp connection peer 10.10.30.12 source 10.10.40.2 password default mode local listener hold-time 0 0 vrf CORP_VN
+cts sxp connection peer 10.10.30.11 source 10.10.40.4 password default mode local listener hold-time 0 0 vrf GUEST_VN
+cts sxp connection peer 10.10.30.12 source 10.10.40.4 password default mode local listener hold-time 0 0 vrf GUEST_VN
+license boot level network-advantage addon dna-advantage
+license smart transport off
+service-template webauth-global-inactive
+ inactivity-timer 3600
+service-template DEFAULT_LINKSEC_POLICY_MUST_SECURE
+ linksec policy must-secure
+service-template DEFAULT_LINKSEC_POLICY_SHOULD_SECURE
+ linksec policy should-secure
+service-template DEFAULT_CRITICAL_VOICE_TEMPLATE
+ voice vlan
+service-template DEFAULT_CRITICAL_DATA_TEMPLATE
+dot1x system-auth-control
+memory free low-watermark processor 186812
+!
+system mtu 9100
+diagnostic bootup level complete
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+!
+!
+!
+enable secret 9 $14$P7UD$VwHtztkQ87d.ZE$B08oM660fmQtgJwmgih/0/UcTJjUP34VjeC2z5hh.Sc
+!
+username sdaadmin privilege 15 secret 9 $14$VesS$eTl3BxdzgA2CdE$ZkJbQ5rx3Z5H84S.T4hKAAxeGhx6zzy8mhJ1r91f1B2
+!
+redundancy
+crypto engine compliance shield disable
+!
+!
+!
+!
+!
+transceiver type all
+ monitoring
+!
+vlan 801
+ name F_BN1_Discovery
+!
+vlan 802
+ name F_BN2_Discovery
+!
+vlan 806
+ name iBGP_Global
+!
+vlan 807
+ name iBGP_CORP
+!
+vlan 808
+ name iBGP_GUEST
+!
+vlan 809
+!
+vlan 3005
+ name 3005
+!
+vlan 3006
+ name 3006
+!
+vlan 3007
+ name 3007
+!
+vlan 3008
+ name 3008
+!
+vlan 3010
+ name 3010
+!
+!
+class-map match-any system-cpp-police-ewlc-control
+  description EWLC Control
+class-map match-any system-cpp-police-topology-control
+  description Topology control
+class-map match-any system-cpp-police-sw-forward
+  description Sw forwarding, L2 LVX data packets, LOGGING, Transit Traffic
+class-map match-any system-cpp-default
+  description EWLC Data, Inter FED Traffic
+class-map match-any system-cpp-police-sys-data
+  description Openflow, Exception, EGR Exception, NFL Sampled Data, RPF Failed
+class-map match-any system-cpp-police-punt-webauth
+  description Punt Webauth
+class-map match-any system-cpp-police-l2lvx-control
+  description L2 LVX control packets
+class-map match-any system-cpp-police-forus
+  description Forus Address resolution and Forus traffic
+class-map match-any system-cpp-police-multicast-end-station
+  description MCAST END STATION
+class-map match-any system-cpp-police-high-rate-app
+  description High Rate Applications
+class-map match-any system-cpp-police-multicast
+  description MCAST Data
+class-map match-any system-cpp-police-l2-control
+  description L2 control
+class-map match-any system-cpp-police-dot1x-auth
+  description DOT1X Auth
+class-map match-any system-cpp-police-data
+  description ICMP redirect, ICMP_GEN and BROADCAST
+class-map match-any system-cpp-police-stackwise-virt-control
+  description Stackwise Virtual OOB
+class-map match-any non-client-nrt-class
+class-map match-any system-cpp-police-routing-control
+  description Routing control and Low Latency
+class-map match-any system-cpp-police-protocol-snooping
+  description Protocol snooping
+class-map match-any system-cpp-police-dhcp-snooping
+  description DHCP snooping
+class-map match-any system-cpp-police-ios-routing
+  description L2 control, Topology control, Routing control, Low Latency
+class-map match-any system-cpp-police-system-critical
+  description System Critical and Gold Pkt
+class-map match-any system-cpp-police-ios-feature
+  description ICMPGEN,BROADCAST,ICMP,L2LVXCntrl,ProtoSnoop,PuntWebauth,MCASTData,Transit,DOT1XAuth,Swfwd,LOGGING,L2LVXData,ForusTraffic,ForusARP,McastEndStn,Openflow,Exception,EGRExcption,NflSampled,RpfFailed
+!
+!
+policy-map system-cpp-policy
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ description Fabric Node Router ID
+ ip address 10.40.0.130 255.255.255.255
+ ip pim sparse-mode
+ ip router isis
+ clns mtu 1400
+!
+interface Loopback201
+ description ISE_SXP_Tunnel_CORP_VN
+ vrf forwarding CORP_VN
+ ip address 10.10.40.2 255.255.255.255
+!
+interface Loopback202
+ description ISE_SXP_Tunnel_GUEST_VN
+ vrf forwarding GUEST_VN
+ ip address 10.10.40.4 255.255.255.255
+!
+interface Loopback1022
+ description Loopback Border
+ vrf forwarding GUEST_VN
+ ip address 10.30.43.254 255.255.255.255
+!
+interface Loopback1023
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 10.30.55.254 255.255.255.255
+!
+interface Loopback1026
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 10.30.35.254 255.255.255.255
+!
+interface Loopback1030
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 158.161.83.254 255.255.255.255
+!
+interface Loopback1031
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 158.161.84.254 255.255.255.255
+!
+interface Loopback1032
+ description Loopback Border
+ vrf forwarding GUEST_VN
+ ip address 10.30.56.254 255.255.255.255
+!
+interface Loopback1033
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 158.161.85.62 255.255.255.255
+!
+interface Loopback1034
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 158.161.166.129 255.255.255.255
+!
+interface Loopback1035
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 10.162.84.1 255.255.255.255
+!
+interface Loopback1038
+ description Loopback Border
+ vrf forwarding GUEST_VN
+ ip address 10.30.65.126 255.255.255.255
+!
+interface Loopback1039
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 10.30.120.62 255.255.255.255
+!
+interface Loopback1040
+ description Loopback Border
+ vrf forwarding INTELATRAC_VN
+ ip address 158.161.167.97 255.255.255.255
+!
+interface Loopback1041
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 158.161.163.62 255.255.255.255
+!
+interface Loopback1042
+ description Loopback Border
+ vrf forwarding GUEST_VN
+ ip address 10.30.66.254 255.255.255.255
+!
+interface Loopback1043
+ description Loopback Border
+ vrf forwarding GUEST_VN
+ ip address 10.30.87.254 255.255.255.255
+!
+interface Loopback1044
+ description Loopback Border
+ vrf forwarding INTELATRAC_VN
+ ip address 10.30.120.254 255.255.255.255
+!
+interface Loopback2045
+ description Loopback Border
+ ip address 10.20.25.254 255.255.255.255
+!
+interface Loopback2047
+ description Loopback Border
+ vrf forwarding CORP_VN
+ ip address 10.30.63.254 255.255.255.255
+!
+interface Loopback60000
+ ip address 10.40.0.131 255.255.255.255
+ ip pim sparse-mode
+ ip router isis
+!
+interface Port-channel11
+ description To_BN1_P11
+ switchport trunk allowed vlan 806-809
+ switchport mode trunk
+!
+interface Port-channel13
+ description TO_FUSION
+ switchport mode trunk
+!
+interface LISP0
+!
+interface LISP0.4097
+!
+interface LISP0.4098
+ vrf forwarding DEFAULT_VN
+!
+interface LISP0.4099
+ vrf forwarding CORP_VN
+!
+interface LISP0.4100
+ vrf forwarding GUEST_VN
+!
+interface LISP0.4101
+ vrf forwarding INTELATRAC_VN
+!
+interface GigabitEthernet0/0
+ description To_OOB_Mgmt
+ vrf forwarding Mgmt-vrf
+ ip address 10.10.80.121 255.255.255.128
+ negotiation auto
+!
+interface TwentyFiveGigE1/0/1
+ description To_BN1_Ten1/0/1
+ switchport trunk allowed vlan 806-809
+ switchport mode trunk
+ channel-protocol lacp
+ channel-group 11 mode active
+!
+interface TwentyFiveGigE1/0/2
+ description To_BN1_Ten1/0/2
+ switchport trunk allowed vlan 806-809
+ switchport mode trunk
+ channel-protocol lacp
+ channel-group 11 mode active
+!
+interface TwentyFiveGigE1/0/3
+ description To_Fusion_Ten1/1/4
+ switchport mode trunk
+ channel-protocol lacp
+ channel-group 13 mode active
+!
+interface TwentyFiveGigE1/0/4
+ description To_Fusion_Ten2/1/4
+ switchport mode trunk
+ channel-protocol lacp
+ channel-group 13 mode active
+!
+interface TwentyFiveGigE1/0/5
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/6
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/7
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/8
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/9
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/10
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/11
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.164 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/12
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.168 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/13
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.136 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/14
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.140 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/15
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.147 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/16
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.173 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/17
+ description To EN205 - Block B
+ no switchport
+ ip address 10.40.0.150 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/18
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.156 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/19
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.179 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/20
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.4.132 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/21
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.2.132 255.255.255.254
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ no bfd echo
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/22
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.183 255.255.255.254
+ no ip redirects
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/23
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.188 255.255.255.254
+ no ip redirects
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/24
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.196 255.255.255.254
+ no ip redirects
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/25
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.201 255.255.255.254
+ no ip redirects
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/26
+!
+interface TwentyFiveGigE1/0/27
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.210 255.255.255.254
+ no ip redirects
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/28
+ description Fabric Physical Link
+ no switchport
+ dampening
+ ip address 10.40.0.214 255.255.255.254
+ no ip redirects
+ ip lisp source-locator Loopback0
+ ip pim sparse-mode
+ ip router isis
+ load-interval 30
+ bfd interval 100 min_rx 100 multiplier 3
+ clns mtu 1400
+ isis network point-to-point
+!
+interface TwentyFiveGigE1/0/29
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/30
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/31
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/32
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/33
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/34
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/35
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/36
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/37
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/38
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/39
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/40
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/41
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/42
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/43
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/44
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/45
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/46
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/47
+ no switchport
+ no ip address
+!
+interface TwentyFiveGigE1/0/48
+ no switchport
+ no ip address
+!
+interface HundredGigE1/0/49
+ no switchport
+ no ip address
+!
+interface HundredGigE1/0/50
+ no switchport
+ no ip address
+!
+interface HundredGigE1/0/51
+ no switchport
+ no ip address
+!
+interface HundredGigE1/0/52
+ no switchport
+ no ip address
+!
+interface Vlan1
+ no ip address
+!
+interface Vlan802
+ description F_BN2
+ ip address 10.10.55.6 255.255.255.252
+ no ip redirects
+ no ip proxy-arp
+ load-interval 30
+!
+interface Vlan806
+ description iBGP_Global
+ ip address 10.10.70.2 255.255.255.252
+ no ip redirects
+!
+interface Vlan807
+ description iBGP_CORP
+ vrf forwarding CORP_VN
+ ip address 10.10.70.6 255.255.255.252
+ no ip redirects
+!
+interface Vlan808
+ description iBGP_GUEST
+ vrf forwarding GUEST_VN
+ ip address 10.10.70.10 255.255.255.252
+ no ip redirects
+!
+interface Vlan809
+ description iBGP_INTELATRAC
+ vrf forwarding INTELATRAC_VN
+ ip address 10.10.70.14 255.255.255.252
+ no ip redirects
+!
+interface Vlan3005
+ description vrf interface to External router
+ ip address 10.50.0.17 255.255.255.252
+ no ip redirects
+ ip route-cache same-interface
+!
+interface Vlan3006
+ description vrf interface to External router
+ vrf forwarding GUEST_VN
+ ip address 10.50.0.21 255.255.255.252
+ no ip redirects
+ ip route-cache same-interface
+!
+interface Vlan3007
+ description vrf interface to External router
+ vrf forwarding CORP_VN
+ ip address 10.50.0.25 255.255.255.252
+ no ip redirects
+ ip route-cache same-interface
+!
+interface Vlan3008
+ description vrf interface to External router
+ vrf forwarding DEFAULT_VN
+ ip address 10.50.0.29 255.255.255.252
+ no ip redirects
+ ip route-cache same-interface
+!
+interface Vlan3010
+ description vrf interface to External router
+ vrf forwarding INTELATRAC_VN
+ ip address 10.50.0.37 255.255.255.252
+ no ip redirects
+ ip route-cache same-interface
+!
+router lisp
+ locator-table default
+ locator-set WLC
+  10.20.21.5
+  exit-locator-set
+ !
+ locator-set rloc_f4de689a-9816-4353-9afa-8da32a4ac7e0
+  IPv4-interface Loopback0 priority 10 weight 10
+  auto-discover-rlocs
+  exit-locator-set
+ !
+ locator default-set rloc_f4de689a-9816-4353-9afa-8da32a4ac7e0
+ service ipv4
+  encapsulation vxlan
+  itr map-resolver 10.40.0.129
+  itr map-resolver 10.40.0.130
+  etr map-server 10.40.0.129 key 7 065157764F4D58
+  etr map-server 10.40.0.129 proxy-reply
+  etr map-server 10.40.0.130 key 7 02515C0C08055E
+  etr map-server 10.40.0.130 proxy-reply
+  etr
+  sgt
+  no map-cache away-eids send-map-request
+  proxy-etr
+  proxy-itr 10.40.0.130
+  map-server
+  map-resolver
+  exit-service-ipv4
+ !
+ service ethernet
+  database-mapping limit dynamic 5000
+  itr map-resolver 10.40.0.129
+  itr map-resolver 10.40.0.130
+  itr
+  etr map-server 10.40.0.129 key 7 065157764F4D58
+  etr map-server 10.40.0.129 proxy-reply
+  etr map-server 10.40.0.130 key 7 02515C0C08055E
+  etr map-server 10.40.0.130 proxy-reply
+  etr
+  map-server
+  map-resolver
+  exit-service-ethernet
+ !
+ instance-id 4097
+  remote-rloc-probe on-route-change
+  service ipv4
+   eid-table default
+   database-mapping 10.50.0.16/30 locator-set rloc_f4de689a-9816-4353-9afa-8da32a4ac7e0
+   map-cache 10.20.24.0/23 map-request
+   route-export site-registrations
+   distance site-registrations 250
+   map-cache site-registration
+   exit-service-ipv4
+  !
+  exit-instance-id
+ !
+ instance-id 4098
+  remote-rloc-probe on-route-change
+  service ipv4
+   eid-table vrf DEFAULT_VN
+   database-mapping 10.50.0.28/30 locator-set rloc_f4de689a-9816-4353-9afa-8da32a4ac7e0
+   route-export site-registrations
+   distance site-registrations 250
+   map-cache site-registration
+   exit-service-ipv4
+  !
+  exit-instance-id
+ !
+ instance-id 4099
+  remote-rloc-probe on-route-change
+  service ipv4
+   eid-table vrf CORP_VN
+   database-mapping 10.50.0.24/30 locator-set rloc_f4de689a-9816-4353-9afa-8da32a4ac7e0
+   route-export site-registrations
+   distance site-registrations 250
+   map-cache site-registration
+   exit-service-ipv4
+  !
+  exit-instance-id
+ !
+ instance-id 4100
+  remote-rloc-probe on-route-change
+  service ipv4
+   eid-table vrf GUEST_VN
+   database-mapping 10.50.0.20/30 locator-set rloc_f4de689a-9816-4353-9afa-8da32a4ac7e0
+   route-export site-registrations
+   distance site-registrations 250
+   map-cache site-registration
+   exit-service-ipv4
+  !
+  exit-instance-id
+ !
+ instance-id 4101
+  remote-rloc-probe on-route-change
+  service ipv4
+   eid-table vrf INTELATRAC_VN
+   database-mapping 10.50.0.36/30 locator-set rloc_f4de689a-9816-4353-9afa-8da32a4ac7e0
+   route-export site-registrations
+   distance site-registrations 250
+   map-cache site-registration
+   exit-service-ipv4
+  !
+  exit-instance-id
+ !
+ map-server session passive-open WLC
+ map-server rloc members distribute
+ site site_uci
+  description map-server configured from Catalyst Center
+  authentication-key 7 087614190A1A54
+  eid-record instance-id 4097 10.20.24.0/23 accept-more-specifics
+  eid-record instance-id 4099 10.30.32.0/22 accept-more-specifics
+  eid-record instance-id 4099 10.30.52.0/22 accept-more-specifics
+  eid-record instance-id 4099 10.30.60.0/22 accept-more-specifics
+  eid-record instance-id 4099 10.30.120.0/26 accept-more-specifics
+  eid-record instance-id 4099 10.162.84.0/25 accept-more-specifics
+  eid-record instance-id 4099 158.161.80.0/22 accept-more-specifics
+  eid-record instance-id 4099 158.161.84.0/24 accept-more-specifics
+  eid-record instance-id 4099 158.161.85.0/26 accept-more-specifics
+  eid-record instance-id 4099 158.161.163.0/26 accept-more-specifics
+  eid-record instance-id 4099 158.161.166.128/25 accept-more-specifics
+  eid-record instance-id 4100 10.30.40.0/22 accept-more-specifics
+  eid-record instance-id 4100 10.30.56.0/24 accept-more-specifics
+  eid-record instance-id 4100 10.30.65.0/25 accept-more-specifics
+  eid-record instance-id 4100 10.30.66.0/24 accept-more-specifics
+  eid-record instance-id 4100 10.30.80.0/21 accept-more-specifics
+  eid-record instance-id 4101 10.30.120.128/25 accept-more-specifics
+  eid-record instance-id 4101 158.161.167.96/27 accept-more-specifics
+  eid-record instance-id 8188 any-mac
+  eid-record instance-id 8190 any-mac
+  eid-record instance-id 8191 any-mac
+  eid-record instance-id 8194 any-mac
+  eid-record instance-id 8200 any-mac
+  eid-record instance-id 8201 any-mac
+  eid-record instance-id 8202 any-mac
+  eid-record instance-id 8203 any-mac
+  eid-record instance-id 8204 any-mac
+  eid-record instance-id 8205 any-mac
+  eid-record instance-id 8206 any-mac
+  eid-record instance-id 8209 any-mac
+  eid-record instance-id 8210 any-mac
+  eid-record instance-id 8211 any-mac
+  eid-record instance-id 8212 any-mac
+  eid-record instance-id 8213 any-mac
+  eid-record instance-id 8214 any-mac
+  eid-record instance-id 8215 any-mac
+  exit-site
+ !
+ ipv4 locator reachability exclude-default
+ ipv4 source-locator Loopback0
+ exit-router-lisp
+!
+router isis
+ net 49.0000.0100.4000.0130.00
+ domain-password cisco
+ metric-style wide
+ log-adjacency-changes
+ nsf ietf
+ default-information originate
+ bfd all-interfaces
+!
+router bgp 65534
+ bgp router-id interface Loopback0
+ bgp log-neighbor-changes
+ bgp graceful-restart
+ neighbor 10.10.70.1 remote-as 65534
+ neighbor 10.50.0.18 remote-as 65535
+ neighbor 10.50.0.18 update-source Vlan3005
+ !
+ address-family ipv4
+  bgp redistribute-internal
+  bgp aggregate-timer 0
+  network 10.20.25.254 mask 255.255.255.255
+  network 10.40.0.0 mask 255.255.0.0
+  network 10.40.0.130 mask 255.255.255.255
+  network 10.50.0.16 mask 255.255.255.252
+  aggregate-address 10.20.24.0 255.255.254.0 summary-only
+  redistribute connected
+  redistribute isis level-1-2
+  redistribute lisp metric 10
+  neighbor 10.10.70.1 activate
+  neighbor 10.10.70.1 next-hop-self
+  neighbor 10.10.70.1 route-map DENY_EBGP_PREFIX_TAG out
+  neighbor 10.50.0.18 activate
+  neighbor 10.50.0.18 weight 65535
+  neighbor 10.50.0.18 advertisement-interval 0
+ exit-address-family
+ !
+ address-family ipv4 vrf CORP_VN
+  bgp aggregate-timer 0
+  network 10.10.40.2 mask 255.255.255.255
+  network 10.30.35.254 mask 255.255.255.255
+  network 10.30.55.254 mask 255.255.255.255
+  network 10.30.63.254 mask 255.255.255.255
+  network 10.30.120.62 mask 255.255.255.255
+  network 10.50.0.24 mask 255.255.255.252
+  network 10.162.84.1 mask 255.255.255.255
+  network 158.161.83.254 mask 255.255.255.255
+  network 158.161.84.254 mask 255.255.255.255
+  network 158.161.85.62 mask 255.255.255.255
+  network 158.161.163.62 mask 255.255.255.255
+  network 158.161.166.129 mask 255.255.255.255
+  aggregate-address 158.161.166.128 255.255.255.128 summary-only
+  aggregate-address 158.161.163.0 255.255.255.192 summary-only
+  aggregate-address 158.161.85.0 255.255.255.192 summary-only
+  aggregate-address 158.161.84.0 255.255.255.0 summary-only
+  aggregate-address 158.161.80.0 255.255.252.0 summary-only
+  aggregate-address 10.162.84.0 255.255.255.128 summary-only
+  aggregate-address 10.30.120.0 255.255.255.192 summary-only
+  aggregate-address 10.30.60.0 255.255.252.0 summary-only
+  aggregate-address 10.30.52.0 255.255.252.0 summary-only
+  aggregate-address 10.30.32.0 255.255.252.0 summary-only
+  redistribute lisp metric 10
+  neighbor 10.10.70.5 remote-as 65534
+  neighbor 10.10.70.5 activate
+  neighbor 10.10.70.5 next-hop-self
+  neighbor 10.50.0.26 remote-as 65535
+  neighbor 10.50.0.26 update-source Vlan3007
+  neighbor 10.50.0.26 activate
+  neighbor 10.50.0.26 weight 65535
+ exit-address-family
+ !
+ address-family ipv4 vrf DEFAULT_VN
+  bgp aggregate-timer 0
+  network 10.50.0.28 mask 255.255.255.252
+  redistribute lisp metric 10
+  neighbor 10.50.0.30 remote-as 65535
+  neighbor 10.50.0.30 update-source Vlan3008
+  neighbor 10.50.0.30 activate
+  neighbor 10.50.0.30 weight 65535
+ exit-address-family
+ !
+ address-family ipv4 vrf GUEST_VN
+  bgp aggregate-timer 0
+  network 10.10.40.4 mask 255.255.255.255
+  network 10.30.43.254 mask 255.255.255.255
+  network 10.30.56.254 mask 255.255.255.255
+  network 10.30.65.126 mask 255.255.255.255
+  network 10.30.66.254 mask 255.255.255.255
+  network 10.30.87.254 mask 255.255.255.255
+  network 10.50.0.20 mask 255.255.255.252
+  aggregate-address 10.30.80.0 255.255.248.0 summary-only
+  aggregate-address 10.30.66.0 255.255.255.0 summary-only
+  aggregate-address 10.30.65.0 255.255.255.128 summary-only
+  aggregate-address 10.30.56.0 255.255.255.0 summary-only
+  aggregate-address 10.30.40.0 255.255.252.0 summary-only
+  redistribute lisp metric 10
+  neighbor 10.10.70.9 remote-as 65534
+  neighbor 10.10.70.9 activate
+  neighbor 10.10.70.9 next-hop-self
+  neighbor 10.50.0.22 remote-as 65535
+  neighbor 10.50.0.22 update-source Vlan3006
+  neighbor 10.50.0.22 activate
+  neighbor 10.50.0.22 weight 65535
+ exit-address-family
+ !
+ address-family ipv4 vrf INTELATRAC_VN
+  bgp aggregate-timer 0
+  network 10.30.120.254 mask 255.255.255.255
+  network 10.50.0.36 mask 255.255.255.252
+  network 158.161.167.97 mask 255.255.255.255
+  aggregate-address 158.161.167.96 255.255.255.224 summary-only
+  aggregate-address 10.30.120.128 255.255.255.128 summary-only
+  redistribute lisp metric 10
+  neighbor 10.10.70.13 remote-as 65534
+  neighbor 10.10.70.13 activate
+  neighbor 10.10.70.13 next-hop-self
+  neighbor 10.50.0.38 remote-as 65535
+  neighbor 10.50.0.38 update-source Vlan3010
+  neighbor 10.50.0.38 activate
+  neighbor 10.50.0.38 weight 65535
+ exit-address-family
+!
+ip default-gateway 10.1.1.1
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http secure-active-session-modules none
+ip http max-connections 16
+ip http active-session-modules none
+ip http client source-interface Loopback0
+ip pim rp-address 10.40.0.131
+ip pim register-source Loopback0
+ip pim ssm default
+ip msdp peer 10.40.0.129 connect-source Loopback0
+ip msdp cache-sa-state
+ip tacacs source-interface Loopback0
+ip ssh bulk-mode 131072
+ip ssh time-out 10
+ip ssh authentication-retries 2
+ip ssh source-interface Loopback0
+!
+ip community-list 1 permit 655370
+!
+ip access-list extended ACL_WEBAUTH_REDIRECT
+ 20 deny ip any host 10.10.30.12
+ 300 deny ip any host 10.10.30.11
+ 500 permit tcp any any eq www
+ 600 permit tcp any any eq 443
+ 700 permit tcp any any eq 8443
+ 800 deny udp any any eq domain
+ 900 deny udp any eq bootpc any eq bootps
+!
+!
+!
+ip prefix-list deny_0.0.0.0 seq 10 permit 0.0.0.0/0
+!
+ip prefix-list l3handoff-prefixes seq 254309360 permit 10.50.0.36/30
+ip prefix-list l3handoff-prefixes seq 254457328 permit 10.50.0.32/30
+ip prefix-list l3handoff-prefixes seq 255382128 permit 10.50.0.28/30
+ip prefix-list l3handoff-prefixes seq 255530096 permit 10.50.0.24/30
+ip prefix-list l3handoff-prefixes seq 255678064 permit 10.50.0.20/30
+ip prefix-list l3handoff-prefixes seq 256602864 permit 10.50.0.16/30
+ip prefix-list l3handoff-prefixes seq 256750832 permit 10.50.0.12/30
+ip prefix-list l3handoff-prefixes seq 276023664 permit 10.50.0.8/30
+ip prefix-list l3handoff-prefixes seq 276171632 permit 10.50.0.4/30
+ip prefix-list l3handoff-prefixes seq 276319600 permit 10.50.0.0/30
+ip radius source-interface Loopback0
+ip sla 2
+ icmp-echo 10.40.0.129 source-ip 10.40.0.130
+  threshold 3
+ip sla schedule 2 life forever start-time now
+ip sla 3
+ icmp-echo 10.40.0.129 source-ip 10.40.0.130
+  threshold 3
+ip sla schedule 3 life forever start-time now
+ip sla 4
+ icmp-echo 10.10.55.254 source-ip 10.50.0.37
+  vrf INTELATRAC_VN
+  threshold 3
+ip sla 5
+ icmp-echo 158.161.174.216 source-ip 10.50.0.37
+  vrf INTELATRAC_VN
+  threshold 3
+ip sla 6
+ icmp-echo 158.161.174.217 source-ip 10.50.0.37
+  vrf INTELATRAC_VN
+  threshold 3
+ip sla 7
+ icmp-echo 158.161.203.197 source-ip 10.50.0.37
+  vrf INTELATRAC_VN
+  threshold 3
+ip sla 8
+ icmp-echo 158.161.203.196 source-ip 10.50.0.37
+  vrf INTELATRAC_VN
+  threshold 3
+ip sla 9
+ icmp-echo 158.161.174.11 source-ip 10.50.0.37
+  vrf INTELATRAC_VN
+  threshold 3
+ip sla 10
+ icmp-echo 192.168.21.1 source-ip 10.50.0.37
+  vrf INTELATRAC_VN
+  threshold 3
+ip sla 11
+ icmp-echo 10.10.55.254 source-ip 10.50.0.29
+  vrf DEFAULT_VN
+  threshold 3
+ip sla 12
+ icmp-echo 158.161.174.216 source-ip 10.50.0.29
+  vrf DEFAULT_VN
+  threshold 3
+ip sla 13
+ icmp-echo 158.161.174.217 source-ip 10.50.0.29
+  vrf DEFAULT_VN
+  threshold 3
+ip sla 14
+ icmp-echo 158.161.203.197 source-ip 10.50.0.29
+  vrf DEFAULT_VN
+  threshold 3
+ip sla 15
+ icmp-echo 158.161.203.196 source-ip 10.50.0.29
+  vrf DEFAULT_VN
+  threshold 3
+ip sla 16
+ icmp-echo 158.161.174.11 source-ip 10.50.0.29
+  vrf DEFAULT_VN
+  threshold 3
+ip sla 17
+ icmp-echo 192.168.21.1 source-ip 10.50.0.29
+  vrf DEFAULT_VN
+  threshold 3
+ip sla 18
+ icmp-echo 10.10.55.254 source-ip 10.50.0.21
+  vrf GUEST_VN
+  threshold 3
+ip sla 19
+ icmp-echo 158.161.174.216 source-ip 10.50.0.21
+  vrf GUEST_VN
+  threshold 3
+ip sla 20
+ icmp-echo 158.161.174.217 source-ip 10.50.0.21
+  vrf GUEST_VN
+  threshold 3
+ip sla 21
+ icmp-echo 158.161.203.197 source-ip 10.50.0.21
+  vrf GUEST_VN
+  threshold 3
+ip sla 22
+ icmp-echo 158.161.203.196 source-ip 10.50.0.21
+  vrf GUEST_VN
+  threshold 3
+ip sla 23
+ icmp-echo 158.161.174.11 source-ip 10.50.0.21
+  vrf GUEST_VN
+  threshold 3
+ip sla 24
+ icmp-echo 192.168.21.1 source-ip 10.50.0.21
+  vrf GUEST_VN
+  threshold 3
+ip sla 25
+ icmp-echo 10.10.55.254 source-ip 10.50.0.25
+  vrf CORP_VN
+  threshold 3
+ip sla 26
+ icmp-echo 158.161.174.216 source-ip 10.50.0.25
+  vrf CORP_VN
+  threshold 3
+ip sla 27
+ icmp-echo 158.161.174.217 source-ip 10.50.0.25
+  vrf CORP_VN
+  threshold 3
+ip sla 28
+ icmp-echo 158.161.203.197 source-ip 10.50.0.25
+  vrf CORP_VN
+  threshold 3
+ip sla 29
+ icmp-echo 158.161.203.196 source-ip 10.50.0.25
+  vrf CORP_VN
+  threshold 3
+ip sla 30
+ icmp-echo 158.161.174.11 source-ip 10.50.0.25
+  vrf CORP_VN
+  threshold 3
+ip sla 31
+ icmp-echo 192.168.21.1 source-ip 10.50.0.25
+  vrf CORP_VN
+  threshold 3
+logging source-interface Loopback0
+logging host 10.10.30.5
+logging host 158.161.160.129 transport udp port 2514
+!
+route-map deny_0.0.0.0 deny 25
+ match ip address prefix-list deny_0.0.0.0
+!
+route-map deny_0.0.0.0 permit 30
+!
+route-map DENY_EBGP_PREFIX_TAG permit 5
+ set community 655370
+!
+snmp-server community blngrd RO
+snmp-server community blngwr RW
+snmp-server trap-source Loopback0
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server enable traps flowmon
+snmp-server enable traps entity-perf throughput-notif
+snmp-server enable traps call-home message-send-fail server-fail
+snmp-server enable traps tty
+snmp-server enable traps eigrp
+snmp-server enable traps ospf state-change
+snmp-server enable traps ospf errors
+snmp-server enable traps ospf retransmit
+snmp-server enable traps ospf lsa
+snmp-server enable traps ospf cisco-specific state-change nssa-trans-change
+snmp-server enable traps ospf cisco-specific state-change shamlink interface
+snmp-server enable traps ospf cisco-specific state-change shamlink neighbor
+snmp-server enable traps ospf cisco-specific errors
+snmp-server enable traps ospf cisco-specific retransmit
+snmp-server enable traps ospf cisco-specific lsa
+snmp-server enable traps bfd
+snmp-server enable traps smart-license
+snmp-server enable traps auth-framework sec-violation
+snmp-server enable traps rep
+snmp-server enable traps memory bufferpeak
+snmp-server enable traps config-copy
+snmp-server enable traps config
+snmp-server enable traps config-ctid
+snmp-server enable traps fru-ctrl
+snmp-server enable traps entity
+snmp-server enable traps flash insertion removal lowspace
+snmp-server enable traps power-ethernet police
+snmp-server enable traps cpu threshold
+snmp-server enable traps syslog
+snmp-server enable traps udld link-fail-rpt
+snmp-server enable traps udld status-change
+snmp-server enable traps vtp
+snmp-server enable traps vlancreate
+snmp-server enable traps vlandelete
+snmp-server enable traps port-security
+snmp-server enable traps envmon
+snmp-server enable traps stackwise
+snmp-server enable traps mvpn
+snmp-server enable traps pw vc
+snmp-server enable traps ipsla
+snmp-server enable traps dhcp
+snmp-server enable traps event-manager
+snmp-server enable traps ike policy add
+snmp-server enable traps ike policy delete
+snmp-server enable traps ike tunnel start
+snmp-server enable traps ike tunnel stop
+snmp-server enable traps ipsec cryptomap add
+snmp-server enable traps ipsec cryptomap delete
+snmp-server enable traps ipsec cryptomap attach
+snmp-server enable traps ipsec cryptomap detach
+snmp-server enable traps ipsec tunnel start
+snmp-server enable traps ipsec tunnel stop
+snmp-server enable traps ipsec too-many-sas
+snmp-server enable traps ospfv3 state-change
+snmp-server enable traps ospfv3 errors
+snmp-server enable traps ipmulticast
+snmp-server enable traps msdp
+snmp-server enable traps pim neighbor-change rp-mapping-change invalid-pim-message
+snmp-server enable traps bridge newroot topologychange
+snmp-server enable traps stpx inconsistency root-inconsistency loop-inconsistency
+snmp-server enable traps bgp
+snmp-server enable traps bgp cbgp2
+snmp-server enable traps hsrp
+snmp-server enable traps isis
+snmp-server enable traps cef resource-failure peer-state-change peer-fib-state-change inconsistency
+snmp-server enable traps lisp
+snmp-server enable traps nhrp nhs
+snmp-server enable traps nhrp nhc
+snmp-server enable traps nhrp nhp
+snmp-server enable traps nhrp quota-exceeded
+snmp-server enable traps local-auth
+snmp-server enable traps entity-diag boot-up-fail hm-test-recover hm-thresh-reached scheduled-test-fail
+snmp-server enable traps mpls rfc ldp
+snmp-server enable traps mpls ldp
+snmp-server enable traps mpls rfc traffic-eng
+snmp-server enable traps mpls traffic-eng
+snmp-server enable traps mpls fast-reroute protected
+snmp-server enable traps bulkstat collection transfer
+snmp-server enable traps mac-notification change move threshold
+snmp-server enable traps errdisable
+snmp-server enable traps vlan-membership
+snmp-server enable traps transceiver all
+snmp-server enable traps vrfmib vrf-up vrf-down vnet-trunk-up vnet-trunk-down
+snmp-server enable traps rf
+snmp-server enable traps mpls vpn
+snmp-server enable traps mpls rfc vpn
+snmp-server host 10.10.30.5 version 2c blngrd
+snmp-server host 10.10.30.5 version 2c blngwr
+tacacs server dnac-tacacs_10.10.30.11
+ address ipv4 10.10.30.11
+ key 7 121B0919152B5F557C
+ timeout 4
+tacacs server dnac-tacacs_10.10.30.12
+ address ipv4 10.10.30.12
+ key 7 020408550C265C701A
+ timeout 4
+!
+radius-server attribute 6 on-for-login-auth
+radius-server attribute 6 support-multiple
+radius-server attribute 8 include-in-access-req
+radius-server attribute 25 access-request include
+radius-server attribute 31 mac format ietf upper-case
+radius-server attribute 31 send nas-port-detail mac-only
+radius-server dead-criteria time 5 tries 3
+radius-server deadtime 3
+!
+radius server dnac-radius_10.10.30.11
+ address ipv4 10.10.30.11 auth-port 1812 acct-port 1813
+ timeout 4
+ retransmit 3
+ automate-tester username dummy ignore-acct-port probe-on
+ pac key 7 0459070808011F1F5F
+!
+radius server dnac-radius_10.10.30.12
+ address ipv4 10.10.30.12 auth-port 1812 acct-port 1813
+ timeout 4
+ retransmit 3
+ automate-tester username dummy ignore-acct-port probe-on
+ pac key 7 094E42071E2544435D
+!
+!
+!
+control-plane
+ service-policy input system-cpp-policy
+!
+!
+cts role-based enforcement
+cts role-based enforcement vlan-list 1-4094
+banner motd ^C--------------------------------------------------------------------------------
+WARNING! This device is the property of BLNG and can be
+accessed only by authorized users. Unauthorized use of this system is strictly
+prohibited and may be subject to criminal prosecution.
+--------------------------------------------------------------------------------^C
+!
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+ stopbits 1
+line aux 0
+ no exec
+line vty 0 4
+ authorization commands 0 VTY_author
+ authorization commands 1 VTY_author
+ authorization commands 15 VTY_author
+ authorization exec VTY_author
+ accounting commands 0 VTY_authen
+ accounting commands 1 VTY_authen
+ accounting commands 15 VTY_authen
+ login authentication VTY_authen
+ transport input ssh
+ transport output ssh
+line vty 5 15
+ authorization commands 0 VTY_author
+ authorization commands 1 VTY_author
+ authorization commands 15 VTY_author
+ authorization exec VTY_author
+ accounting commands 0 VTY_authen
+ accounting commands 1 VTY_authen
+ accounting commands 15 VTY_authen
+ login authentication VTY_authen
+ transport input ssh
+ transport output ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+  destination address http https://bnlmtlngdnac.blng.shell.bn/licensemanager/smartproxy
+  no destination address http https://tools.cisco.com/its/service/oddce/services/DDCEService
+ntp source Loopback0
+ntp server 158.161.18.2
+ntp server 158.161.18.3
+ntp server 158.161.193.92
+!
+!
+!
+!
+!
+!
+end
+
+BNLMTLNGBN202#sh inven
+BNLMTLNGBN202#sh inventory
+NAME: "Chassis", DESCR: "Cisco Catalyst 9500 Series Chassis"
+PID: C9500-48Y4C       , VID: V01  , SN: CAT2349L03S
+
+NAME: "Power Supply Module 0", DESCR: "Cisco Catalyst 9500 Series 650W AC Power Supply"
+PID: C9K-PWR-650WAC-R  , VID: V01  , SN: ART2347F4YW
+
+NAME: "Power Supply Module 1", DESCR: "Cisco Catalyst 9500 Series 650W AC Power Supply"
+PID: C9K-PWR-650WAC-R  , VID: V01  , SN: ART2347F4XM
+
+NAME: "Fan Tray 0", DESCR: "Cisco Catalyst 9500 Series Fan Tray"
+PID: C9K-T1-FANTRAY    , VID:      , SN:
+
+NAME: "Fan Tray 1", DESCR: "Cisco Catalyst 9500 Series Fan Tray"
+PID: C9K-T1-FANTRAY    , VID:      , SN:
+
+NAME: "Slot 1 Supervisor", DESCR: "Cisco Catalyst 9500 Series Router"
+PID: C9500-48Y4C       , VID: V01  , SN: CAT2349L03S
+
+NAME: "TwentyFiveGigE1/0/1", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR          , VID: V03  , SN: AVD2338982C
+
+NAME: "TwentyFiveGigE1/0/2", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR          , VID: V03  , SN: AVD2338982F
+
+NAME: "TwentyFiveGigE1/0/3", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR          , VID: V03  , SN: AVD233896CW
+
+NAME: "TwentyFiveGigE1/0/4", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR          , VID: V03  , SN: AVD233896DG
+
+NAME: "TwentyFiveGigE1/0/11", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR          , VID: V03  , SN: AVD2338935F
+
+NAME: "TwentyFiveGigE1/0/14", DESCR: "GE SX"
+PID: GLC-SX-MMD          , VID: V02  , SN: OPM23450718
+
+NAME: "TwentyFiveGigE1/0/15", DESCR: "SFP+ 10GBASE-LR"
+PID: SFP-10G-LR          , VID: V02  , SN: AVD2318K1BP
+
+NAME: "TwentyFiveGigE1/0/16", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR          , VID: V03  , SN: AVD2338935L
+
+NAME: "TwentyFiveGigE1/0/17", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR-S        , VID: V01  , SN: AVJ2412D3C2
+
+NAME: "TwentyFiveGigE1/0/18", DESCR: "SFP+ 10GBASE-LR"
+PID: SFP-10G-LR-S        , VID: V01  , SN: FNS22110TDA
+
+NAME: "TwentyFiveGigE1/0/20", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR          , VID: V03  , SN: AVD233892XH
+
+NAME: "TwentyFiveGigE1/0/21", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR          , VID: V03  , SN: AVD2338942B
+
+NAME: "TwentyFiveGigE1/0/22", DESCR: "SFP+ 10GBASE-LR"
+PID: SFP-10G-LR          , VID: V02  , SN: AVD2318K1B9
+
+NAME: "TwentyFiveGigE1/0/23", DESCR: "SFP+ 10GBASE-LR"
+PID: SFP-10G-LR          , VID: V02  , SN: AVD2249KA1W
+
+NAME: "TwentyFiveGigE1/0/25", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR-S        , VID: V01  , SN: AVJ2412D052
+
+NAME: "TwentyFiveGigE1/0/27", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR          , VID: V03  , SN: AVD233898S2
+
+NAME: "TwentyFiveGigE1/0/28", DESCR: "SFP+ 10GBASE-SR"
+PID: SFP-10G-SR-S        , VID: V01  , SN: AVD2408DJN7
+
+
+BNLMTLNGBN202#sh cdp nei
+BNLMTLNGBN202#sh cdp neighbors
+Capability Codes: R - Router, T - Trans Bridge, B - Source Route Bridge
+                  S - Switch, H - Host, I - IGMP, r - Repeater, P - Phone,
+                  D - Remote, C - CVTA, M - Two-port Mac Relay
+
+Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID
+BNLMTLNGOB201.BLNG
+                 Gig 0/0           165             R S I  C9300-24U Ten 1/0/8
+BNLMTLNGEN213-1.blng.shell.bn
+                 Twe 1/0/14        149             R S I  C9300-24U Ten 1/1/2
+BNLMTLNGEN203-1.blng.shell.bn
+                 Twe 1/0/16        149             R S I  C9300-24U Ten 2/1/1
+BNLMTLNGEN200-1.blng.shell.bn
+                 Twe 1/0/11        136             R S I  C9300-24U Ten 1/1/2
+BNLMTLNGEN214-1.blng.shell.bn
+                 Twe 1/0/15        167             R S I  C9300-24U Ten 1/1/2
+BNLMTLNGEN205-1.blng.shell.bn
+                 Twe 1/0/17        152             R S I  C9300-24U Ten 1/1/2
+BNLMTLNGEN218-1.blng.shell.bn
+                 Twe 1/0/18        155             R S I  C9300-24U Ten 1/1/2
+BNLMTLNGEN219.blng.shell.bn
+                 Twe 1/0/22        132             R S I  C9300-24U Ten 1/1/2
+BNLMTLNGBN201.blng.shell.bn
+                 Twe 1/0/2         170             R S I  C9500-48Y Twe 1/0/2
+BNLMTLNGBN201.blng.shell.bn
+                 Twe 1/0/1         146             R S I  C9500-48Y Twe 1/0/1
+BNLMTLNGEN224.blng.shell.bn
+                 Twe 1/0/27        177             R S I  C9300-24U Ten 1/1/2
+BNLMTLNGEN225.blng.shell.bn
+                 Twe 1/0/28        174             R S I  C9300-24S Ten 1/1/2
+BNLMTLNGEN220.blng.shell.bn
+                 Twe 1/0/23        152             R S I  C9300-24U Ten 1/1/2
+BNLMTLNGFN201.blng.shell.bn
+                 Twe 1/0/4         148             R S I  C9300-24T Ten 2/1/4
+BNLMTLNGFN201.blng.shell.bn
+                 Twe 1/0/3         145             R S I  C9300-24T Ten 1/1/4
+
+Total cdp entries displayed : 15
+BNLMTLNGBN202#sh ip int brief
+Interface              IP-Address      OK? Method Status                Protocol
+Vlan1                  unassigned      YES NVRAM  up                    up
+Vlan802                10.10.55.6      YES NVRAM  up                    up
+Vlan806                10.10.70.2      YES NVRAM  up                    up
+Vlan807                10.10.70.6      YES NVRAM  up                    up
+Vlan808                10.10.70.10     YES NVRAM  up                    up
+Vlan809                10.10.70.14     YES NVRAM  up                    up
+Vlan3005               10.50.0.17      YES NVRAM  up                    up
+Vlan3006               10.50.0.21      YES NVRAM  up                    up
+Vlan3007               10.50.0.25      YES NVRAM  up                    up
+Vlan3008               10.50.0.29      YES NVRAM  up                    up
+Vlan3010               10.50.0.37      YES NVRAM  up                    up
+GigabitEthernet0/0     10.10.80.121    YES NVRAM  up                    up
+TwentyFiveGigE1/0/1    unassigned      YES unset  up                    up
+TwentyFiveGigE1/0/2    unassigned      YES unset  up                    up
+TwentyFiveGigE1/0/3    unassigned      YES unset  up                    up
+TwentyFiveGigE1/0/4    unassigned      YES unset  up                    up
+TwentyFiveGigE1/0/5    unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/6    unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/7    unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/8    unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/9    unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/10   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/11   10.40.0.164     YES NVRAM  up                    up
+TwentyFiveGigE1/0/12   10.40.0.168     YES NVRAM  down                  down
+TwentyFiveGigE1/0/13   10.40.0.136     YES NVRAM  down                  down
+TwentyFiveGigE1/0/14   10.40.0.140     YES NVRAM  up                    up
+TwentyFiveGigE1/0/15   10.40.0.147     YES NVRAM  up                    up
+TwentyFiveGigE1/0/16   10.40.0.173     YES NVRAM  up                    up
+TwentyFiveGigE1/0/17   10.40.0.150     YES NVRAM  up                    up
+TwentyFiveGigE1/0/18   10.40.0.156     YES NVRAM  up                    up
+TwentyFiveGigE1/0/19   10.40.0.179     YES NVRAM  down                  down
+TwentyFiveGigE1/0/20   10.40.4.132     YES NVRAM  down                  down
+TwentyFiveGigE1/0/21   10.40.2.132     YES NVRAM  down                  down
+TwentyFiveGigE1/0/22   10.40.0.183     YES NVRAM  up                    up
+TwentyFiveGigE1/0/23   10.40.0.188     YES NVRAM  up                    up
+TwentyFiveGigE1/0/24   10.40.0.196     YES NVRAM  down                  down
+TwentyFiveGigE1/0/25   10.40.0.201     YES NVRAM  down                  down
+TwentyFiveGigE1/0/26   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/27   10.40.0.210     YES NVRAM  up                    up
+TwentyFiveGigE1/0/28   10.40.0.214     YES NVRAM  up                    up
+TwentyFiveGigE1/0/29   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/30   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/31   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/32   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/33   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/34   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/35   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/36   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/37   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/38   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/39   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/40   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/41   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/42   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/43   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/44   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/45   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/46   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/47   unassigned      YES unset  down                  down
+TwentyFiveGigE1/0/48   unassigned      YES unset  down                  down
+HundredGigE1/0/49      unassigned      YES unset  down                  down
+HundredGigE1/0/50      unassigned      YES unset  down                  down
+HundredGigE1/0/51      unassigned      YES unset  down                  down
+HundredGigE1/0/52      unassigned      YES unset  down                  down
+Port-channel11         unassigned      YES unset  up                    up
+Port-channel13         unassigned      YES unset  up                    up
+LISP0                  unassigned      YES unset  up                    up
+LISP0.4097             10.50.0.17      YES unset  up                    up
+LISP0.4098             10.50.0.29      YES unset  up                    up
+LISP0.4099             10.50.0.25      YES unset  up                    up
+LISP0.4100             10.50.0.21      YES unset  up                    up
+LISP0.4101             10.50.0.37      YES unset  up                    up
+Loopback0              10.40.0.130     YES NVRAM  up                    up
+Loopback201            10.10.40.2      YES NVRAM  up                    up
+Loopback202            10.10.40.4      YES NVRAM  up                    up
+Loopback1022           10.30.43.254    YES NVRAM  up                    up
+Loopback1023           10.30.55.254    YES NVRAM  up                    up
+Loopback1026           10.30.35.254    YES NVRAM  up                    up
+Loopback1030           158.161.83.254  YES NVRAM  up                    up
+Loopback1031           158.161.84.254  YES NVRAM  up                    up
+Loopback1032           10.30.56.254    YES NVRAM  up                    up
+Loopback1033           158.161.85.62   YES NVRAM  up                    up
+Loopback1034           158.161.166.129 YES NVRAM  up                    up
+Loopback1035           10.162.84.1     YES NVRAM  up                    up
+Loopback1038           10.30.65.126    YES NVRAM  up                    up
+Loopback1039           10.30.120.62    YES NVRAM  up                    up
+Loopback1040           158.161.167.97  YES NVRAM  up                    up
+Loopback1041           158.161.163.62  YES NVRAM  up                    up
+Loopback1042           10.30.66.254    YES NVRAM  up                    up
+Loopback1043           10.30.87.254    YES NVRAM  up                    up
+Loopback1044           10.30.120.254   YES NVRAM  up                    up
+Loopback2045           10.20.25.254    YES NVRAM  up                    up
+Loopback2047           10.30.63.254    YES NVRAM  up                    up
+Loopback60000          10.40.0.131     YES NVRAM  up                    up
+Tunnel0                10.40.0.130     YES unset  up                    up
+Tunnel1                10.40.0.131     YES unset  up                    up
+BNLMTLNGBN202#
+BNLMTLNGBN202#
+BNLMTLNGBN202#
+BNLMTLNGBN202#

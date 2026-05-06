@@ -1,0 +1,533 @@
+{
+  "name": "SDA-Fabric-Full-Deployment-v2",
+  "description": "Complete SD-Access fabric (LISP+VXLAN+BGP) deployment with pre/post checks, 6-phase deploy, verification, and rollback",
+  "trigger": {
+    "type": "manual"
+  },
+  "activities": [
+    {
+      "id": "act_01_input",
+      "type": "inputForm",
+      "name": "Collect SDA Fabric Parameters",
+      "description": "Operator fills in fabric, device, underlay, overlay, and access parameters",
+      "properties": {
+        "fields": [
+          {
+            "name": "fabric_name",
+            "label": "Fabric Name",
+            "type": "string",
+            "defaultValue": "SJC23_SDA_Fabric",
+            "required": true
+          },
+          {
+            "name": "border_ip",
+            "label": "Border Node Mgmt IP",
+            "type": "string",
+            "defaultValue": "192.168.128.9",
+            "required": true
+          },
+          {
+            "name": "border_loopback0",
+            "label": "Border Loopback0 IP",
+            "type": "string",
+            "defaultValue": "10.255.255.1",
+            "required": true
+          },
+          {
+            "name": "border_router_id",
+            "label": "Border Router-ID",
+            "type": "string",
+            "defaultValue": "10.255.255.1",
+            "required": false
+          },
+          {
+            "name": "bgp_asn",
+            "label": "BGP ASN",
+            "type": "number",
+            "defaultValue": 65001,
+            "required": false
+          },
+          {
+            "name": "edge_ip",
+            "label": "Edge Node Mgmt IP",
+            "type": "string",
+            "defaultValue": "192.168.128.7",
+            "required": true
+          },
+          {
+            "name": "edge_loopback0",
+            "label": "Edge Loopback0 IP",
+            "type": "string",
+            "defaultValue": "10.255.255.2",
+            "required": true
+          },
+          {
+            "name": "border_p2p_ip",
+            "label": "P2P Link IP (Border)",
+            "type": "string",
+            "defaultValue": "10.255.0.0",
+            "required": false
+          },
+          {
+            "name": "edge_p2p_ip",
+            "label": "P2P Link IP (Edge)",
+            "type": "string",
+            "defaultValue": "10.255.0.1",
+            "required": false
+          },
+          {
+            "name": "isis_area",
+            "label": "ISIS Area",
+            "type": "string",
+            "defaultValue": "49.0001",
+            "required": false
+          },
+          {
+            "name": "border_isis_net",
+            "label": "ISIS NET (Border)",
+            "type": "string",
+            "defaultValue": "49.0001.0102.5525.5001.00",
+            "required": false
+          },
+          {
+            "name": "edge_isis_net",
+            "label": "ISIS NET (Edge)",
+            "type": "string",
+            "defaultValue": "49.0001.0102.5525.5002.00",
+            "required": false
+          },
+          {
+            "name": "vrf1_name",
+            "label": "VRF 1 Name",
+            "type": "string",
+            "defaultValue": "CORP_VN",
+            "required": false
+          },
+          {
+            "name": "vrf1_instance_id",
+            "label": "VRF 1 Instance ID",
+            "type": "number",
+            "defaultValue": 4099,
+            "required": false
+          },
+          {
+            "name": "vrf1_rd",
+            "label": "VRF 1 RD",
+            "type": "string",
+            "defaultValue": "1:4099",
+            "required": false
+          },
+          {
+            "name": "vrf1_rt",
+            "label": "VRF 1 RT Import/Export",
+            "type": "string",
+            "defaultValue": "1:4099",
+            "required": false
+          },
+          {
+            "name": "vrf2_name",
+            "label": "VRF 2 Name",
+            "type": "string",
+            "defaultValue": "GUEST_VN",
+            "required": false
+          },
+          {
+            "name": "vrf2_instance_id",
+            "label": "VRF 2 Instance ID",
+            "type": "number",
+            "defaultValue": 4100,
+            "required": false
+          },
+          {
+            "name": "vrf2_rd",
+            "label": "VRF 2 RD",
+            "type": "string",
+            "defaultValue": "1:4100",
+            "required": false
+          },
+          {
+            "name": "vrf2_rt",
+            "label": "VRF 2 RT Import/Export",
+            "type": "string",
+            "defaultValue": "1:4100",
+            "required": false
+          },
+          {
+            "name": "vlan1_id",
+            "label": "VLAN 1 ID",
+            "type": "number",
+            "defaultValue": 100,
+            "required": false
+          },
+          {
+            "name": "vlan1_name",
+            "label": "VLAN 1 Name",
+            "type": "string",
+            "defaultValue": "Corp_Data",
+            "required": false
+          },
+          {
+            "name": "vlan1_gateway",
+            "label": "VLAN 1 Gateway",
+            "type": "string",
+            "defaultValue": "10.30.100.1",
+            "required": false
+          },
+          {
+            "name": "vlan1_l2vni",
+            "label": "VLAN 1 L2 VNI",
+            "type": "number",
+            "defaultValue": 8100,
+            "required": false
+          },
+          {
+            "name": "vlan2_id",
+            "label": "VLAN 2 ID",
+            "type": "number",
+            "defaultValue": 200,
+            "required": false
+          },
+          {
+            "name": "vlan2_name",
+            "label": "VLAN 2 Name",
+            "type": "string",
+            "defaultValue": "Guest_WiFi",
+            "required": false
+          },
+          {
+            "name": "vlan2_gateway",
+            "label": "VLAN 2 Gateway",
+            "type": "string",
+            "defaultValue": "10.30.200.1",
+            "required": false
+          },
+          {
+            "name": "vlan2_l2vni",
+            "label": "VLAN 2 L2 VNI",
+            "type": "number",
+            "defaultValue": 8200,
+            "required": false
+          },
+          {
+            "name": "rp_address",
+            "label": "RP Address (Anycast)",
+            "type": "string",
+            "defaultValue": "10.255.255.100",
+            "required": false
+          },
+          {
+            "name": "dhcp_helper",
+            "label": "DHCP Helper IP",
+            "type": "string",
+            "defaultValue": "10.10.10.1",
+            "required": false
+          },
+          {
+            "name": "deploy_security",
+            "label": "Deploy Security (Phase 6)?",
+            "type": "boolean",
+            "defaultValue": false,
+            "required": false
+          },
+          {
+            "name": "force",
+            "label": "Force (skip existing config check)?",
+            "type": "boolean",
+            "defaultValue": false,
+            "required": false
+          }
+        ]
+      },
+      "next": "act_02_precheck"
+    },
+    {
+      "id": "act_02_precheck",
+      "type": "httpRequest",
+      "name": "Pre-Check \u2014 Device Health (8 checks)",
+      "description": "Verify RESTCONF reachability, IOS-XE version, memory, interfaces, no existing config",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/precheck",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\", \"border_ip\": \"${{ form.border_ip }}\", \"edge_ip\": \"${{ form.edge_ip }}\", \"border_loopback0\": \"${{ form.border_loopback0 }}\", \"edge_loopback0\": \"${{ form.edge_loopback0 }}\", \"force\": \"${{ form.force }}\"}",
+        "timeout": 30
+      },
+      "next": "act_03_precheck_condition"
+    },
+    {
+      "id": "act_03_precheck_condition",
+      "type": "condition",
+      "name": "Pre-Check Pass/Fail",
+      "properties": {
+        "expression": "${{ response.body.status == 'pass' }}"
+      },
+      "truePath": "act_04_phase1_deploy",
+      "falsePath": "act_20c_fail_notify"
+    },
+    {
+      "id": "act_04_phase1_deploy",
+      "type": "httpRequest",
+      "name": "Phase 1 \u2014 Deploy Underlay (ISIS + BFD + PIM + Loopbacks)",
+      "description": "Push MTU, Loopback0, Loopback60000, P2P links, ISIS, PIM RP, BFD to both devices",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/deploy/phase1-underlay",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\", \"border_loopback0\": \"${{ form.border_loopback0 }}\", \"edge_loopback0\": \"${{ form.edge_loopback0 }}\", \"border_p2p_ip\": \"${{ form.border_p2p_ip }}\", \"edge_p2p_ip\": \"${{ form.edge_p2p_ip }}\", \"border_isis_net\": \"${{ form.border_isis_net }}\", \"edge_isis_net\": \"${{ form.edge_isis_net }}\", \"rp_address\": \"${{ form.rp_address }}\"}",
+        "timeout": 60
+      },
+      "next": "act_05_delay_15s"
+    },
+    {
+      "id": "act_05_delay_15s",
+      "type": "delay",
+      "name": "Wait 15s \u2014 ISIS Convergence",
+      "properties": {
+        "duration": 15,
+        "unit": "seconds"
+      },
+      "next": "act_06_phase1_verify"
+    },
+    {
+      "id": "act_06_phase1_verify",
+      "type": "httpRequest",
+      "name": "Phase 1 Verify \u2014 Underlay Health",
+      "description": "Check ISIS neighbor UP, BFD session UP, PIM neighbor formed",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/verify/phase1-underlay",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\"}",
+        "timeout": 30
+      },
+      "next": "act_07_phase1_condition"
+    },
+    {
+      "id": "act_07_phase1_condition",
+      "type": "condition",
+      "name": "Phase 1 Pass/Fail",
+      "properties": {
+        "expression": "${{ response.body.status == 'pass' }}"
+      },
+      "truePath": "act_08_phase2_deploy",
+      "falsePath": "act_20b_rollback"
+    },
+    {
+      "id": "act_08_phase2_deploy",
+      "type": "httpRequest",
+      "name": "Phase 2 \u2014 Deploy LISP Control Plane",
+      "description": "Push LISP config: Map-Server/Map-Resolver on Border, ITR/ETR on Edge",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/deploy/phase2-lisp",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\", \"border_loopback0\": \"${{ form.border_loopback0 }}\", \"edge_loopback0\": \"${{ form.edge_loopback0 }}\"}",
+        "timeout": 60
+      },
+      "next": "act_09_delay_10s"
+    },
+    {
+      "id": "act_09_delay_10s",
+      "type": "delay",
+      "name": "Wait 10s \u2014 LISP Session Establishment",
+      "properties": {
+        "duration": 10,
+        "unit": "seconds"
+      },
+      "next": "act_10_phase2_verify"
+    },
+    {
+      "id": "act_10_phase2_verify",
+      "type": "httpRequest",
+      "name": "Phase 2 Verify \u2014 LISP Health",
+      "description": "Check LISP session UP, Map-Server active, ETR registration",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/verify/phase2-lisp",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\"}",
+        "timeout": 30
+      },
+      "next": "act_11_phase2_condition"
+    },
+    {
+      "id": "act_11_phase2_condition",
+      "type": "condition",
+      "name": "Phase 2 Pass/Fail",
+      "properties": {
+        "expression": "${{ response.body.status == 'pass' }}"
+      },
+      "truePath": "act_12_phase3_deploy",
+      "falsePath": "act_20b_rollback"
+    },
+    {
+      "id": "act_12_phase3_deploy",
+      "type": "httpRequest",
+      "name": "Phase 3 \u2014 Deploy VXLAN + L3/L2 VNI",
+      "description": "Create LISP instances for each VRF (L3 VNI) and each VLAN (L2 VNI) on Border + Edge",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/deploy/phase3-vxlan-vni",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\", \"border_loopback0\": \"${{ form.border_loopback0 }}\", \"edge_loopback0\": \"${{ form.edge_loopback0 }}\"}",
+        "timeout": 60
+      },
+      "next": "act_13_delay_10s"
+    },
+    {
+      "id": "act_13_delay_10s",
+      "type": "delay",
+      "name": "Wait 10s \u2014 VNI Establishment",
+      "properties": {
+        "duration": 10,
+        "unit": "seconds"
+      },
+      "next": "act_14_phase4_deploy"
+    },
+    {
+      "id": "act_14_phase4_deploy",
+      "type": "httpRequest",
+      "name": "Phase 4 \u2014 Deploy VRF + BGP",
+      "description": "Push VRF definitions, L3 handoff SVIs, BGP process with fusion peering, border loopbacks",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/deploy/phase4-vrf-bgp",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\", \"bgp_asn\": \"${{ form.bgp_asn }}\", \"border_loopback0\": \"${{ form.border_loopback0 }}\"}",
+        "timeout": 60
+      },
+      "next": "act_15_delay_15s"
+    },
+    {
+      "id": "act_15_delay_15s",
+      "type": "delay",
+      "name": "Wait 15s \u2014 BGP Convergence",
+      "properties": {
+        "duration": 15,
+        "unit": "seconds"
+      },
+      "next": "act_16_phase5_deploy"
+    },
+    {
+      "id": "act_16_phase5_deploy",
+      "type": "httpRequest",
+      "name": "Phase 5 \u2014 Deploy Access Layer (Edge Only)",
+      "description": "Create VLANs, SVIs with anycast MAC, device tracking, DHCP snooping",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/deploy/phase5-access",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\"}",
+        "timeout": 60
+      },
+      "next": "act_17_phase6_deploy"
+    },
+    {
+      "id": "act_17_phase6_deploy",
+      "type": "httpRequest",
+      "name": "Phase 6 \u2014 Deploy Security (Optional)",
+      "description": "AAA, RADIUS, dot1x, CTS enforcement, access port templates. Skipped if security not enabled.",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/deploy/phase6-security",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\", \"deploy_security\": \"${{ form.deploy_security }}\"}",
+        "timeout": 60
+      },
+      "next": "act_18_postcheck"
+    },
+    {
+      "id": "act_18_postcheck",
+      "type": "httpRequest",
+      "name": "Post-Check \u2014 22 Validation Checks",
+      "description": "Comprehensive validation: underlay (5), LISP (5), VXLAN (3), BGP (4), access (4), security (1)",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/postcheck",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\"}",
+        "timeout": 60
+      },
+      "next": "act_19_postcheck_condition"
+    },
+    {
+      "id": "act_19_postcheck_condition",
+      "type": "condition",
+      "name": "Post-Check Score \u2265 20/22?",
+      "properties": {
+        "expression": "${{ response.body.status == 'pass' }}"
+      },
+      "truePath": "act_20a_success_notify",
+      "falsePath": "act_20b_rollback"
+    },
+    {
+      "id": "act_20a_success_notify",
+      "type": "notification",
+      "name": "Deployment Successful",
+      "properties": {
+        "channel": "email",
+        "recipients": [
+          "network-engineering@company.com"
+        ],
+        "subject": "\u2705 SD-Access Fabric Deployed: ${{ form.fabric_name }}",
+        "body": "Fabric Name: ${{ form.fabric_name }}\nDeployed: ${{ response.body.timestamp }}\n\nBorder Node: ${{ form.border_ip }} (C9500-32C)\nEdge Node:   ${{ form.edge_ip }} (C9300X-48HXN)\n\nValidation Score: ${{ response.body.score }}\n\nVRFs Deployed:\n- ${{ form.vrf1_name }} (Instance ${{ form.vrf1_instance_id }})\n- ${{ form.vrf2_name }} (Instance ${{ form.vrf2_instance_id }})\n\nVerification Commands:\n  Border: show lisp site summary\n  Border: show lisp session\n  Edge:   show lisp instance-id * ipv4 map-cache\n  Edge:   show vlan brief"
+      },
+      "next": "act_21_end"
+    },
+    {
+      "id": "act_20b_rollback",
+      "type": "httpRequest",
+      "name": "Rollback \u2014 Reverse All Config",
+      "description": "Remove all deployed config in reverse phase order (6\u21925\u21924\u21923\u21922\u21921). Backup saved first.",
+      "properties": {
+        "url": "https://placeholder.ngrok-free.app/api/v2/rollback",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"fabric_name\": \"${{ form.fabric_name }}\"}",
+        "timeout": 120
+      },
+      "next": "act_20c_fail_notify"
+    },
+    {
+      "id": "act_20c_fail_notify",
+      "type": "notification",
+      "name": "Deployment Failed",
+      "properties": {
+        "channel": "email",
+        "recipients": [
+          "network-engineering@company.com"
+        ],
+        "subject": "\u274c SD-Access Deployment FAILED: ${{ form.fabric_name }}",
+        "body": "Fabric Name: ${{ form.fabric_name }}\nFailed At: Check relay server logs for details.\n\nRollback: Attempted \u2014 check rollback response.\nBackup: Saved on relay server.\n\nNext Steps:\n1. Check relay server logs: journalctl -u sda-relay.service --since '30 min ago'\n2. Verify YANG payload structure matches IOS-XE version\n3. Test RESTCONF manually:\n   curl -k https://${{ form.border_ip }}:443/restconf/data/Cisco-IOS-XE-native:native/hostname\n4. Re-run workflow after fixing the issue"
+      },
+      "next": "act_21_end"
+    },
+    {
+      "id": "act_21_end",
+      "type": "end",
+      "name": "Workflow Complete"
+    }
+  ]
+}

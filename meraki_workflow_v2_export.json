@@ -1,0 +1,376 @@
+{
+  "version": "2.0",
+  "name": "SDA-Fabric-Full-Deployment-v2",
+  "description": "Complete SD-Access fabric (LISP+VXLAN+BGP) deployment with pre/post checks, 6-phase deploy, verification, and rollback",
+  "trigger": "manual",
+  "targets": [
+    {
+      "name": "SDA_Relay_Server",
+      "type": "HTTPS",
+      "url": "https://YOUR-NGROK-URL.ngrok-free.app",
+      "headers": {
+        "Content-Type": "application/json",
+        "X-Webhook-Secret": "${{ secrets.WEBHOOK_SECRET }}"
+      }
+    }
+  ],
+  "activities": [
+    {
+      "id": "act_01_input",
+      "type": "Input Form",
+      "name": "Collect SDA Fabric Parameters",
+      "description": "Operator fills in fabric, device, underlay, overlay, and access parameters",
+      "fields": [
+        {"name": "fabric_name",        "type": "text",   "label": "Fabric Name",             "default": "SJC23_SDA_Fabric",       "required": true},
+        {"name": "border_ip",          "type": "text",   "label": "Border Node Mgmt IP",     "default": "192.168.128.9",          "required": true},
+        {"name": "border_loopback0",   "type": "text",   "label": "Border Loopback0 IP",     "default": "10.255.255.1",           "required": true},
+        {"name": "border_router_id",   "type": "text",   "label": "Border Router-ID",        "default": "10.255.255.1"},
+        {"name": "bgp_asn",            "type": "number", "label": "BGP ASN",                 "default": 65001},
+        {"name": "edge_ip",            "type": "text",   "label": "Edge Node Mgmt IP",       "default": "192.168.128.7",          "required": true},
+        {"name": "edge_loopback0",     "type": "text",   "label": "Edge Loopback0 IP",       "default": "10.255.255.2",           "required": true},
+        {"name": "border_p2p_ip",      "type": "text",   "label": "P2P Link IP (Border)",    "default": "10.255.0.0"},
+        {"name": "edge_p2p_ip",        "type": "text",   "label": "P2P Link IP (Edge)",      "default": "10.255.0.1"},
+        {"name": "isis_area",          "type": "text",   "label": "ISIS Area",               "default": "49.0001"},
+        {"name": "border_isis_net",    "type": "text",   "label": "ISIS NET (Border)",       "default": "49.0001.0102.5525.5001.00"},
+        {"name": "edge_isis_net",      "type": "text",   "label": "ISIS NET (Edge)",         "default": "49.0001.0102.5525.5002.00"},
+        {"name": "vrf1_name",          "type": "text",   "label": "VRF 1 Name",              "default": "CORP_VN"},
+        {"name": "vrf1_instance_id",   "type": "number", "label": "VRF 1 Instance ID",       "default": 4099},
+        {"name": "vrf1_rd",            "type": "text",   "label": "VRF 1 RD",                "default": "1:4099"},
+        {"name": "vrf1_rt",            "type": "text",   "label": "VRF 1 RT Import/Export",  "default": "1:4099"},
+        {"name": "vrf2_name",          "type": "text",   "label": "VRF 2 Name",              "default": "GUEST_VN"},
+        {"name": "vrf2_instance_id",   "type": "number", "label": "VRF 2 Instance ID",       "default": 4100},
+        {"name": "vrf2_rd",            "type": "text",   "label": "VRF 2 RD",                "default": "1:4100"},
+        {"name": "vrf2_rt",            "type": "text",   "label": "VRF 2 RT Import/Export",  "default": "1:4100"},
+        {"name": "vlan1_id",           "type": "number", "label": "VLAN 1 ID",               "default": 100},
+        {"name": "vlan1_name",         "type": "text",   "label": "VLAN 1 Name",             "default": "Corp_Data"},
+        {"name": "vlan1_gateway",      "type": "text",   "label": "VLAN 1 Gateway",          "default": "10.30.100.1"},
+        {"name": "vlan1_l2vni",        "type": "number", "label": "VLAN 1 L2 VNI",           "default": 8100},
+        {"name": "vlan2_id",           "type": "number", "label": "VLAN 2 ID",               "default": 200},
+        {"name": "vlan2_name",         "type": "text",   "label": "VLAN 2 Name",             "default": "Guest_WiFi"},
+        {"name": "vlan2_gateway",      "type": "text",   "label": "VLAN 2 Gateway",          "default": "10.30.200.1"},
+        {"name": "vlan2_l2vni",        "type": "number", "label": "VLAN 2 L2 VNI",           "default": 8200},
+        {"name": "rp_address",         "type": "text",   "label": "RP Address (Anycast)",    "default": "10.255.255.100"},
+        {"name": "dhcp_helper",        "type": "text",   "label": "DHCP Helper IP",          "default": "10.10.10.1"},
+        {"name": "deploy_security",    "type": "boolean","label": "Deploy Security (Phase 6)?","default": false},
+        {"name": "force",              "type": "boolean","label": "Force (skip existing config check)?", "default": false}
+      ],
+      "next": "act_02_precheck"
+    },
+
+    {
+      "id": "act_02_precheck",
+      "type": "Send HTTP Request",
+      "name": "Pre-Check — Device Health (8 checks)",
+      "description": "Verify RESTCONF reachability, IOS-XE version, memory, interfaces, no existing config",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/precheck",
+      "body": {
+        "fabric_name":      "${{ form.fabric_name }}",
+        "border_ip":        "${{ form.border_ip }}",
+        "edge_ip":          "${{ form.edge_ip }}",
+        "border_loopback0": "${{ form.border_loopback0 }}",
+        "edge_loopback0":   "${{ form.edge_loopback0 }}",
+        "force":            "${{ form.force }}"
+      },
+      "timeout": 30,
+      "next": "act_03_precheck_condition"
+    },
+
+    {
+      "id": "act_03_precheck_condition",
+      "type": "Condition",
+      "name": "Pre-Check Pass/Fail",
+      "condition": "${{ response.body.status == 'pass' }}",
+      "true_path": "act_04_phase1_deploy",
+      "false_path": "act_20c_fail_notify"
+    },
+
+    {
+      "id": "act_04_phase1_deploy",
+      "type": "Send HTTP Request",
+      "name": "Phase 1 — Deploy Underlay (ISIS + BFD + PIM + Loopbacks)",
+      "description": "Push MTU, Loopback0, Loopback60000, P2P links, ISIS, PIM RP, BFD to both devices",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/deploy/phase1-underlay",
+      "body": {
+        "fabric_name":      "${{ form.fabric_name }}",
+        "border_loopback0": "${{ form.border_loopback0 }}",
+        "edge_loopback0":   "${{ form.edge_loopback0 }}",
+        "border_p2p_ip":    "${{ form.border_p2p_ip }}",
+        "edge_p2p_ip":      "${{ form.edge_p2p_ip }}",
+        "border_isis_net":  "${{ form.border_isis_net }}",
+        "edge_isis_net":    "${{ form.edge_isis_net }}",
+        "rp_address":       "${{ form.rp_address }}"
+      },
+      "timeout": 60,
+      "next": "act_05_delay_15s"
+    },
+
+    {
+      "id": "act_05_delay_15s",
+      "type": "Delay",
+      "name": "Wait 15s — ISIS Convergence",
+      "duration_seconds": 15,
+      "next": "act_06_phase1_verify"
+    },
+
+    {
+      "id": "act_06_phase1_verify",
+      "type": "Send HTTP Request",
+      "name": "Phase 1 Verify — Underlay Health",
+      "description": "Check ISIS neighbor UP, BFD session UP, PIM neighbor formed",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/verify/phase1-underlay",
+      "body": {
+        "fabric_name": "${{ form.fabric_name }}"
+      },
+      "timeout": 30,
+      "next": "act_07_phase1_condition"
+    },
+
+    {
+      "id": "act_07_phase1_condition",
+      "type": "Condition",
+      "name": "Phase 1 Pass/Fail",
+      "condition": "${{ response.body.status == 'pass' }}",
+      "true_path": "act_08_phase2_deploy",
+      "false_path": "act_20b_rollback"
+    },
+
+    {
+      "id": "act_08_phase2_deploy",
+      "type": "Send HTTP Request",
+      "name": "Phase 2 — Deploy LISP Control Plane",
+      "description": "Push LISP config: Map-Server/Map-Resolver on Border, ITR/ETR on Edge",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/deploy/phase2-lisp",
+      "body": {
+        "fabric_name":      "${{ form.fabric_name }}",
+        "border_loopback0": "${{ form.border_loopback0 }}",
+        "edge_loopback0":   "${{ form.edge_loopback0 }}"
+      },
+      "timeout": 60,
+      "next": "act_09_delay_10s"
+    },
+
+    {
+      "id": "act_09_delay_10s",
+      "type": "Delay",
+      "name": "Wait 10s — LISP Session Establishment",
+      "duration_seconds": 10,
+      "next": "act_10_phase2_verify"
+    },
+
+    {
+      "id": "act_10_phase2_verify",
+      "type": "Send HTTP Request",
+      "name": "Phase 2 Verify — LISP Health",
+      "description": "Check LISP session UP, Map-Server active, ETR registration",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/verify/phase2-lisp",
+      "body": {
+        "fabric_name": "${{ form.fabric_name }}"
+      },
+      "timeout": 30,
+      "next": "act_11_phase2_condition"
+    },
+
+    {
+      "id": "act_11_phase2_condition",
+      "type": "Condition",
+      "name": "Phase 2 Pass/Fail",
+      "condition": "${{ response.body.status == 'pass' }}",
+      "true_path": "act_12_phase3_deploy",
+      "false_path": "act_20b_rollback"
+    },
+
+    {
+      "id": "act_12_phase3_deploy",
+      "type": "Send HTTP Request",
+      "name": "Phase 3 — Deploy VXLAN + L3/L2 VNI",
+      "description": "Create LISP instances for each VRF (L3 VNI) and each VLAN (L2 VNI) on Border + Edge",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/deploy/phase3-vxlan-vni",
+      "body": {
+        "fabric_name":      "${{ form.fabric_name }}",
+        "border_loopback0": "${{ form.border_loopback0 }}",
+        "edge_loopback0":   "${{ form.edge_loopback0 }}"
+      },
+      "timeout": 60,
+      "next": "act_13_delay_10s"
+    },
+
+    {
+      "id": "act_13_delay_10s",
+      "type": "Delay",
+      "name": "Wait 10s — VNI Establishment",
+      "duration_seconds": 10,
+      "next": "act_14_phase4_deploy"
+    },
+
+    {
+      "id": "act_14_phase4_deploy",
+      "type": "Send HTTP Request",
+      "name": "Phase 4 — Deploy VRF + BGP",
+      "description": "Push VRF definitions, L3 handoff SVIs, BGP process with fusion peering, border loopbacks",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/deploy/phase4-vrf-bgp",
+      "body": {
+        "fabric_name":      "${{ form.fabric_name }}",
+        "bgp_asn":          "${{ form.bgp_asn }}",
+        "border_loopback0": "${{ form.border_loopback0 }}"
+      },
+      "timeout": 60,
+      "next": "act_15_delay_15s"
+    },
+
+    {
+      "id": "act_15_delay_15s",
+      "type": "Delay",
+      "name": "Wait 15s — BGP Convergence",
+      "duration_seconds": 15,
+      "next": "act_16_phase5_deploy"
+    },
+
+    {
+      "id": "act_16_phase5_deploy",
+      "type": "Send HTTP Request",
+      "name": "Phase 5 — Deploy Access Layer (Edge Only)",
+      "description": "Create VLANs, SVIs with anycast MAC, device tracking, DHCP snooping",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/deploy/phase5-access",
+      "body": {
+        "fabric_name": "${{ form.fabric_name }}"
+      },
+      "timeout": 60,
+      "next": "act_17_phase6_deploy"
+    },
+
+    {
+      "id": "act_17_phase6_deploy",
+      "type": "Send HTTP Request",
+      "name": "Phase 6 — Deploy Security (Optional)",
+      "description": "AAA, RADIUS, dot1x, CTS enforcement, access port templates. Skipped if security not enabled.",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/deploy/phase6-security",
+      "body": {
+        "fabric_name":      "${{ form.fabric_name }}",
+        "deploy_security":  "${{ form.deploy_security }}"
+      },
+      "timeout": 60,
+      "next": "act_18_postcheck"
+    },
+
+    {
+      "id": "act_18_postcheck",
+      "type": "Send HTTP Request",
+      "name": "Post-Check — 22 Validation Checks",
+      "description": "Comprehensive validation: underlay (5), LISP (5), VXLAN (3), BGP (4), access (4), security (1)",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/postcheck",
+      "body": {
+        "fabric_name": "${{ form.fabric_name }}"
+      },
+      "timeout": 60,
+      "next": "act_19_postcheck_condition"
+    },
+
+    {
+      "id": "act_19_postcheck_condition",
+      "type": "Condition",
+      "name": "Post-Check Score ≥ 20/22?",
+      "condition": "${{ response.body.status == 'pass' }}",
+      "true_path": "act_20a_success_notify",
+      "false_path": "act_20b_rollback"
+    },
+
+    {
+      "id": "act_20a_success_notify",
+      "type": "Notification",
+      "name": "Deployment Successful",
+      "channel": "email",
+      "to": ["network-engineering@company.com"],
+      "subject": "✅ SD-Access Fabric Deployed: ${{ form.fabric_name }}",
+      "body": "Fabric Name: ${{ form.fabric_name }}\nDeployed: ${{ response.body.timestamp }}\n\nBorder Node: ${{ form.border_ip }} (C9500-32C)\nEdge Node:   ${{ form.edge_ip }} (C9300X-48HXN)\n\nValidation Score: ${{ response.body.score }}\n\nVRFs Deployed:\n- ${{ form.vrf1_name }} (Instance ${{ form.vrf1_instance_id }})\n- ${{ form.vrf2_name }} (Instance ${{ form.vrf2_instance_id }})\n\nVerification Commands:\n  Border: show lisp site summary\n  Border: show lisp session\n  Edge:   show lisp instance-id * ipv4 map-cache\n  Edge:   show vlan brief",
+      "next": "act_21_end"
+    },
+
+    {
+      "id": "act_20b_rollback",
+      "type": "Send HTTP Request",
+      "name": "Rollback — Reverse All Config",
+      "description": "Remove all deployed config in reverse phase order (6→5→4→3→2→1). Backup saved first.",
+      "target": "SDA_Relay_Server",
+      "method": "POST",
+      "path": "/api/v2/rollback",
+      "body": {
+        "fabric_name": "${{ form.fabric_name }}"
+      },
+      "timeout": 120,
+      "next": "act_20c_fail_notify"
+    },
+
+    {
+      "id": "act_20c_fail_notify",
+      "type": "Notification",
+      "name": "Deployment Failed",
+      "channel": "email",
+      "to": ["network-engineering@company.com"],
+      "subject": "❌ SD-Access Deployment FAILED: ${{ form.fabric_name }}",
+      "body": "Fabric Name: ${{ form.fabric_name }}\nFailed At: Check relay server logs for details.\n\nRollback: Attempted — check rollback response.\nBackup: Saved on relay server.\n\nNext Steps:\n1. Check relay server logs: journalctl -u sda-relay.service --since '30 min ago'\n2. Verify YANG payload structure matches IOS-XE version\n3. Test RESTCONF manually:\n   curl -k https://${{ form.border_ip }}:443/restconf/data/Cisco-IOS-XE-native:native/hostname\n4. Re-run workflow after fixing the issue",
+      "next": "act_21_end"
+    },
+
+    {
+      "id": "act_21_end",
+      "type": "End",
+      "name": "Workflow Complete"
+    }
+  ],
+
+  "_workflow_map": {
+    "description": "Visual flow of activities",
+    "flow": [
+      "act_01_input → act_02_precheck → act_03_precheck_condition",
+      "  ├─ PASS → act_04_phase1 → act_05_delay → act_06_verify1 → act_07_condition",
+      "  │           ├─ PASS → act_08_phase2 → act_09_delay → act_10_verify2 → act_11_condition",
+      "  │           │           ├─ PASS → act_12_phase3 → act_13_delay → act_14_phase4 → act_15_delay",
+      "  │           │           │           → act_16_phase5 → act_17_phase6 → act_18_postcheck → act_19_condition",
+      "  │           │           │                ├─ PASS → act_20a_success → act_21_end",
+      "  │           │           │                └─ FAIL → act_20b_rollback → act_20c_fail → act_21_end",
+      "  │           │           └─ FAIL → act_20b_rollback → act_20c_fail → act_21_end",
+      "  │           └─ FAIL → act_20b_rollback → act_20c_fail → act_21_end",
+      "  └─ FAIL → act_20c_fail → act_21_end"
+    ]
+  },
+
+  "_timing": {
+    "description": "Estimated execution times",
+    "phases": [
+      {"activity": "Pre-Check",       "duration_sec": 5,  "cumulative_sec": 5},
+      {"activity": "Phase 1 Deploy",  "duration_sec": 10, "cumulative_sec": 15},
+      {"activity": "Delay + Verify",  "duration_sec": 20, "cumulative_sec": 35},
+      {"activity": "Phase 2 Deploy",  "duration_sec": 8,  "cumulative_sec": 43},
+      {"activity": "Delay + Verify",  "duration_sec": 15, "cumulative_sec": 58},
+      {"activity": "Phase 3 Deploy",  "duration_sec": 12, "cumulative_sec": 70},
+      {"activity": "Delay",           "duration_sec": 10, "cumulative_sec": 80},
+      {"activity": "Phase 4 Deploy",  "duration_sec": 15, "cumulative_sec": 95},
+      {"activity": "Delay",           "duration_sec": 15, "cumulative_sec": 110},
+      {"activity": "Phase 5 Deploy",  "duration_sec": 10, "cumulative_sec": 120},
+      {"activity": "Phase 6 Deploy",  "duration_sec": 8,  "cumulative_sec": 128},
+      {"activity": "Post-Check",      "duration_sec": 15, "cumulative_sec": 143},
+      {"activity": "Notification",    "duration_sec": 2,  "cumulative_sec": 145}
+    ],
+    "total_estimated": "~2.5 minutes"
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "workflow": {
+    "unique_name": "definition_workflow_vrC11D3essdFJNqPbwMWa5ZUZqOb1Q",
+    "name": "Test 1 - Condition Block",
+    "title": "Test 1 - Condition Block",
+    "type": "generic.workflow",
+    "base_type": "workflow",
+    "variables": [
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "hello",
+          "scope": "input",
+          "name": "Test Variable",
+          "type": "datatype.string",
+          "description": "A test variable",
+          "is_required": false,
+          "display_on_wizard": false,
+          "is_invisible": false,
+          "variable_string_format": ""
+        },
+        "unique_name": "variable_workflow_Do0AruRjt9mMHVDMkowB0ARbHDhy3U",
+        "object_type": "variable_workflow"
+      }
+    ],
+    "properties": {
+      "atomic": {
+        "is_atomic": false
+      },
+      "delete_workflow_instance": false,
+      "description": "Incremental test 1: Test 1 - Condition Block",
+      "display_name": "Test 1 - Condition Block",
+      "runtime_user": {
+        "override_target_runtime_user": false,
+        "specify_on_workflow_start": false,
+        "target_default": true
+      },
+      "target": {
+        "no_target": true
+      }
+    },
+    "object_type": "definition_workflow",
+    "actions": [
+      {
+        "unique_name": "definition_activity_wE9speYHdIc9j9OmYBb87gZTX0QXkR",
+        "name": "Execute Python Script",
+        "title": "Hello World Test",
+        "type": "python3.script",
+        "base_type": "activity",
+        "properties": {
+          "action_timeout": 60,
+          "continue_on_failure": false,
+          "description": "Hello World Test",
+          "display_name": "Hello World Test",
+          "script_arguments": [
+            "$workflow.definition_workflow_vrC11D3essdFJNqPbwMWa5ZUZqOb1Q.input.variable_workflow_Do0AruRjt9mMHVDMkowB0ARbHDhy3U$"
+          ],
+          "script_body": "import sys\nval = sys.argv[1] if len(sys.argv) > 1 else 'none'\nsucceeded = True\nresult = f'Got: {val}'\nprint(result)",
+          "script_queries": [
+            {
+              "script_query_name": "succeeded",
+              "script_query_type": "boolean"
+            },
+            {
+              "script_query_name": "result",
+              "script_query_type": "string"
+            }
+          ],
+          "skip_execution": false
+        },
+        "object_type": "definition_activity"
+      },
+      {
+        "unique_name": "definition_activity_W4sy4YpzhwCZVQyAouPubG0N3jCop1",
+        "name": "Condition Block",
+        "title": "Check Result",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Check if script succeeded",
+          "display_name": "Check Result",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_izUUcUZYoa82zbVOs1RgHWUtkGkDV5",
+            "name": "Condition Branch",
+            "title": "Passed",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$activity.definition_activity_wE9speYHdIc9j9OmYBb87gZTX0QXkR.output.script_queries.succeeded$",
+                "operator": "ne",
+                "right_operand": ""
+              },
+              "continue_on_failure": false,
+              "description": "Script passed",
+              "display_name": "Passed",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": []
+          },
+          {
+            "unique_name": "definition_activity_NVNfaB92tjydNuaINmo5XvsMKtHqbf",
+            "name": "Condition Branch",
+            "title": "Failed",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$activity.definition_activity_wE9speYHdIc9j9OmYBb87gZTX0QXkR.output.script_queries.succeeded$",
+                "operator": "eq",
+                "right_operand": ""
+              },
+              "continue_on_failure": false,
+              "description": "Script failed",
+              "display_name": "Failed",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": []
+          }
+        ]
+      }
+    ],
+    "categories": [
+      "category_LawWK1IhIiqLWO4mAC3uTsi7dDSx8D"
+    ]
+  },
+  "categories": {
+    "category_LawWK1IhIiqLWO4mAC3uTsi7dDSx8D": {
+      "unique_name": "category_LawWK1IhIiqLWO4mAC3uTsi7dDSx8D",
+      "name": "SDA Test",
+      "title": "SDA Test",
+      "type": "basic.category",
+      "base_type": "category",
+      "description": "Incremental import test",
+      "category_type": "custom",
+      "object_type": "category"
+    }
+  }
+}

@@ -1,0 +1,520 @@
+================================================================
+  SDA POC - LAB SETUP REQUIREMENTS DOCUMENT
+  Prepared: April 2, 2026
+  Project: Meraki SDA Workflow POC (SJC23-SDA)
+  Contact: Darsh (darmania@cisco.com)
+================================================================
+
+This document covers ALL requirements for the lab technician:
+  A. Relay Server VM Specifications
+  B. Switch Configuration Requirements
+  C. Physical Connectivity & Port Mapping
+  D. Logical Connectivity & Reachability
+  E. Internet & Cloud Requirements
+  F. Pre-Validation Checklist
+  G. Deliverables
+
+
+================================================================
+A. RELAY SERVER (VM) - FULL SPECIFICATIONS
+================================================================
+
+PURPOSE:
+  The relay server bridges Meraki Cloud (internet) to the
+  on-prem switches (private IPs). Meraki sends HTTPS webhooks
+  to this server, which translates them into RESTCONF API
+  calls to configure the Catalyst switches.
+
+---------- HARDWARE / VM SPECS ----------
+
+  Resource        Minimum (Lab)      Recommended (Prod)
+  -----------     --------------     ------------------
+  vCPU            2 cores            4 cores
+  RAM             4 GB               8 GB
+  Disk            40 GB (SSD)        80 GB (SSD)
+  NIC             1x 1GbE           2x 1GbE
+
+  NOTE: A single NIC is fine for the POC. It will carry
+  both management traffic AND RESTCONF traffic to switches.
+
+---------- OPERATING SYSTEM ----------
+
+  OS:             Ubuntu 22.04 LTS Server (64-bit)
+  Download:       https://releases.ubuntu.com/22.04/
+  ISO File:       ubuntu-22.04.4-live-server-amd64.iso (~1.8 GB)
+  Kernel:         5.15 LTS (default with 22.04)
+
+  WHY Ubuntu 22.04:
+    - Free (no license)
+    - Python 3.10 included
+    - LTS support until April 2027
+    - ~2 GB RAM base usage (leaves room for the app)
+
+---------- VM PLATFORM OPTIONS ----------
+
+  Option 1: ESXi / vSphere  (preferred if available)
+  Option 2: Hyper-V on Windows Server
+  Option 3: VirtualBox on any PC (quick for lab)
+  Option 4: Bare-metal (Intel NUC or similar)
+
+---------- NETWORKING ON THE VM ----------
+
+  VM Network Adapter Mode: BRIDGED (not NAT)
+    -> Must bridge to the physical NIC on the same VLAN/subnet
+       that can reach 192.168.128.0/24 (switch management)
+
+  Static IP Configuration on the VM:
+    IP Address:   192.168.128.10
+    Subnet Mask:  255.255.255.0  (/24)
+    Gateway:      192.168.128.1  (MX or default GW)
+    DNS:          208.67.222.222, 8.8.8.8
+    NTP:          Same NTP server used by switches
+
+  All devices are on the SAME subnet: 192.168.128.0/24
+
+---------- SOFTWARE TO INSTALL ON VM ----------
+
+  After Ubuntu installation, run:
+
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y python3 python3-pip python3-venv git curl net-tools
+
+  Then:
+    mkdir -p /opt/sda-relay && cd /opt/sda-relay
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install flask requests pyyaml python-dotenv gunicorn
+
+  ngrok (HTTPS tunnel):
+    curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok-v3-stable-linux-amd64.tgz \
+      | sudo tar xz -C /usr/local/bin
+    ngrok config add-authtoken <TOKEN_FROM_ngrok_dashboard>
+
+---------- VM USER ACCOUNT ----------
+
+  Username:    sdaadmin
+  Hostname:    sda-relay-server
+  SSH:         Enable OpenSSH server during install
+  Privilege:   Full sudo access
+
+
+================================================================
+B. SWITCH CONFIGURATION REQUIREMENTS
+================================================================
+
+These are the MINIMUM configs needed on BOTH switches so they can:
+  1. Be claimed into Meraki Dashboard (Cloud Monitoring)
+  2. Accept RESTCONF API calls from the relay server
+
+  *** IMPORTANT: DO NOT configure SDA-specific items manually! ***
+  The relay server will push ALL SDA configuration automatically:
+    - Hostnames, Loopback0, fabric link IPs
+    - ISIS, LISP, VXLAN, PIM, BGP
+    - VN overlays (CORP_VN, GUEST_VN)
+  You only need: management IP, RESTCONF, AAA, DNS, NTP, Meraki connect.
+
+---------- B1. COMMON CONFIG (BOTH SWITCHES) ----------
+
+! === RESTCONF (Required for relay server) ===
+conf t
+restconf
+ip http server
+ip http secure-server
+ip http authentication local
+
+! === AAA (Required for both Meraki + RESTCONF) ===
+aaa new-model
+aaa authentication login default local
+aaa authorization exec default local
+
+! === Local User with Privilege 15 (Required) ===
+! This user is used by: (a) RESTCONF from relay, (b) Meraki onboarding
+username admin privilege 15 secret <STRONG_PASSWORD>
+
+! === IP Routing (Required for Meraki tunnel) ===
+ip routing
+
+! === DNS Resolution (Required for Meraki tunnel) ===
+ip name-server 208.67.222.222
+ip domain lookup
+ip domain name sjc23.cisco.com
+
+! === NTP (Required - clock must be correct for TLS) ===
+ntp server 10.40.0.1
+! (Use your lab NTP server. If none, use: ntp server pool.ntp.org)
+
+! === System MTU ===
+system mtu 9100
+
+! === Meraki Cloud Registration ===
+! This initiates the tunnel to Meraki Dashboard
+service meraki connect
+end
+
+! === VERIFY MERAKI TUNNEL ===
+show meraki connect
+! Expected output:
+!   Meraki Tunnel status: Up
+!   Cloud ID: XXXX-XXXX-XXXX    <-- RECORD THIS! Needed to claim in Dashboard
+!
+! If tunnel is DOWN, check:
+!   - DNS resolution (ping google.com)
+!   - NTP (show clock -- must be current date/time)
+!   - Internet reachability (ping 8.8.8.8)
+!   - Firewall rules (port 443 outbound)
+
+
+---------- B2. C9500-32C (BORDER NODE) - 192.168.128.9 ----------
+
+Role: SDA Border node (will become LISP MS/MR, PIM RP after automation)
+
+Additional config beyond the common section:
+
+! Management IP (should already be set)
+interface Vlan128
+ ip address 192.168.128.9 255.255.255.0
+ no shutdown
+
+! Default route (for internet / Meraki tunnel)
+ip route 0.0.0.0 0.0.0.0 192.168.128.1
+
+! *** DO NOT CONFIGURE THESE MANUALLY ***
+! The following will be PUSHED AUTOMATICALLY by the relay server:
+!   - hostname
+!   - Loopback0 (Router ID / RLOC)
+!   - Fabric link interface (TwentyFiveGigE1/0/1) IP addressing
+!   - ISIS, LISP, VXLAN, PIM, BGP
+!   - VN overlays (CORP_VN, GUEST_VN)
+!
+! Just plug in Cable #4 (see Section C) -- the relay handles the rest.
+
+
+---------- B3. C9300X-48HXN (EDGE NODE) - 192.168.128.7 ----------
+
+Role: SDA Edge node (will become LISP xTR, access after automation)
+
+Additional config beyond the common section:
+
+! Management IP (should already be set)
+interface Vlan128
+ ip address 192.168.128.7 255.255.255.0
+ no shutdown
+
+! Default route (for internet / Meraki tunnel)
+ip route 0.0.0.0 0.0.0.0 192.168.128.1
+
+! *** DO NOT CONFIGURE THESE MANUALLY ***
+! The following will be PUSHED AUTOMATICALLY by the relay server:
+!   - hostname
+!   - Loopback0 (Router ID / RLOC)
+!   - Fabric link interface (TenGigabitEthernet1/1/1) IP addressing
+!   - ISIS, LISP, VXLAN
+!   - VN overlays (CORP_VN, GUEST_VN)
+!
+! Just plug in Cable #4 (see Section C) -- the relay handles the rest.
+
+
+================================================================
+C. PHYSICAL CONNECTIVITY & PORT MAPPING
+================================================================
+
+---------- PHYSICAL TOPOLOGY DIAGRAM ----------
+
+
+                     +---------------------------------------+
+                     |        MANAGEMENT SWITCH / MX          |
+                     |        VLAN 128 - 192.168.128.0/24     |
+                     |    (Must have internet uplink via MX)   |
+                     +----+----------+----------+-------------+
+                          |          |          |
+                       Port A     Port B     Port C
+                       (RJ45)     (RJ45)     (RJ45)
+                       Cable#1    Cable#2    Cable#3
+                          |          |          |
+      +-------------------+          |          +-------------------+
+      |                              |                              |
+      v                              v                              v
++-----------------+         +-----------------+         +-----------------+
+|                 |         |                 |         |                 |
+|  VM / SERVER    |         |   C9500-32C     |         |  C9300X-48HXN   |
+|  (sda-relay)    |         |   BORDER NODE   |         |  EDGE NODE      |
+|                 |         |                 |         |                 |
+|  OS: Ubuntu     |         |  Role: LISP     |         |  Role: LISP     |
+|      22.04 LTS  |         |  MS/MR, PIM RP  |         |  xTR, Access    |
+|                 |         |                 |         |                 |
+|  NIC: eth0      |         |  Mgmt: front-   |         |  Mgmt: front-   |
+|  192.168.128.10 |         |  panel port     |         |  panel port     |
+|  /24            |         |  192.168.128.9  |         |  192.168.128.7  |
+|  GW: .128.1     |         |  /24            |         |  /24            |
+|                 |         |  GW: .128.1     |         |  GW: .128.1     |
++-----------------+         +--------+--------+         +--------+--------+
+                                     |                          |
+                                     |  SDA FABRIC LINK         |
+                                     |  Cable #4                |
+                                     |  (Direct! No switch      |
+                                     |   in between)            |
+                                     |                          |
+                              TwFiveGigE             TenGigE
+                               1/0/1                  1/1/1
+                              (IPs assigned           (IPs assigned
+                               by automation)          by automation)
+                                     |                          |
+                                     +--------------------------+
+                                       SFP28/SFP+ DAC or Fiber
+                                       (25G or 10G)
+
+  NOTE: Just plug in Cable #4. The relay server will configure
+  the IP addresses, ISIS, LISP, and VXLAN on these interfaces
+  automatically via RESTCONF.
+
+
+---------- CABLE LIST ----------
+
+Cable  From                              To                              Type           Purpose
+-----  --------------------------------  --------------------------------  -------------  ----------------------
+  #1   VM eth0 / NIC port                Mgmt Switch - access port        Cat6 RJ45      VM management +
+                                         on VLAN 128                      (1GbE)         internet + RESTCONF
+
+  #2   C9500-32C                         Mgmt Switch - access port        Cat6 RJ45      Switch management
+       FRONT-PANEL port                  on VLAN 128                      (1GbE)         VLAN 128 (Meraki
+       (any GigE or 10G RJ45)                                                           tunnel + RESTCONF)
+
+  #3   C9300X-48HXN                      Mgmt Switch - access port        Cat6 RJ45      Switch management
+       FRONT-PANEL port                  on VLAN 128                      (1GbE)         VLAN 128 (Meraki
+       (any GigE or 10G RJ45)                                                           tunnel + RESTCONF)
+
+  #4   C9500-32C                         C9300X-48HXN                     SFP28/SFP+     SDA fabric underlay
+       TwentyFiveGigE1/0/1               TenGigabitEthernet1/1/1          25G DAC or     (ISIS, LISP, VXLAN)
+                                                                          10G SFP+ DAC   DIRECT connection!
+
+
+---------- PORT MAPPING SUMMARY ----------
+
+Device              Port                       IP Address        Role            Cable #  VLAN
+------------------  -------------------------  ----------------  --------------  -------  ------
+VM (sda-relay)      eth0 / ens160              192.168.128.10    Management      #1       128
+C9500 (Border)      Front-panel GigE/10G       192.168.128.9     Management      #2       128
+C9500 (Border)      TwentyFiveGigE1/0/1        (by automation)   Fabric uplink   #4       routed
+C9300X (Edge)       Front-panel GigE/10G       192.168.128.7     Management      #3       128
+C9300X (Edge)       TenGigabitEthernet1/1/1    (by automation)   Fabric uplink   #4       routed
+
+  Fabric IPs, Loopbacks, and all SDA config are pushed by the relay
+  server automation. Only management IPs need to be set manually.
+
+
+---------- IMPORTANT CABLING NOTES ----------
+
+  * Cable #4 (Fabric Link) MUST be a DIRECT connection between the
+    two switches. No switch in between. This is the SDA underlay.
+
+  * For Cable #4, you need a compatible SFP28/SFP+ transceiver:
+    - C9500 side: 25G SFP28 port -> use SFP-25G-AOC or SFP-10/25G-CSR-S
+    - C9300X side: 10G SFP+ port in the network module slot (1/1/x)
+    - If mixing speeds, port auto-negotiates to the lower speed (10G)
+    - A 10G SFP+ DAC cable works on both sides if 25G is not required
+
+  * For management (Cables #2 and #3):
+    - Use a FRONT-PANEL port configured as access on VLAN 128
+    - Do NOT use GigE0/0 (the OOB management port on the back)
+
+  *** CRITICAL ***
+      Meraki "service meraki connect" requires the uplink to be
+      via a FRONT-PANEL port, NOT the dedicated management port
+      (GigE0/0). The Meraki tunnel will NOT form over GigE0/0.
+      You CAN still use GigE0/0 for local console/SSH if desired.
+
+
+================================================================
+D. LOGICAL CONNECTIVITY & REACHABILITY MAP
+================================================================
+
+---------- IP ADDRESSING TABLE ----------
+
+--- MANUAL (set by lab tech) ---
+
+Device                  Interface                  IP Address        Subnet  VLAN    Purpose
+----------------------  -------------------------  ----------------  ------  ------  --------------------------
+VM (sda-relay)          eth0 / ens160              192.168.128.10    /24     128     Mgmt + RESTCONF + Internet
+C9500-32C (Border)      VLAN 128 SVI               192.168.128.9     /24     128     Mgmt + RESTCONF + Meraki
+C9300X-48HXN (Edge)     VLAN 128 SVI               192.168.128.7     /24     128     Mgmt + RESTCONF + Meraki
+Default Gateway         MX or L3 switch            192.168.128.1     /24     128     Internet gateway
+
+--- AUTOMATED (pushed by relay server via RESTCONF) ---
+
+Device                  Interface                  IP Address        Subnet  Purpose
+----------------------  -------------------------  ----------------  ------  --------------------------
+C9500-32C (Border)      TwentyFiveGigE1/0/1        10.255.0.0        /31     SDA underlay fabric link
+C9300X-48HXN (Edge)     TenGigabitEthernet1/1/1    10.255.0.1        /31     SDA underlay fabric link
+C9500-32C (Border)      Loopback0                  10.255.255.1      /32     Router ID / LISP RLOC
+C9300X-48HXN (Edge)     Loopback0                  10.255.255.2      /32     Router ID / LISP RLOC
+C9500-32C (Border)      Loopback60000              10.255.255.100    /32     Anycast RP / LISP MS
+
+  All management devices (VM + switches + GW) are on 192.168.128.0/24.
+  The 10.x.x.x addresses are pushed by the relay and are internal to the SDA fabric.
+
+
+---------- TRAFFIC FLOW DIAGRAM ----------
+
+
+     +------------------+                       +------------------+
+     |  Meraki Cloud    |  webhook (HTTPS :443)  |  ngrok servers   |
+     |  dashboard.      | ----(outbound only)--> |  *.ngrok.com     |
+     |  meraki.com      |                        +--------+---------+
+     +--------+---------+                                 |
+              |                                  ngrok tunnel (outbound
+              |  Meraki Tunnel                   from VM to ngrok)
+              |  (outbound :443                           |
+              |   from each switch)                       v
+              |                                 +------------------+
+              |                                 |  VM / Relay      |
+              +--- switches connect ----------> |  192.168.128.10  |
+                   outbound to Meraki           |  Flask :5000     |
+                   cloud for monitoring         +----+--------+----+
+                                                     |        |
+                                            RESTCONF |        | RESTCONF
+                                            :443     |        | :443
+                                                     v        v
+                                            +---------+  +---------+
+                                            | C9500   |  | C9300X  |
+                                            | .128.9  |  | .128.7  |
+                                            +---------+  +---------+
+                                                  \         /
+                                                   \ Cable /
+                                                    \ #4  /
+                                                     \   /
+                                                      \ /
+                                                SDA Fabric Link
+                                              (ISIS + LISP + VXLAN)
+
+
+---------- REACHABILITY REQUIREMENTS ----------
+
+FROM --> TO                                PORT    PROTOCOL   PURPOSE
+-----------------------------------------  ------  ---------  --------------------------
+VM --> C9500 (192.168.128.9)               443     HTTPS      RESTCONF API calls
+VM --> C9300X (192.168.128.7)              443     HTTPS      RESTCONF API calls
+VM --> Internet                            443     HTTPS      ngrok tunnel (outbound)
+VM --> api.meraki.com                      443     HTTPS      Meraki Dashboard API
+C9500 --> Internet                         443     HTTPS      Meraki tunnel
+C9300X --> Internet                        443     HTTPS      Meraki tunnel
+C9500 --> DNS (208.67.222.222)             53      UDP/TCP    Name resolution
+C9300X --> DNS (208.67.222.222)            53      UDP/TCP    Name resolution
+C9500 --> NTP server                       123     UDP        Clock sync (for TLS)
+C9300X --> NTP server                      123     UDP        Clock sync (for TLS)
+C9500 <--> C9300X (Cable #4)               ALL     IP         SDA underlay (after automation)
+Your PC --> VM (192.168.128.10)            22      SSH        Admin access to relay
+
+
+================================================================
+E. INTERNET & CLOUD REQUIREMENTS
+================================================================
+
+---------- DOES THE VM NEED INTERNET? ----------
+
+  YES. Outbound HTTPS (port 443) to:
+    1. *.ngrok.com    - HTTPS tunnel service
+    2. api.meraki.com - Dashboard API
+    3. Ubuntu repos   - package updates (apt)
+
+---------- DO THE SWITCHES NEED INTERNET? ----------
+
+  YES. Outbound HTTPS (port 443) to:
+    1. *.meraki.com   - Dashboard + Cloud tunnel
+    2. DNS server     - To resolve Meraki hostnames
+    3. NTP server     - Clock sync (TLS needs correct time)
+
+---------- MERAKI-SPECIFIC FIREWALL RULES ----------
+
+  If there's a firewall, allow these domains OUTBOUND on port 443:
+
+    *.meraki.com
+    *.networkmeraki.com
+    dashboard.meraki.com
+    api.meraki.com
+
+  Full list: https://documentation.meraki.com/General_Administration/
+             Other_Topics/Upstream_Firewall_Rules_for_Cloud_Connectivity
+
+---------- DOES ANYTHING NEED INBOUND INTERNET ACCESS? ----------
+
+  NO. Everything is OUTBOUND only:
+    - ngrok: outbound tunnel (VM --> ngrok servers)
+    - Meraki: outbound tunnel (switch --> Meraki cloud)
+    - No inbound firewall rules needed
+    - No public IP needed
+    - No port forwarding needed
+
+
+================================================================
+F. PRE-VALIDATION CHECKLIST
+================================================================
+
+After setup, verify EACH item and check the box:
+
+VM CHECKS:
+  [ ] VM powered on, Ubuntu booted
+  [ ] Static IP 192.168.128.10 assigned (run: ip a)
+  [ ] Can SSH from your PC (ssh sdaadmin@192.168.128.10)
+  [ ] VM can ping 192.168.128.1  (gateway)
+  [ ] VM can ping 192.168.128.9  (C9500)
+  [ ] VM can ping 192.168.128.7  (C9300X)
+  [ ] VM can ping 8.8.8.8        (internet)
+  [ ] VM can ping google.com     (DNS)
+  [ ] Python 3.10+ installed     (python3 --version)
+
+C9500 (BORDER) CHECKS:
+  [ ] Powered on, console accessible
+  [ ] 192.168.128.9 reachable from VM
+  [ ] FRONT-PANEL port on VLAN 128 (NOT GigE0/0)
+  [ ] Can ping 192.168.128.1     (gateway)
+  [ ] Can ping 8.8.8.8           (internet)
+  [ ] Can ping google.com        (DNS)
+  [ ] Clock correct              (show clock)
+  [ ] RESTCONF enabled           (show run | inc restconf)
+  [ ] HTTP secure enabled        (show run | inc http secure)
+  [ ] AAA configured             (show run | inc aaa)
+  [ ] Cable #4 plugged in         (TwFiveGigE1/0/1 to C9300X)
+  [ ] service meraki connect configured
+  [ ] show meraki connect --> Tunnel UP, Cloud ID noted
+  (Loopback0, fabric IPs, ISIS, LISP -- pushed by automation later)
+
+C9300X (EDGE) CHECKS:
+  [ ] Powered on, console accessible
+  [ ] 192.168.128.7 reachable from VM
+  [ ] FRONT-PANEL port on VLAN 128 (NOT GigE0/0)
+  [ ] Can ping 192.168.128.1     (gateway)
+  [ ] Can ping 8.8.8.8           (internet)
+  [ ] Can ping google.com        (DNS)
+  [ ] Clock correct              (show clock)
+  [ ] RESTCONF enabled           (show run | inc restconf)
+  [ ] HTTP secure enabled        (show run | inc http secure)
+  [ ] AAA configured             (show run | inc aaa)
+  [ ] Cable #4 plugged in         (TenGig1/1/1 to C9500)
+  [ ] service meraki connect configured
+  [ ] show meraki connect --> Tunnel UP, Cloud ID noted
+  (Loopback0, fabric IPs, ISIS, LISP -- pushed by automation later)
+
+RESTCONF VALIDATION (run these from the VM):
+  [ ] curl -k -u admin:<pw> https://192.168.128.9:443/restconf/
+      --> HTTP 200 with RESTCONF capabilities
+  [ ] curl -k -u admin:<pw> https://192.168.128.7:443/restconf/
+      --> HTTP 200 with RESTCONF capabilities
+
+
+================================================================
+G. DELIVERABLES - WHAT I NEED BACK
+================================================================
+
+Once setup is complete, please send me:
+
+  1. Cloud ID from "show meraki connect" on C9500:  _______________
+  2. Cloud ID from "show meraki connect" on C9300X:  _______________
+  3. Admin password you set on the switches:          _______________
+  4. VM IP confirmed (192.168.128.10):                _______________
+  5. Completed checklist (Section F above)
+
+
+================================================================
+  END OF DOCUMENT
+  Questions? Contact darmania@cisco.com
+================================================================

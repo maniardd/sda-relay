@@ -1,0 +1,46 @@
+{
+  "lisp_map_server": {
+    "description": "LISP Map Server config via RESTCONF on C9500",
+    "endpoint": "/restconf/data/Cisco-IOS-XE-lisp:lisp",
+    "method": "PUT",
+    "payload": {
+      "Cisco-IOS-XE-lisp:lisp": {
+        "instance_id": [{"iid": 100,"enable": [null],"map_cache_limit": 100000}],
+        "map_server":  [{"authoritative": true,"map_registrar_connections": 3}],
+        "map_resolver":[{"enabled": true,"ipv4_address": "10.255.255.1"}]
+      }
+    }
+  },
+  "vxlan_nve_c9500": {
+    "description": "C9500 VXLAN NVE (Border Node)",
+    "endpoint": "/restconf/data/Cisco-IOS-XE-nve:nve",
+    "method": "PUT",
+    "payload": {
+      "Cisco-IOS-XE-nve:nve": {
+        "nve": [{
+          "interface_number": 1,
+          "source_interface": "Loopback0",
+          "host_reachability_protocol": "lisp",
+          "suppress_arp": false,
+          "vni_list": [{"vlan": 100,"vni": 100}]
+        }]
+      }
+    }
+  },
+  "vxlan_nve_c9300": {
+    "description": "C9300 VXLAN NVE (Edge Node)",
+    "endpoint": "/restconf/data/Cisco-IOS-XE-nve:nve",
+    "method": "PUT",
+    "payload": {
+      "Cisco-IOS-XE-nve:nve": {
+        "nve": [{
+          "interface_number": 1,
+          "source_interface": "Loopback0",
+          "host_reachability_protocol": "lisp",
+          "suppress_arp": false,
+          "vni_list": [{"vlan": 100,"vni": 100}]
+        }]
+      }
+    }
+  }
+}

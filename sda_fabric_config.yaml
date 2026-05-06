@@ -155,7 +155,9 @@ access_vlans:
     dynamic_eid:
       name: "Corp_Data-IPV4"
       prefix: "10.30.100.0/24"
-    east_west_test_ip: "10.30.100.254"  # Border loopback inside CORP_VN — ping from edge endpoint to prove VXLAN/LISP
+    vn_supernet: "10.30.0.0/16"        # Site MS accept-more-specifics scope for CORP_VN
+    east_west_test_ip: "10.30.100.254"  # Border loopback inside CORP_VN — ping target
+    edge_test_eid: "10.30.199.99"       # Edge synthetic EID (outside SVI subnet) so LISP registers without endpoints
     dhcp_pool:                         # DHCP pool now on BORDER (helper-address from edge SVI)
       pool_name: "CORP_DATA_POOL"
       network: "10.30.100.0"
@@ -180,7 +182,9 @@ access_vlans:
     dynamic_eid:
       name: "Guest_WiFi-IPV4"
       prefix: "10.30.200.0/24"
+    vn_supernet: "10.30.0.0/16"        # Same supernet OK — instance-id keeps VNs separate on MS
     east_west_test_ip: "10.30.200.254"  # Border loopback inside GUEST_VN
+    edge_test_eid: "10.30.249.99"       # Edge synthetic EID for GUEST_VN (valid octet)
     dhcp_pool:
       pool_name: "GUEST_WIFI_POOL"
       network: "10.30.200.0"
@@ -271,3 +275,35 @@ edge_access_ports:
       access_vlan: 100
       voice_vlan: null
       description: "User Access Port"
+
+# ── ENDPOINT PORT ASSIGNMENTS ─────────────────────────────────────
+# Driven by Meraki workflow input form. Each entry says: "this physical jack
+# belongs to this Virtual Network". Relay translates -> access VLAN + portfast.
+# An endpoint plugged here gets DHCP/IP from the matching VN automatically.
+port_assignments:
+  - device: "SJC23-EDGE-01"
+    port: "GigabitEthernet1/0/3"
+    vn: "CORP_VN"
+    label: "John's laptop / employee jack"
+  - device: "SJC23-EDGE-01"
+    port: "GigabitEthernet1/0/4"
+    vn: "GUEST_VN"
+    label: "Lobby visitor jack"
+
+# ── INTERNET ACCESS ───────────────────────────────────────────────────
+# Two modes — pick one (or 'none'). Both implemented on BORDER.
+#   nat_overload   = C1: PAT each VN to the border's mgmt SVI public-side IP.
+#                    Simplest. All VNs share one egress IP.
+#   border_fusion  = C2: Border itself acts as fusion. Per-VN static default
+#                    route from VRF -> global next-hop, with route-leaking back.
+#                    Per-VN exit, no extra device.
+#   none           = skip internet access (fabric-only).
+internet_access:
+  mode: "none"                       # none | nat_overload | border_fusion
+  upstream_next_hop: "192.168.128.1" # Mgmt-side gateway (lab MX/router)
+  upstream_interface: "Vlan128"      # Border interface in global table to upstream
+  per_vn:
+    - vn: "CORP_VN"
+      enabled: true
+    - vn: "GUEST_VN"
+      enabled: true

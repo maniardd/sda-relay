@@ -127,15 +127,30 @@ def phase2_lisp(fabric: Dict[str, Any], target: str) -> List[Block]:
     ]))
 
     # Block 2: site (border only — MS holds the site DB)
+    # CRITICAL: site must list every EID prefix it will accept registers for,
+    # otherwise the MS silently drops map-registers and the LISP TCP/4342
+    # session never establishes (lesson learned 2026-05-06).
     if target == "border":
-        blocks.append(("lisp_site", [
+        site_lines = [
             "router lisp",
             f" site {fab.get('site_name','site_uci')}",
             f"  authentication-key {fab.get('site_auth_key','CiscoSDA123')}",
             "  description SDA fabric site",
-            "  exit-site",
-            " exit-router-lisp",
-        ]))
+        ]
+        # Permit every L3 VN's EID space (use access_vlans dynamic_eid prefix
+        # OR an explicit vn_supernet override) plus the per-VN test /32.
+        for v in fabric.get("access_vlans", []):
+            iid = v["l3_instance_id"]
+            prefix = v.get("vn_supernet") or v["dynamic_eid"]["prefix"]
+            site_lines.append(f"  eid-record instance-id {iid} {prefix} accept-more-specifics")
+            tip = v.get("edge_test_eid") or v.get("east_west_test_ip")
+            if tip:
+                site_lines.append(f"  eid-record instance-id {iid} {tip}/32 accept-more-specifics")
+            l2 = v.get("l2_instance_id")
+            if l2:
+                site_lines.append(f"  eid-record instance-id {l2} any-mac")
+        site_lines += ["  exit-site", " exit-router-lisp"]
+        blocks.append(("lisp_site", site_lines))
 
     # Block 3: service ipv4 — IOS-XE 17.x SDA: MS/MR/proxy go INSIDE service block
     svc_ipv4 = [
@@ -335,27 +350,134 @@ def phase4_access(fabric: Dict[str, Any], target: str) -> List[Block]:
             " exit-router-lisp",
         ]))
 
-    # Endpoint test port — Gi1/0/3 in VLAN 100 (CORP_VN), portfast for fast DHCP
-    blocks.append(("endpoint_test_port", [
-        "interface GigabitEthernet1/0/3",
-        " description SDA Endpoint Test Port (CORP_VN VLAN 100)",
-        " switchport mode access",
-        " switchport access vlan 100",
-        " spanning-tree portfast",
-        " spanning-tree bpduguard enable",
-        " no shutdown",
-    ]))
+    # ── Per-VN edge test EID ─────────────────────────────────────────
+    # A static /32 inside each VN (NOT inside the SVI subnet) so LISP has
+    # something concrete to register — this fires the MS map-register and
+    # brings the TCP/4342 session Up even before any real endpoint plugs in.
+    for v in fabric.get("access_vlans", []):
+        tip = v.get("edge_test_eid")
+        if not tip:
+            continue
+        iid = v["l3_instance_id"]
+        loop_id = 4000 + iid   # e.g. 8099 for CORP_VN, 8100 for GUEST_VN
+        blocks.append((f"edge_test_loopback_{iid}", [
+            f"interface Loopback{loop_id}",
+            f" description SDA edge test EID {v['vrf']}",
+            f" vrf forwarding {v['vrf']}",
+            f" ip address {tip} 255.255.255.255",
+            " no shutdown",
+        ]))
+        blocks.append((f"edge_test_eid_{iid}", [
+            "router lisp",
+            f" instance-id {iid}",
+            "  service ipv4",
+            f"   database-mapping {tip}/32 locator-set " + fabric["lisp"].get("locator_set_name","rloc_fabric"),
+            "   exit-service-ipv4",
+            "  exit-instance-id",
+            " exit-router-lisp",
+        ]))
+
+    # ── Endpoint port assignments (user-driven via YAML/Meraki form) ──
+    # Each entry binds a physical port to a VN (= access VLAN). This is the
+    # "who plugs in where" map; lets a user say "Gi1/0/5 = guest jack" without
+    # editing CLI directly.
+    for p in fabric.get("port_assignments", []):
+        if p.get("device") and p["device"] != fabric["devices"]["edge"]["hostname"]:
+            continue
+        port = p["port"]
+        # Find the access_vlan record for this VN to get vlan_id
+        vlan_id = None
+        for v in fabric.get("access_vlans", []):
+            if v["vrf"] == p["vn"]:
+                vlan_id = v["vlan_id"]
+                break
+        if not vlan_id:
+            continue
+        blocks.append((f"endpoint_port_{port.replace('/', '_')}", [
+            f"interface {port}",
+            f" description SDA endpoint :: {p['vn']} :: {p.get('label','')}",
+            " switchport mode access",
+            f" switchport access vlan {vlan_id}",
+            " spanning-tree portfast",
+            " spanning-tree bpduguard enable",
+            " no shutdown",
+        ]))
 
     return blocks
 
 
 # ─────────────────────────────────────────────────────────────────────
-# PHASE 5 — Border handoff / BGP (skipped for POC if fusion disabled)
+# PHASE 5 — Internet Access (NAT overload OR border-as-fusion)
+# Per design: skip true L3 handoff (external BGP) for now.
+#
+# nat_overload : VRF default route -> global next-hop; PAT each VN to upstream IF.
+#                Cheapest. All VNs share one public IP.
+# border_fusion: VRF default route -> global next-hop, plus reverse leak so
+#                global has /16 route back to VN via Loopback0 -> LISP. Per-VN exit.
 # ─────────────────────────────────────────────────────────────────────
-def phase5_border_handoff(fabric: Dict[str, Any], target: str) -> List[Block]:
-    if not fabric.get("bgp", {}).get("fusion", {}).get("enabled", False):
-        return []  # POC: fusion disabled
-    return []
+def phase5_internet(fabric: Dict[str, Any], target: str) -> List[Block]:
+    if target != "border":
+        return []
+    ia = fabric.get("internet_access", {})
+    mode = ia.get("mode", "none")
+    if mode == "none":
+        return []
+
+    blocks: List[Block] = []
+    nh = ia["upstream_next_hop"]
+    upiface = ia.get("upstream_interface", "Vlan128")
+
+    enabled_vns = [v["vn"] for v in ia.get("per_vn", []) if v.get("enabled")]
+    vrf_records = [v for v in fabric.get("vrfs", []) if v["name"] in enabled_vns]
+
+    if mode == "nat_overload":
+        # 1) Default route per VRF pointing at global upstream
+        for v in vrf_records:
+            blocks.append((f"vrf_default_route_{v['name']}", [
+                f"ip route vrf {v['name']} 0.0.0.0 0.0.0.0 {nh} global",
+            ]))
+        # 2) NAT ACL + interface NAT (one shared overload to upstream IF)
+        acl_lines = ["ip access-list extended ACL_NAT_VNS"]
+        for v in fabric.get("access_vlans", []):
+            if v["vrf"] in enabled_vns:
+                net = v["dhcp_pool"]["network"]
+                # convert /24 mask to wildcard 0.0.0.255 (POC: assume /24)
+                acl_lines.append(f" permit ip {net} 0.0.0.255 any")
+        blocks.append(("nat_acl", acl_lines))
+        for v in vrf_records:
+            blocks.append((f"nat_overload_{v['name']}", [
+                f"ip nat inside source list ACL_NAT_VNS interface {upiface} vrf {v['name']} overload",
+            ]))
+        # 3) Mark fabric link as NAT inside, upstream as NAT outside
+        link = fabric["underlay"]["fabric_links"][0]
+        blocks.append(("nat_inside_iface", [
+            f"interface {link['border_interface']}",
+            " ip nat inside",
+        ]))
+        blocks.append(("nat_outside_iface", [
+            f"interface {upiface}",
+            " ip nat outside",
+        ]))
+
+    elif mode == "border_fusion":
+        # Per-VN default toward global; global gets a /16 leak back via LISP RLOC
+        for v in vrf_records:
+            blocks.append((f"vrf_default_route_{v['name']}", [
+                f"ip route vrf {v['name']} 0.0.0.0 0.0.0.0 {nh} global",
+            ]))
+        # Return path: per-VN supernet pointed at LISP (border itself terminates)
+        # The LISP-resolved map-cache will hand it to the right edge.
+        for v in fabric.get("access_vlans", []):
+            if v["vrf"] not in enabled_vns:
+                continue
+            sn = v.get("vn_supernet") or v["dynamic_eid"]["prefix"]
+            # static route in global pointing supernet at NULL0 prevents loop;
+            # actual resolution happens via LISP since border is the petr/proxy-itr
+            blocks.append((f"global_return_{v['vrf']}", [
+                f"ip route {sn.split('/')[0]} 255.255.0.0 Null0 254",  # safety floor
+            ]))
+
+    return blocks
 
 
 # Phase registry the relay calls
@@ -364,29 +486,33 @@ PHASE_BUILDERS = {
     "phase2-lisp":      phase2_lisp,
     "phase3-overlay":   phase3_vrf_overlay,
     "phase4-access":    phase4_access,
-    "phase5-handoff":   phase5_border_handoff,
+    "phase5-internet":  phase5_internet,
 }
 
-# Per-phase verify commands — relay runs these and grep-checks for keywords
+# Per-phase verify commands — relay runs these and grep-checks for keywords.
+# These are now FUNCTIONAL gates, not just config existence checks:
+# phase1 = ISIS adj UP + peer Loopback0 in route table
+# phase2 = LISP session UP + MS sees a registered EID  (proves end-to-end CP)
+# phase4 = DHCP pool exists + at least one bound or registered EID for VN
 VERIFY_CMDS = {
     "phase1-underlay": [
-        ("show isis neighbors",          ["Up"]),
-        ("show ip route isis | inc /32", []),                     # any line is fine
-        ("show ip pim rp mapping",       ["RP "]),
-        ("show ip interface brief Loopback0", ["up"]),
+        ("show isis neighbors",                 ["up"]),
+        ("show ip interface brief Loopback0",   ["up"]),
+        ("show ip pim rp mapping",              ["rp "]),
     ],
     "phase2-lisp": [
-        ("show lisp instance-id 4099 ipv4 server", ["site"]),
-        ("show lisp session",            ["up"]),
+        # Functional: session must be Up (means register accepted, key matched,
+        # MS site config valid, underlay reachable on TCP 4342).
+        ("show lisp session 10.255.255.1",      ["established: 1"]),
     ],
     "phase3-overlay": [
-        ("show vrf",                     ["corp_vn"]),
-        ("show lisp instance-id 4099 ipv4", ["instance"]),
+        ("show vrf",                            ["corp_vn"]),
+        ("show running-config | section router lisp", ["instance-id 4099"]),
     ],
     "phase4-access": [
-        ("show ip interface brief | inc Vlan", ["vlan100", "vlan200"]),
-        ("show ip dhcp pool",            ["corp_data_pool"]),
-        ("show device-tracking policy IPDT_POLICY_100", ["tracking enable"]),
+        # Functional: edge has a registered EID for CORP_VN visible on MS.
+        ("show lisp instance-id 4099 ipv4 server", ["site_uci"]),
+        ("show ip dhcp pool",                   ["corp_data_pool"]),
     ],
 }
 

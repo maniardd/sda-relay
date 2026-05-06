@@ -1,0 +1,86 @@
+{
+  "workflow": {
+    "unique_name": "definition_workflow_02T738VPYWL4J71YHy065XYsD9ushobTEST",
+    "name": "Test Import - Minimal",
+    "title": "Test Import - Minimal",
+    "type": "generic.workflow",
+    "base_type": "workflow",
+    "variables": [
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "hello",
+          "scope": "input",
+          "name": "Test Variable",
+          "type": "datatype.string",
+          "description": "A test variable",
+          "is_required": false,
+          "display_on_wizard": false,
+          "is_invisible": false,
+          "variable_string_format": ""
+        },
+        "unique_name": "variable_workflow_02T738VQI5VLR6JbBElwVIwMjbvBVLOTEST",
+        "object_type": "variable_workflow"
+      }
+    ],
+    "properties": {
+      "atomic": {
+        "is_atomic": false
+      },
+      "delete_workflow_instance": false,
+      "description": "Minimal test workflow to verify import works.",
+      "display_name": "Test Import - Minimal",
+      "runtime_user": {
+        "override_target_runtime_user": false,
+        "specify_on_workflow_start": false,
+        "target_default": true
+      },
+      "target": {
+        "no_target": true
+      }
+    },
+    "object_type": "definition_workflow",
+    "actions": [
+      {
+        "unique_name": "definition_activity_02T738VU36OV65sDEwQqMcEznV7PZSVDpTST",
+        "name": "Execute Python Script",
+        "title": "Hello World Test",
+        "type": "python3.script",
+        "base_type": "activity",
+        "properties": {
+          "action_timeout": 60,
+          "continue_on_failure": false,
+          "description": "Simple test script",
+          "display_name": "Hello World Test",
+          "script_arguments": [
+            "$workflow.definition_workflow_02T738VPYWL4J71YHy065XYsD9ushobTEST.input.variable_workflow_02T738VQI5VLR6JbBElwVIwMjbvBVLOTEST$"
+          ],
+          "script_body": "import sys\ntest_val = sys.argv[1] if len(sys.argv) > 1 else 'no input'\nresult = f'Hello from test: {test_val}'\nprint(result)",
+          "script_queries": [
+            {
+              "script_query_name": "result",
+              "script_query_type": "string"
+            }
+          ],
+          "skip_execution": false
+        },
+        "object_type": "definition_activity"
+      }
+    ],
+    "categories": [
+      "category_02SK2E2L43U5S4BnPxdmBvgkIEcESmD2TST"
+    ]
+  },
+  "categories": {
+    "category_02SK2E2L43U5S4BnPxdmBvgkIEcESmD2TST": {
+      "unique_name": "category_02SK2E2L43U5S4BnPxdmBvgkIEcESmD2TST",
+      "name": "Test Category",
+      "title": "Test Category",
+      "type": "basic.category",
+      "base_type": "category",
+      "description": "Test category for import verification",
+      "category_type": "custom",
+      "object_type": "category"
+    }
+  }
+}

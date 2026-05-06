@@ -1,0 +1,1226 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  SDA FABRIC FULL DEPLOYMENT — COMPLETE STEP-BY-STEP BUILD GUIDE        ║
+║  Meraki Dashboard Manual Workflow Build                                 ║
+║  Follow EVERY step in order. Do NOT skip steps.                        ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITES:
+  • Logged into Meraki Dashboard (dashboard.meraki.com)
+  • Organization: CiscoWLAN
+  • Network: SJC23-SDA
+  • Navigate to: Automation > Workspace
+
+Total activities to build: 10 top-level blocks
+Estimated build: Phase 1 takes longest, Phases 2-5 are duplicates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: CREATE THE WORKFLOW (Long Form — Fill All Fields)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1.1  Click "+ New Workflow"
+1.2  You'll see a long form. Fill in each field TOP to BOTTOM:
+
+     ┌─────────────────────────────────────────────────────────────────┐
+     │ FIELD                        │ VALUE                           │
+     ├─────────────────────────────────────────────────────────────────┤
+     │ Display Name                 │ SDA Fabric Full Deployment      │
+     │                              │                                 │
+     │ Owner                        │ (leave default — your account)  │
+     │                              │                                 │
+     │ Description                  │ Complete SD-Access fabric       │
+     │                              │ deployment (ISIS + LISP + VXLAN │
+     │                              │ + VRF + Access VLANs) via       │
+     │                              │ RESTCONF relay server.          │
+     │                              │                                 │
+     │ Clean up after successful    │ ☐ UNCHECKED (leave unchecked)   │
+     │ execution                    │ (maps to delete_workflow_       │
+     │                              │  instance: false)               │
+     │                              │                                 │
+     │ Category                     │ Click "New Category" or pick    │
+     │                              │ existing. Name: SDA Deployment  │
+     │                              │                                 │
+     │ Variables                    │ *** ADD ALL 7 HERE (Step 2) *** │
+     │                              │ (see below — do this NOW before │
+     │                              │  scrolling further)             │
+     │                              │                                 │
+     │ Automation Rules             │ (leave default/empty)           │
+     │                              │                                 │
+     │ Version                      │ (leave default)                 │
+     │                              │                                 │
+     │ Exchange                     │ (leave default/empty)           │
+     │                              │                                 │
+     │ Target                       │ Select "No Target"              │
+     │                              │ (no_target: true)               │
+     └─────────────────────────────────────────────────────────────────┘
+
+     NOTE: Do NOT scroll past the Variables section yet.
+     Add all 7 variables in the Variables section of this form FIRST.
+     Then continue filling the rest of the form and save/create.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 2: CREATE ALL 7 VARIABLES (Inside the Workflow Form)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the Variables section of the form, click "+ Add Variable" for each one.
+Each variable opens a popup/panel with these fields (top to bottom):
+
+     ┌─────────────────────────────────────────────────────────────────┐
+     │  FORM FIELD                  │ NOTES                           │
+     ├─────────────────────────────────────────────────────────────────┤
+     │  Data Type (dropdown)         │ "String" or "Boolean"           │
+     │                               │                                 │
+     │  ── General ──                │ (section header)                │
+     │  Display Name* (text)         │ Variable name (max 64 chars)    │
+     │  Description (text area)      │ What it does (max 1024 chars)   │
+     │                               │                                 │
+     │  Scope* (dropdown)            │ "Input" or "Local"              │
+     │                               │                                 │
+     │  ── Only if Scope = Input ──  │                                 │
+     │  ☐ Required for workflow      │ Checkbox: must be filled to run │
+     │    to run                     │                                 │
+     │  ☐ Display on install wizard  │ Checkbox: shown during install  │
+     │                               │                                 │
+     │  ── Only if Data Type =       │                                 │
+     │     String ──                 │                                 │
+     │  String Type (dropdown)       │ HTML / JSON / Markdown / Python │
+     │                               │ / Text / XML / YAML             │
+     │                               │                                 │
+     │  Value (text area)            │ Default value                   │
+     │                               │                                 │
+     │            [Cancel]  [Save]   │ Buttons at bottom               │
+     └─────────────────────────────────────────────────────────────────┘
+
+     IMPORTANT NOTES:
+     • "Required for workflow to run" and "Display on install wizard"
+       checkboxes ONLY appear when Scope = Input.
+       When Scope = Local → these checkboxes are NOT shown.
+     • "String Type" dropdown ONLY appears when Data Type = String.
+       When Data Type = Boolean → this dropdown is NOT shown.
+     • For Boolean variables, the Value field accepts: true or false
+
+── VARIABLE 1: Relay Server URL ──
+  Data Type:                    String
+  ── General ──
+  Display Name:                 Relay Server URL
+  Description:                  ngrok public HTTPS URL for the relay server (e.g. https://abc123.ngrok-free.app)
+  Scope:                        Input
+  ☑ Required for workflow
+    to run:                     CHECKED
+  ☐ Display on install wizard:  UNCHECKED
+  String Type:                  (leave as default "Select" — do NOT pick any option)
+  Value:                        (leave empty — user provides at runtime)
+  → Click [Save]
+
+── VARIABLE 2: Fabric Name ──
+  Data Type:                    String
+  ── General ──
+  Display Name:                 Fabric Name
+  Description:                  Name of the SDA fabric
+  Scope:                        Input
+  ☑ Required for workflow
+    to run:                     CHECKED
+  ☐ Display on install wizard:  UNCHECKED
+  String Type:                  (leave as default "Select" — do NOT pick any option)
+  Value:                        SJC23_SDA_Fabric
+  → Click [Save]
+
+── VARIABLE 3: Deploy Security ──
+  Data Type:                    Boolean
+  ── General ──
+  Display Name:                 Deploy Security
+  Description:                  Deploy Phase 6 (dot1x, RADIUS, CTS)? Default false.
+  Scope:                        Input
+  ☐ Required for workflow
+    to run:                     UNCHECKED
+  ☐ Display on install wizard:  UNCHECKED
+  (String Type:                 NOT shown — Boolean type)
+  Value:                        false
+  → Click [Save]
+
+── VARIABLE 4: Force Deploy ──
+  Data Type:                    Boolean
+  ── General ──
+  Display Name:                 Force Deploy
+  Description:                  Skip existing config check? Default false.
+  Scope:                        Input
+  ☐ Required for workflow
+    to run:                     UNCHECKED
+  ☐ Display on install wizard:  UNCHECKED
+  (String Type:                 NOT shown — Boolean type)
+  Value:                        false
+  → Click [Save]
+
+── VARIABLE 5: Deployment Failed ──
+  Data Type:                    Boolean
+  ── General ──
+  Display Name:                 Deployment Failed
+  Description:                  Tracks if any phase failed
+  Scope:                        Local
+  (Required / Display:          NOT shown — Local scope)
+  (String Type:                 NOT shown — Boolean type)
+  Value:                        false
+  → Click [Save]
+
+── VARIABLE 6: Failed Phase ──
+  Data Type:                    String
+  ── General ──
+  Display Name:                 Failed Phase
+  Description:                  Name of the phase that failed
+  Scope:                        Local
+  (Required / Display:          NOT shown — Local scope)
+  String Type:                  (leave as default "Select" — do NOT pick any option)
+  Value:                        (leave empty)
+  → Click [Save]
+
+── VARIABLE 7: Phase Result JSON ──
+  Data Type:                    String
+  ── General ──
+  Display Name:                 Phase Result JSON
+  Description:                  JSON response from last relay call
+  Scope:                        Local
+  (Required / Display:          NOT shown — Local scope)
+  String Type:                  JSON
+  Value:                        (leave empty)
+  → Click [Save]
+
+     → After adding all 7 variables, check these remaining sections in the
+       RIGHT PANEL (Workflow Properties):
+        - Designate as Atomic Workflow: ☐ UNCHECKED
+        - Category: SDA Deployment (should already be set)
+        - Automation Rules: leave default (collapsed section)
+        - Version: leave default (collapsed section)
+        - Exchange: leave default (collapsed section)
+        - Target: expand this section → select "No Target"
+
+     → The workflow AUTO-SAVES. There is no separate Save/Submit button.
+     → You should already see the canvas with "Drag activity here" in the
+       center panel. You're ready to start adding activities (Step 3).
+     → The top bar should show: [Workflow is unlocked] [More Actions ∨]
+       [Validate] [Run]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 3: ADD ACTIVITY #1 — Pre-Check (Execute Python Script)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3.1  On the canvas, click "+" between START and END to add an activity
+3.2  Choose "Execute Python Script"
+3.3  Configure:
+       Title:              Pre-Check - Device Health
+       Description:        Verify RESTCONF reachability on both switches via relay server.
+       Action Timeout:     120  (seconds)
+       Continue on Failure: ☑ CHECKED (important!)
+       Skip Execution:     ☐ unchecked
+
+3.4  Script Arguments — in the "Python Query" section under "Script arguments":
+       Click "+ Add" three times to create 3 argument rows.
+
+       FOR EACH ARGUMENT — follow these exact clicks:
+         1. Click inside the argument text field (clear any existing text)
+         2. Click the {x} icon on the RIGHT side of the text field
+         3. "Browse Variables" popup opens showing:
+              Env >
+              Workflow >
+         4. Click "Workflow >"  (this expands to show your workflow)
+         5. Navigate through the folders until you see the variable name
+         6. Click the variable name to select it
+         7. Popup closes — the field now shows a $workflow...$ reference
+
+       Argument 1: navigate to and select → "Relay Server URL"
+       Argument 2: navigate to and select → "Fabric Name"
+       Argument 3: navigate to and select → "Force Deploy"
+
+       ⚠ Do NOT type text into these fields. Each field must contain a
+       $workflow.definition_workflow_xxx.input.variable_workflow_xxx$
+       reference (it looks like a long path starting and ending with $)
+
+3.5  Script Body — paste this EXACTLY:
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+force = sys.argv[3] if len(sys.argv) > 3 else "false"
+
+url = f"{relay_url}/api/v2/precheck"
+payload = {"fabric_name": fabric_name, "force": force.lower() == "true"}
+
+try:
+    resp = requests.post(url, json=payload, timeout=60, verify=False)
+    result = resp.json()
+    status = result.get("status", "fail")
+    succeeded = status == "pass"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    status = "error"
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+3.6  Script Output Variables — in the "Script Output Variables" section:
+       Each output has 3 fields you TYPE directly (plain text, no {x} picker):
+
+       ┌──────────────────────────────────────────────────────────────┐
+       │  Script Variable*   │ TYPE the Python variable name         │
+       │  Property Name*     │ TYPE a name for this output           │
+       │  Property Type*     │ SELECT from dropdown (Boolean/String) │
+       └──────────────────────────────────────────────────────────────┘
+
+       ⚠ There is NO separate Save button per output row.
+         You fill in the fields and they stay in place.
+
+       Click "+ Add" → fill in row → Click "+ Add" → fill in next row:
+
+       Row 1 (click + Add):
+         Script Variable:  succeeded        (type this word)
+         Property Name:    succeeded        (type this word)
+         Property Type:    Boolean          (select from dropdown)
+
+       Row 2 (click + Add):
+         Script Variable:  status           (type this word)
+         Property Name:    status           (type this word)
+         Property Type:    String           (select from dropdown)
+
+       Row 3 (click + Add):
+         Script Variable:  result_json      (type this word)
+         Property Name:    result_json      (type this word)
+         Property Type:    String           (select from dropdown)
+
+3.7  Scroll to the BOTTOM of the entire activity panel and click "Save".
+       This one Save button saves EVERYTHING (title, arguments, script
+       body, AND output variables) for this activity.
+
+     → Your canvas should now show: START → [Pre-Check - Device Health] → END
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 4: ADD ACTIVITY #2 — Pre-Check Pass/Fail (Condition Block)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4.1  Click "+" AFTER the Pre-Check activity
+4.2  Switch to the "Logic" tab (top-left, next to "Activities")
+       → Under "Conditions" category, click "Condition Block"
+4.3  In the right panel, change Display Name to: Pre-Check Pass/Fail
+
+4.4  Configure Branch 1 (the "If" branch):
+       Click the LEFT branch box on the canvas. In the right panel:
+       Display Name: Pre-Check Passed
+       Condition section (scroll down):
+         ● ALL of these conditions must be met (leave selected)
+         Property:    {x} → Activities > Pre-Check - Device Health > → click "Succeeded" (BOOLEAN)
+         Comparison:  Equals
+         Value:       true
+       Actions inside this branch: NONE (leave empty, it just continues to next step)
+
+4.5  Configure Branch 2:
+       Click the RIGHT branch box on the canvas. In the right panel:
+       Display Name: Pre-Check Failed
+       Condition section (scroll down):
+         ● ALL of these conditions must be met (leave selected)
+         Property:    {x} → Activities > Pre-Check - Device Health > → click "Succeeded" (BOOLEAN)
+         Comparison:  Equals
+         Value:       false
+
+4.6  Inside "Pre-Check Failed" branch, add a "Set Variables" activity:
+       (Found under: Activities tab → Core section → "Set Variables")
+       Drag it into the branch, then configure:
+       Title: Set Pre-Check Failed
+       Add 2 variable updates:
+         Update 1:
+           Variable: Select → Local → "Deployment Failed"
+           New Value: true
+         Update 2:
+           Variable: Select → Local → "Failed Phase"
+           New Value: Pre-Check
+
+4.7  Save the Condition Block.
+
+     → Canvas: START → [Pre-Check] → [Pre-Check Pass/Fail] → END
+     → SAVE the workflow now.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 5: ADD ACTIVITY #3 — Phase 1 (The Template — Build This Carefully)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is the most complex block. Phases 2-5 are copies of this.
+Structure:
+  Condition Block: "Continue to Phase 1?"
+    ├── Branch 1: "Continue - Deploy Phase 1" (Deployment Failed == false)
+    │   └── Group: "Phase 1 - Deploy & Verify Underlay"
+    │       ├── Python: "Deploy Phase 1 - Underlay"
+    │       └── Condition: "Phase 1 Deploy Success?"
+    │           ├── Branch: "Phase 1 Succeeded - Verify"
+    │           │   └── Python: "Verify Phase 1 - Underlay Health"
+    │           └── Branch: "Phase 1 Failed"
+    │               └── Set Variables: Deployment Failed=true, Failed Phase="Phase 1"
+    └── Branch 2: "Stop - Deployment Failed" (Deployment Failed == true)
+        (empty)
+
+─── 5.1: Add the outer Condition Block ───
+
+5.1.1  Click "+" after the Pre-Check Pass/Fail block
+5.1.2  Choose "Condition Block"
+5.1.3  Title: Continue to Phase 1?
+
+5.1.4  Branch 1:
+         Title: Continue - Deploy Phase 1
+         Condition:
+           Left Operand:  Select → Local Variable → "Deployment Failed"
+           Operator:      is equal to
+           Right Operand: false
+
+5.1.5  Branch 2:
+         Title: Stop - Deployment Failed
+         Condition:
+           Left Operand:  Select → Local Variable → "Deployment Failed"
+           Operator:      is equal to
+           Right Operand: true
+         Actions: NONE (empty branch)
+
+─── 5.2: Add a Group inside Branch 1 ───
+
+5.2.1  Inside "Continue - Deploy Phase 1" branch, click "+" to add activity
+5.2.2  Choose "Group"
+5.2.3  Title: Phase 1 - Deploy & Verify Underlay
+       Description: ISIS + BFD + PIM + Loopbacks + P2P links
+
+─── 5.3: Add Deploy Python Script inside the Group ───
+
+5.3.1  Inside the Group, click "+" to add activity
+5.3.2  Choose "Execute Python Script"
+5.3.3  Configure:
+         Title:              Deploy Phase 1 - Underlay
+         Description:        Deploy ISIS underlay via RESTCONF relay.
+         Action Timeout:     180
+         Continue on Failure: ☑ CHECKED
+         Skip Execution:     ☐ unchecked
+
+5.3.4  Script Arguments (2 rows):
+         Click "+ Add" twice. Use {x} picker to select variables:
+         Argument 1: {x} → "Relay Server URL"
+         Argument 2: {x} → "Fabric Name"
+
+5.3.5  Script Body — paste:
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/deploy/phase1-underlay"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    succeeded = resp.status_code == 200 and result.get("status") != "error"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+5.3.6  Script Output Variables (add 2):
+         Output 1:
+           Script Variable:  succeeded
+           Property Name:    succeeded
+           Property Type:    Boolean
+         Output 2:
+           Script Variable:  result_json
+           Property Name:    result_json
+           Property Type:    String
+
+5.3.7  Save this Python activity.
+
+─── 5.4: Add Condition Block inside the Group (after Deploy) ───
+
+5.4.1  Inside the Group, click "+" AFTER "Deploy Phase 1" to add activity
+5.4.2  Choose "Condition Block"
+5.4.3  Title: Phase 1 Deploy Success?
+
+5.4.4  Branch 1:
+         Title: Phase 1 Succeeded - Verify
+         Condition:
+           Property:    {x} → Activities > Continue to Phase 1? > Continue - Deploy Phase 1 >
+                              Phase 1 - Deploy & Verify Underlay > Deploy Phase 1 - Underlay >
+                              → click "Succeeded" (BOOLEAN)
+           Comparison:  Equals
+           Value:       true
+
+5.4.5  Inside "Phase 1 Succeeded - Verify" branch, add a Python Script:
+         Title:              Verify Phase 1 - Underlay Health
+         Description:        Wait 15s then verify ISIS/BFD/PIM neighbors.
+         Action Timeout:     120
+         Continue on Failure: ☑ CHECKED
+
+         Script Arguments (2 rows):
+           Click "+ Add" twice. Use {x} picker:
+           Argument 1: {x} → "Relay Server URL"
+           Argument 2: {x} → "Fabric Name"
+
+         Script Body — paste:
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+import time
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+time.sleep(15)
+
+url = f"{relay_url}/api/v2/verify/phase1-underlay"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=60, verify=False)
+    result = resp.json()
+    succeeded = result.get("status") == "pass"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+         Script Output Variables (add 2):
+           Output 1:
+             Script Variable:  succeeded
+             Property Name:    succeeded
+             Property Type:    Boolean
+           Output 2:
+             Script Variable:  result_json
+             Property Name:    result_json
+             Property Type:    String
+
+         Save this Verify activity.
+
+5.4.6  Branch 2:
+         Title: Phase 1 Failed
+         Condition:
+           Property:    {x} → Activities > Continue to Phase 1? > Continue - Deploy Phase 1 >
+                              Phase 1 - Deploy & Verify Underlay > Deploy Phase 1 - Underlay >
+                              → click "Succeeded" (BOOLEAN)
+           Comparison:  Equals
+           Value:       false
+
+5.4.7  Inside "Phase 1 Failed" branch, add a "Set Variables" activity:
+         (Found under: Activities tab → Core section → "Set Variables")
+         Drag it into the branch, then configure:
+         Title: Set Phase 1 Failed
+         Variable updates:
+           Update 1:
+             Variable: Local → "Deployment Failed"
+             New Value: true
+           Update 2:
+             Variable: Local → "Failed Phase"
+             New Value: Phase 1 - Underlay Deploy
+
+5.4.8  Save the Condition Block.
+
+─── 5.5: Save everything ───
+
+     Save the Group, save the outer Condition Block.
+     → SAVE THE WORKFLOW NOW.
+
+     Your canvas should now show:
+     START → [Pre-Check] → [Pre-Check Pass/Fail] → [Continue to Phase 1?] → END
+
+     ✅ CHECKPOINT: Validate the workflow. If no errors, Phase 1 is done.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 6: ADD ACTIVITY #4 — Phase 2 (DUPLICATE Phase 1 pattern)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NOTE: If the Dashboard has a "Duplicate" or "Copy" feature for activities,
+      duplicate the "Continue to Phase 1?" block and change the values below.
+      If not, rebuild the same structure manually.
+
+CHANGES from Phase 1:
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ Outer Condition Block title:  Continue to Phase 2?                  │
+  │ Branch 1 title:               Continue - Deploy Phase 2             │
+  │ Branch 2 title:               Stop - Skip Phase 2                  │
+  │ Group title:                  Phase 2 - Deploy & Verify LISP       │
+  │ Group description:            LISP Map-Server/Map-Resolver + xTR   │
+  │ Deploy script title:          Deploy Phase 2 - LISP                │
+  │ Deploy script URL line:       /api/v2/deploy/phase2-lisp           │
+  │ Condition Block title:        Phase 2 Deploy Success?              │
+  │ Succeeded branch title:       Phase 2 Succeeded - Verify           │
+  │ Verify script title:          Verify Phase 2 - LISP Sessions       │
+  │ Verify script sleep:          time.sleep(10)   ← changed from 15  │
+  │ Verify script URL line:       /api/v2/verify/phase2-lisp           │
+  │ Failed branch title:          Phase 2 Failed                       │
+  │ Set Variables title:          Set Phase 2 Failed                   │
+  │ Failed Phase value:           Phase 2 - LISP Deploy                │
+  └──────────────────────────────────────────────────────────────────────┘
+
+  Deploy Script Body (only URL changes):
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/deploy/phase2-lisp"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    succeeded = resp.status_code == 200 and result.get("status") != "error"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+  Verify Script Body (URL + sleep change):
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+import time
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+time.sleep(10)
+
+url = f"{relay_url}/api/v2/verify/phase2-lisp"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=60, verify=False)
+    result = resp.json()
+    succeeded = result.get("status") == "pass"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+  IMPORTANT: All conditions reference the PHASE 2 deploy activity (not Phase 1).
+  - Succeeded branch condition: "Deploy Phase 2 - LISP" → Succeeded is equal to true
+  - Failed branch condition: "Deploy Phase 2 - LISP" → Succeeded is equal to false
+
+  → SAVE THE WORKFLOW after completing Phase 2.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 7: ADD ACTIVITY #5 — Phase 3 (SIMPLER — No Verify Script)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Phase 3 is SIMPLER than 1 & 2: NO Verify script. The "Succeeded" branch is EMPTY.
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ Outer Condition Block title:  Continue to Phase 3?                  │
+  │ Branch 1 title:               Continue - Deploy Phase 3             │
+  │ Branch 2 title:               Stop - Skip Phase 3                  │
+  │ Group title:                  Phase 3 - Deploy VXLAN + VNI         │
+  │ Group description:            L3 and L2 VNI instance configuration │
+  │ Deploy script title:          Deploy Phase 3 - VXLAN               │
+  │ Deploy script URL line:       /api/v2/deploy/phase3-vxlan-vni      │
+  │ Condition Block title:        Phase 3 Deploy Success?              │
+  │ Succeeded branch title:       Phase 3 Succeeded                    │
+  │ Succeeded branch actions:     *** NONE — leave EMPTY ***           │
+  │ Failed branch title:          Phase 3 Failed                       │
+  │ Set Variables title:          Set Phase 3 Failed                   │
+  │ Failed Phase value:           Phase 3 - VXLAN                      │
+  └──────────────────────────────────────────────────────────────────────┘
+
+  Deploy Script Body:
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/deploy/phase3-vxlan-vni"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    succeeded = resp.status_code == 200 and result.get("status") != "error"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+  Script Arguments: {x} → "Relay Server URL", {x} → "Fabric Name"
+  Script Output Variables:
+    Output 1: Script Variable = succeeded,  Property Name = succeeded,  Property Type = Boolean
+    Output 2: Script Variable = result_json, Property Name = result_json, Property Type = String
+
+  → SAVE after Phase 3.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 8: ADD ACTIVITY #6 — Phase 4 (Same pattern as Phase 3)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Identical structure to Phase 3 (no verify). Only change titles and URL.
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ Outer Condition Block title:  Continue to Phase 4?                  │
+  │ Branch 1 title:               Continue - Deploy Phase 4             │
+  │ Branch 2 title:               Stop - Skip Phase 4                  │
+  │ Group title:                  Phase 4 - Deploy VRF + BGP           │
+  │ Group description:            VRF and BGP for overlay routing      │
+  │ Deploy script title:          Deploy Phase 4 - VRF/BGP             │
+  │ Deploy script URL line:       /api/v2/deploy/phase4-vrf-bgp        │
+  │ Condition Block title:        Phase 4 Deploy Success?              │
+  │ Succeeded branch title:       Phase 4 Succeeded                    │
+  │ Succeeded branch actions:     *** NONE — leave EMPTY ***           │
+  │ Failed branch title:          Phase 4 Failed                       │
+  │ Set Variables title:          Set Phase 4 Failed                   │
+  │ Failed Phase value:           Phase 4 - VRF/BGP                    │
+  └──────────────────────────────────────────────────────────────────────┘
+
+  Deploy Script Body:
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/deploy/phase4-vrf-bgp"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    succeeded = resp.status_code == 200 and result.get("status") != "error"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+  → SAVE after Phase 4.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 9: ADD ACTIVITY #7 — Phase 5 (Same pattern as Phase 3)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Identical structure to Phase 3 (no verify). Only change titles and URL.
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ Outer Condition Block title:  Continue to Phase 5?                  │
+  │ Branch 1 title:               Continue - Deploy Phase 5             │
+  │ Branch 2 title:               Stop - Skip Phase 5                  │
+  │ Group title:                  Phase 5 - Deploy Access Layer        │
+  │ Group description:            VLANs, SVIs, DHCP relay on Edge      │
+  │ Deploy script title:          Deploy Phase 5 - Access              │
+  │ Deploy script URL line:       /api/v2/deploy/phase5-access         │
+  │ Condition Block title:        Phase 5 Deploy Success?              │
+  │ Succeeded branch title:       Phase 5 Succeeded                    │
+  │ Succeeded branch actions:     *** NONE — leave EMPTY ***           │
+  │ Failed branch title:          Phase 5 Failed                       │
+  │ Set Variables title:          Set Phase 5 Failed                   │
+  │ Failed Phase value:           Phase 5 - Access Layer               │
+  └──────────────────────────────────────────────────────────────────────┘
+
+  Deploy Script Body:
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/deploy/phase5-access"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    succeeded = resp.status_code == 200 and result.get("status") != "error"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+  → SAVE after Phase 5.
+
+  ✅ CHECKPOINT: Your canvas should now show 7 blocks in a row:
+     START → [Pre-Check] → [Pre-Check Pass/Fail] → [Phase 1] → [Phase 2] → [Phase 3] → [Phase 4] → [Phase 5] → END
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 10: ADD ACTIVITY #8 — Phase 6 Security (Conditional Deploy)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This phase is DIFFERENT — it checks the "Deploy Security" INPUT variable
+(not "Deployment Failed"). No Group, no inner condition. Just a simple
+condition with one Python script.
+
+10.1  Click "+" after Phase 5 block
+10.2  Choose "Condition Block"
+10.3  Title: Deploy Security Phase?
+
+10.4  Branch 1:
+        Title: Yes - Deploy Security
+        Condition:
+          Left Operand:  Select → Input → "Deploy Security"
+          Operator:      is equal to
+          Right Operand: true
+
+10.5  Inside "Yes - Deploy Security" branch, add "Execute Python Script":
+        Title:              Deploy Phase 6 - Security
+        Action Timeout:     180
+        Continue on Failure: ☑ CHECKED
+
+        Script Arguments (2 rows):
+          Click "+ Add" twice. Use {x} picker:
+          Argument 1: {x} → "Relay Server URL"
+          Argument 2: {x} → "Fabric Name"
+
+        Script Body:
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/deploy/phase6-security"
+payload = {"fabric_name": fabric_name, "deploy_security": True}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    succeeded = resp.status_code == 200 and result.get("status") != "error"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+        Script Output Variables (add 2):
+          Output 1:
+            Script Variable:  succeeded
+            Property Name:    succeeded
+            Property Type:    Boolean
+          Output 2:
+            Script Variable:  result_json
+            Property Name:    result_json
+            Property Type:    String
+
+10.6  Branch 2:
+        Title: Skip Security
+        Condition:
+          Left Operand:  Select → Input → "Deploy Security"
+          Operator:      is not equal to
+          Right Operand: true
+        Actions: NONE (empty)
+
+10.7  Save. → SAVE WORKFLOW.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 11: ADD ACTIVITY #9 — Post-Check with Rollback
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Structure:
+  Condition Block: "Any Failure Before Post-Check?"
+    ├── Branch 1: "No Failure - Run Post-Check" (Deployment Failed == false)
+    │   └── Group: "Post-Check & Finalize"
+    │       ├── Python: "Post-Check - 22 Validations"
+    │       └── Condition: "Post-Check Pass/Fail?"
+    │           ├── Branch: "Post-Check Passed" (empty — success!)
+    │           └── Branch: "Post-Check Failed - Rollback"
+    │               ├── Python: "Rollback - Reverse All Config"
+    │               └── (workflow ends after rollback)
+    └── Branch 2: "Skip Post-Check (Already Failed)" (Deployment Failed == true)
+        (empty)
+
+─── 11.1: Outer Condition Block ───
+
+11.1.1  Click "+" after Phase 6 block
+11.1.2  Choose "Condition Block"
+11.1.3  Title: Any Failure Before Post-Check?
+
+11.1.4  Branch 1:
+          Title: No Failure - Run Post-Check
+          Condition:
+            Left Operand:  Local → "Deployment Failed"
+            Operator:      is equal to
+            Right Operand: false
+
+11.1.5  Branch 2:
+          Title: Skip Post-Check (Already Failed)
+          Condition:
+            Left Operand:  Local → "Deployment Failed"
+            Operator:      is equal to
+            Right Operand: true
+          Actions: NONE
+
+─── 11.2: Group inside Branch 1 ───
+
+11.2.1  Inside "No Failure" branch, add "Group"
+11.2.2  Title: Post-Check & Finalize
+         Description: Run 22 validation checks and rollback if failed
+
+─── 11.3: Post-Check Python inside Group ───
+
+11.3.1  Inside Group, add "Execute Python Script"
+11.3.2  Configure:
+          Title:              Post-Check - 22 Validations
+          Action Timeout:     180
+          Continue on Failure: ☑ CHECKED
+
+          Script Arguments (2 rows):
+            Click "+ Add" twice. Use {x} picker:
+            Argument 1: {x} → "Relay Server URL"
+            Argument 2: {x} → "Fabric Name"
+
+          Script Body:
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/postcheck"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    status = result.get("status", "fail")
+    score = result.get("score", "0/22")
+    succeeded = status == "pass"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    score = "error"
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+          Script Output Variables (3):
+            Output 1:
+              Script Variable:  succeeded
+              Property Name:    succeeded
+              Property Type:    Boolean
+            Output 2:
+              Script Variable:  score
+              Property Name:    score
+              Property Type:    String
+            Output 3:
+              Script Variable:  result_json
+              Property Name:    result_json
+              Property Type:    String
+
+─── 11.4: Post-Check Condition Block inside Group ───
+
+11.4.1  Inside Group, add "Condition Block" AFTER Post-Check script
+11.4.2  Title: Post-Check Pass/Fail?
+
+11.4.3  Branch 1:
+          Title: Post-Check Passed
+          Condition:
+            Property:    {x} → Activity Outputs → "Post-Check - 22 Validations" → Succeeded
+            Comparison:  is equal to
+            Value:       true
+          Actions: NONE (workflow completes successfully — nothing to do!)
+
+11.4.4  Branch 2:
+          Title: Post-Check Failed - Rollback
+          Condition:
+            Property:    {x} → Activity Outputs → "Post-Check - 22 Validations" → Succeeded
+            Comparison:  is equal to
+            Value:       false
+
+11.4.5  Inside "Post-Check Failed - Rollback" branch, add "Execute Python Script":
+          Title:              Rollback - Reverse All Config
+          Action Timeout:     300
+          Continue on Failure: ☑ CHECKED
+
+          Script Arguments (2 rows):
+            Click "+ Add" twice. Use {x} picker:
+            Argument 1: {x} → "Relay Server URL"
+            Argument 2: {x} → "Fabric Name"
+
+          Script Body:
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/rollback"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=180, verify=False)
+    result = resp.json()
+    result_json = json.dumps(result)
+except Exception as e:
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+          Script Output Variables (1):
+            Output 1:
+              Script Variable:  result_json
+              Property Name:    result_json
+              Property Type:    String
+
+11.4.6  Save everything.
+
+  → SAVE WORKFLOW.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 12: ADD ACTIVITY #10 — Mid-Phase Failure Handler (Final Block)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This catches failures from Phases 1-5 that skipped Post-Check.
+
+12.1  Click "+" after the Post-Check block
+12.2  Choose "Condition Block"
+12.3  Title: Handle Mid-Phase Failure
+
+12.4  Branch 1:
+        Title: Deployment Failed - Rollback
+        Condition:
+          Left Operand:  Local → "Deployment Failed"
+          Operator:      is equal to
+          Right Operand: true
+
+12.5  Inside this branch, add "Execute Python Script":
+        Title:              Rollback - Mid-Phase Failure
+        Action Timeout:     300
+        Continue on Failure: ☑ CHECKED
+
+        Script Arguments (2 rows):
+          Click "+ Add" twice. Use {x} picker:
+          Argument 1: {x} → "Relay Server URL"
+          Argument 2: {x} → "Fabric Name"
+
+        Script Body (SAME as the Post-Check rollback):
+┌────────────────────────────────────────────────────────────────────┐
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/rollback"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=180, verify=False)
+    result = resp.json()
+    result_json = json.dumps(result)
+except Exception as e:
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+└────────────────────────────────────────────────────────────────────┘
+
+        Script Output Variables (1):
+          Output 1:
+            Script Variable:  result_json
+            Property Name:    result_json
+            Property Type:    String
+
+12.6  Branch 2:
+        Title: No Failure - Already Handled
+        Condition:
+          Left Operand:  Local → "Deployment Failed"
+          Operator:      is equal to
+          Right Operand: false
+        Actions: NONE (empty)
+
+12.7  Save.
+
+  → SAVE WORKFLOW (final save).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 13: FINAL VALIDATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+13.1  Verify the workflow validates (look for a "Validate" button or
+      check mark). Fix any errors shown.
+
+13.2  Your final canvas should show 10 top-level blocks in this order:
+
+  ┌────────────────────────────────────────────────────────┐
+  │  1. [Python]    Pre-Check - Device Health              │
+  │  2. [Condition] Pre-Check Pass/Fail                    │
+  │  3. [Condition] Continue to Phase 1?                   │
+  │  4. [Condition] Continue to Phase 2?                   │
+  │  5. [Condition] Continue to Phase 3?                   │
+  │  6. [Condition] Continue to Phase 4?                   │
+  │  7. [Condition] Continue to Phase 5?                   │
+  │  8. [Condition] Deploy Security Phase?                 │
+  │  9. [Condition] Any Failure Before Post-Check?         │
+  │ 10. [Condition] Handle Mid-Phase Failure               │
+  └────────────────────────────────────────────────────────┘
+
+13.3  Verify variable count: 7 variables (4 input, 3 local)
+
+13.4  Export the workflow as JSON (for backup) — save it as
+      meraki_workflow_export.json
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK REFERENCE — ALL RELAY ENDPOINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  POST {relay}/api/v2/precheck               Pre-Check
+  POST {relay}/api/v2/deploy/phase1-underlay Phase 1 Deploy
+  POST {relay}/api/v2/verify/phase1-underlay Phase 1 Verify
+  POST {relay}/api/v2/deploy/phase2-lisp     Phase 2 Deploy
+  POST {relay}/api/v2/verify/phase2-lisp     Phase 2 Verify
+  POST {relay}/api/v2/deploy/phase3-vxlan-vni Phase 3 Deploy
+  POST {relay}/api/v2/deploy/phase4-vrf-bgp  Phase 4 Deploy
+  POST {relay}/api/v2/deploy/phase5-access   Phase 5 Deploy
+  POST {relay}/api/v2/deploy/phase6-security Phase 6 Deploy
+  POST {relay}/api/v2/postcheck              Post-Check
+  POST {relay}/api/v2/rollback               Rollback
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMMON SETTINGS CHEAT SHEET
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  HOW TO ADD SCRIPT ARGUMENTS:
+    • In the "Python Query" section, under "Script arguments"
+    • Click "+ Add" to add each argument row
+    • EASIEST: Type $ in the text field → dropdown appears → pick variable
+    • OR: Click {x} icon → "Browse Variables" → Workflow > → find variable
+    • Path in Browse: Workflow > (your workflow) > Input/Local variables
+    • Do NOT type text — you must select variables via $ or {x}
+
+  HOW TO ADD SCRIPT OUTPUT VARIABLES:
+    • In the "Script Output Variables" section
+    • Click "+ Add" to add each output
+    • Fill 3 fields for each output:
+      - Script Variable*: Python variable name (e.g. succeeded)
+      - Property Name*:   Same name (e.g. succeeded)
+      - Property Type*:   Boolean or String
+
+  All Deploy scripts:
+    • Arguments: {x}→Relay Server URL, {x}→Fabric Name
+    • Outputs:
+        succeeded  / succeeded  / Boolean
+        result_json / result_json / String
+    • Timeout: 180s
+    • Continue on Failure: YES
+
+  All Verify scripts:
+    • Arguments: {x}→Relay Server URL, {x}→Fabric Name
+    • Outputs:
+        succeeded  / succeeded  / Boolean
+        result_json / result_json / String
+    • Timeout: 120s
+    • Continue on Failure: YES
+
+  Pre-Check script:
+    • Arguments: {x}→Relay Server URL, {x}→Fabric Name, {x}→Force Deploy
+    • Outputs:
+        succeeded  / succeeded  / Boolean
+        status     / status     / String
+        result_json / result_json / String
+    • Timeout: 120s
+    • Continue on Failure: YES
+
+  Post-Check script:
+    • Arguments: {x}→Relay Server URL, {x}→Fabric Name
+    • Outputs:
+        succeeded  / succeeded  / Boolean
+        score      / score      / String
+        result_json / result_json / String
+    • Timeout: 180s
+    • Continue on Failure: YES
+
+  Rollback scripts (both):
+    • Arguments: {x}→Relay Server URL, {x}→Fabric Name
+    • Outputs:
+        result_json / result_json / String
+    • Timeout: 300s
+    • Continue on Failure: YES
+
+  All "Continue to Phase N?" conditions:
+    • Branch 1: Deployment Failed == false → (deploy activities)
+    • Branch 2: Deployment Failed == true → (empty)
+
+  All "Phase N Deploy Success?" conditions:
+    • Branch 1: [Deploy script].Succeeded == true → verify or empty
+    • Branch 2: [Deploy script].Succeeded == false → Set Variables
+
+  All "Set Variables" on failure:
+    • Deployment Failed = true
+    • Failed Phase = "[phase name]"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Q: Condition can't find the deploy script output?
+  A: The condition MUST reference an activity that is a SIBLING or
+     ANCESTOR in the workflow tree. If the Deploy script is inside a
+     Group, the Condition must also be inside the SAME Group.
+
+  Q: Variable picker doesn't show my variable?
+  A: Make sure you're looking in the right scope (Input vs Local).
+     Input variables for script arguments. Local for Set Variables.
+
+  Q: Script fails with "requests not found"?
+  A: The Meraki Python environment includes requests by default.
+     If not, wrap the import in try/except.
+
+  Q: How to test without the relay server?
+  A: The scripts will fail gracefully (caught by try/except).
+     The workflow will go to the "Failed" branches and rollback.
+     This validates the FLOW works even if the relay isn't up yet.

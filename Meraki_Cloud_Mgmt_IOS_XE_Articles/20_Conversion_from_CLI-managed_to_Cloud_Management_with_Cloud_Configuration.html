@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html  lang="en">
+<head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta name="google-site-verification" content="ErguAk4wKTpg1tEsWB8uz9HopWuJNT1GCGc0w91yllg"/>
+        <meta name="generator" content="MindTouch"/>
+        <meta name="robots" content="index,follow"/>
+        <meta property="og:title" content="Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration"/>
+        <meta property="og:site_name" content="Cisco Meraki Documentation"/>
+        <meta property="og:type" content="article"/>
+        <meta property="og:locale" content="en_US"/>
+        <meta property="og:url" content="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration"/>
+        <meta property="og:image" content="https://a.mtstatic.com/@public/production/site_13505/1603418441-social-share.png"/>
+        <meta property="og:description" content="This article gives you step-by-step instruction on how to migrate from DNA management mode to Meraki Cloud management mode, in the new cloud-native IOS XE architecture."/>
+        <meta property="article:published_time" content="2024-09-19T17:21:02Z"/>
+        <meta property="article:modified_time" content="2026-02-27T15:55:46Z"/>
+        <meta name="twitter:card" content="summary"/>
+        <meta name="twitter:title" content="Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration"/>
+        <meta name="twitter:description" content="This article gives you step-by-step instruction on how to migrate from DNA management mode to Meraki Cloud management mode, in the new cloud-native IOS XE architecture."/>
+        <meta name="twitter:image" content="https://a.mtstatic.com/@public/production/site_13505/1603418441-social-share.png"/>
+        <meta name="description" content="This article gives you step-by-step instruction on how to migrate from DNA management mode to Meraki Cloud management mode, in the new cloud-native IOS XE architecture."/>
+        <link rel="canonical" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration"/>
+        <link rel="search" type="application/opensearchdescription+xml" title="Cisco Meraki Documentation Search" href="https://documentation.meraki.com/@api/deki/site/opensearch/description"/>
+        <link rel="apple-touch-icon" href="https://a.mtstatic.com/@public/production/site_13505/1749845950-apple-touch-icon.png"/>
+        <link rel="shortcut icon" href="https://a.mtstatic.com/@public/production/site_13505/1756406766-favicon.ico"/>
+
+        <script type="application/ld+json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324">{"@context":"http:\/\/schema.org","@type":"Article","name":"Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration","url":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration","image":{"@type":"ImageObject","url":"https:\/\/a.mtstatic.com\/@public\/production\/site_13505\/1603418441-social-share.png","height":{"@type":"QuantitativeValue","maxValue":315},"width":{"@type":"QuantitativeValue","maxValue":600}},"datePublished":"2024-09-19T17:21:02Z","dateModified":"2026-02-27T15:55:46Z","description":"This article gives you step-by-step instruction on how to migrate from DNA management mode to Meraki Cloud management mode, in the new cloud-native IOS XE architecture.","thumbnailUrl":"https:\/\/documentation.meraki.com\/@api\/deki\/pages\/10593\/thumbnail?default=https%3A%2F%2Fdocumentation.meraki.com%2F%40style%2Fcommon%2Fimages%2Fimage-placeholder.png","mainEntityofPage":{"@type":"WebPage","@id":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration"},"headline":"Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration"}</script>
+        <script type="application/ld+json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324">{"@context":"http:\/\/schema.org","@type":"WebPage","name":"Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration","url":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration","relatedLink":["https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Upgrading_Cloud-Monitored_Switches_to_Cloud_Management_with_Device_Configuration","https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Enable_Cloud_Management_for_Cisco_Switches_with_Device_Configuration","https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Onboarding_Cloud-Managed_Catalyst_switches_to_the_Meraki_Dashboard","https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Operating_mode_claim_to_network_API_endpoint"]}</script>
+        <script type="application/ld+json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324">{"@context":"http:\/\/schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https:\/\/documentation.meraki.com\/Switching","name":"Switching"}},{"@type":"ListItem","position":2,"item":{"@id":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE","name":"Cloud Management with IOS XE"}},{"@type":"ListItem","position":3,"item":{"@id":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started","name":"Install and Get Started"}}]}</script>
+
+        <title>Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration - Cisco Meraki Documentation</title>
+
+
+    <style type="text/css">/*<![CDATA[*/
+/*.mt-foot {
+    display: none;
+}
+
+#contact-support{
+    width: 350px;
+    /*background-image: url('data:image/png;base64,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');
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 5em;*/
+    /*padding-left: 6em;
+    margin-left: 35px;
+    margin-top: -15px;
+}
+#wishFrame{
+    margin-top: 25px;
+    margin-left: 35px;
+    width: 350px;
+}
+
+/* /begin Added 10/20/17 
+#contact-sales{
+    width: 350px;
+    margin-left: 80px;
+    margin-top: -15px;
+}
+#contact-sales h2{
+    color: #999;
+}
+#contact-sales a{
+    font-size: larger;
+    color: #999;
+}
+
+/* /end Added 10/20/17 */
+
+/* /begin Added for testing 8/16/17 
+#ask-community{
+    margin-left: 35px;
+    margin-top: -15px;
+    width: 350px;
+}
+/* /end Added for testing 8/16/17 */
+/*.clearFix{
+   content: " "; /* Older browser do not support empty content 
+   visibility: hidden;
+   display: block;
+   height: 0;
+   clear: both;
+}
+.float-right{
+   display:inline-block;
+   float:right;
+}
+.float-left{
+   display:inline-block;
+   float:left;
+}
+#internal-suggestion {
+    margin: auto;
+    width: 572px;
+    clear: both;
+    margin-top: 2em;
+    border-top: 1px solid rgba(0,0,0,0.2);
+    text-align: center;
+    padding-top: 2em;
+}
+/* Changes for Docs+KB UI */
+/*#footerContent{
+    background: #484848; /* grey background color */
+   /* border-top: 6px solid #282828; /* small black border at the top */
+   /* margin: auto;
+    width: 1280px;
+    color: #999;
+    clear: both;
+    overflow: auto;
+    box-shadow: 0 0 3px rgba(0,0,0,0.4);
+}
+#contact-support a {
+    font-size: larger;
+    color: #999;
+}
+#contact-support a:hover {
+    color: #0097c8;
+}
+
+#contact-support h2{
+    color: #999; /* makes "contact support" a better grey */
+}
+
+/* /begin Added 8/16/17 */
+/*#ask-community a {
+    font-size: larger;
+    color: #999;
+}
+#ask-community a:hover {
+    color: #0097c8;
+}
+
+#ask-community h2{
+    color: #999; /* makes "contact support" a better grey */
+}
+/* /end Added 8/16/17 */
+
+/*#copyright {
+    margin: auto;
+    padding-right: 90px;
+    color: grey;
+    float: right;
+}
+#crfoot {
+    background: #505050;
+    margin: auto;
+    width: 1280px;
+    clear: both;
+    overflow: auto;
+    box-shadow: 0 3px 3px rgba(0,0,0,0.4);
+    height: 20px;
+    padding-top: 10px;
+    padding-bottom: 5px;
+}/*]]>*/</style>
+
+        <link media="screen" type="text/css" rel="stylesheet" href="https://a.mtstatic.com/@cache/layout/anonymous.css?_=3c7f8c51d8defda1cd09ffbefd24156e_ZG9jdW1lbnRhdGlvbi5tZXJha2kuY29t:site_13505" id="mt-screen-css" />
+
+    
+        <link media="print" type="text/css" rel="stylesheet" href="https://a.mtstatic.com/@cache/layout/print.css?_=5c42a1a2337fd8cfe9dd506434fe4035:site_13505" id="mt-print-css" />
+
+
+    <script type="application/json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" id="mt-localizations-draft">
+{"Draft.JS.alert.cancel.button":"OK","Draft.JS.alert.cancel.message":"You can not cancel a draft when the live page is unpublished.","Draft.JS.alert.cancel.title":"This draft cannot be canceled","Draft.JS.alert.publish.button":"OK","Draft.JS.alert.publish.message":"You can not publish a draft of a page with an unpublished parent","Draft.JS.alert.publish.title":"This draft cannot be published","Draft.JS.alert.unpublish.button":"OK","Draft.JS.alert.unpublish.message":"You can not unpublish a page when published subpages are present.","Draft.JS.alert.unpublish.title":"This page cannot be unpublished","Draft.JS.success.cancel":"The draft was successfully deleted.","Draft.JS.success.schedule.publish":"Publication schedule successfully created.","Draft.JS.success.publish":"The draft was successfully published.","Draft.JS.success.unpublish":"The page was successfully unpublished.","Draft.JS.success.unpublish.inherits-schedule\n        Draft.JS.success.unpublish.scheduled-to-publish":"[MISSING: draft.js.success.unpublish.inherits-schedule\n        draft.js.success.unpublish.scheduled-to-publish]","Draft.JS.success.update.schedule.publish":"Publication schedule successfully updated.","Draft.JS.success.update.schedule.unpublish":"[MISSING: draft.js.success.update.schedule.unpublish]","Draft.JS.success.delete.schedule\n        Draft.JS.success.delete.schedule.with.subpages\n        Draft.error.cancel":"[MISSING: draft.js.success.delete.schedule\n        draft.js.success.delete.schedule.with.subpages\n        draft.error.cancel]","Draft.error.publish":"There was an error publishing the draft.","Draft.error.unpublish":"There was an error unpublishing the page.","Draft.message.at":"at","Dialog.ConfirmSave.StrictIdf.title":"Oops!","Dialog.ConfirmSave.StrictIdf.error.missing-template-reference":"This article type requires a template reference widget. Not having one may negatively impact your site and SEO. Please contact CXone Expert support.","Dialog.ConfirmSave.StrictIdf.label.continue":"Proceed anyway","Dialog.ConfirmSave.StrictIdf.label.cancel":"Cancel","Dialog.ConfirmSave.StrictIdf.label.missing-template-reference-help-link":"Learn more about required references","Dialog.ConfirmSave.StrictIdf.error.invalid-idf":"This type of article should not exist at the requested location in the site hierarchy. Proceeding with the requested move may negatively impact site navigation and SEO.","Dialog.ConfirmSave.StrictIdf.label.invalid-idf-help-link":"Learn more about IDF structure","Dialog.EditDraft.page-title":"Create draft","Dialog.Scheduler.Common.label.am":"{0} AM","Dialog.Scheduler.Common.label.pm":"{0} PM","Dialog.Scheduler.Publish.alert-create-draft":"Create","Dialog.Scheduler.Publish.alert-existing-publication-scheduled":"This location has an existing publication schedule applied.  The new page will inherit this new schedule.","Dialog.Scheduler.Publish.alert-modify-message":"This draft is scheduled to be published {0} at {1}. A schedule cannot be modified or deleted less than 15 minutes from its start time.","Dialog.Scheduler.Publish.alert-modify-title":"This schedule cannot be modified","Dialog.Scheduler.Publish.button-close":"Close","Dialog.Scheduler.Publish.button-save":"Save publish schedule","Dialog.Scheduler.Publish.button-go-to-parent":"Go to parent","Dialog.Scheduler.Publish.do-not-have-permission-message":"This page will be published {0} with another page scheduled by {1}. You do not have permission to view this page. Please see {1} to resolve scheduling conflicts.","Dialog.Scheduler.Publish.go-to-parent-message":"This draft will be published {0}, scheduled by {1}. A schedule can only be modified where it was created.","Dialog.Scheduler.Publish.label.f1-link":"Learn about scheduled publishing","Dialog.Scheduler.Publish.page-title":"Publish","Dialog.Scheduler.Unpublish.button-save":"Save unpublish schedule","Dialog.Scheduler.Unpublish.alert-modify-message":"This page is scheduled to be unpublished {0} at {1}. A schedule cannot be modified or deleted less than 15 minutes from its start time.","Dialog.Scheduler.Unpublish.do-not-have-permission-message":"This page will be unpublished {0} with another page scheduled by {1}. You do not have permission to view this page. Please see {1} to resolve scheduling conflicts.","Dialog.Scheduler.Unpublish.go-to-parent-message":"This page will be unpublished {0}, scheduled by {1}. A schedule can only be modified where it was created.","Dialog.Scheduler.Unpublish.page-title":"Unpublish","Page.Dashboard.page-title":"Dashboard"}    </script>    <script type="application/json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" id="mt-localizations-editor">
+{"Article.Attach.file.upload.toobig":"The file \"{1}\" is too large.  The maximum allowed file size is {0}.","Article.Attach.file.upload.notAllowed":"The selected file can not be uploaded because you do not have permission to upload files of that type.","Article.Attach.file.upload.fileExtension":"You picked a file with an unsupported extension.  Please try again with a valid file.","Article.Common.page-is-restricted-login":"You do not have permission to view this page - please try signing in.","Article.Common.page-save-conflict":"You may have overwritten a concurrent editor's changes. Use this page's <a title=\"Revision History\" target=\"_blank\" href=\"{0}\" >Revision History<\/a> to review.","Article.Error.page-couldnt-be-loaded":"The requested page's contents could not be loaded.","Article.Error.page-save-conflict":"A page already exists at {0}. Navigate to the existing page and edit the page if you wish to modify its contents.","Article.Error.page-save-forbidden":"Your session has expired or you do not have permission to edit this page.","Article.Error.page-title-required":"A page title is required.","Article.edit.summary":"Edit summary","Article.edit.summary-reason":"Why are you making this edit?","Article.edit.enter-reason":"Enter reason (viewable in Site History Report)","Component.YoutubeSearch.error.key-invalid":"Your YouTube API Key was improperly configured. Please review the article at the","Component.YoutubeSearch.error.key-missing":"Your CXone Expert deployment needs to update your YouTube API Key. Details on how to update can be found at the","Component.YoutubeSearch.error.search-failed":"Search failed","Component.YoutubeSearch.info.not-found":"No videos found","Component.YoutubeSearch.label.video-url":"Video URL","Component.YoutubeSearch.placeholder.query":"Video URL or YouTube search query","Dialog.ConfirmCancel.button.continue-editing":"Continue editing","Dialog.ConfirmCancel.button.discard-changes":"Discard changes","Dialog.ConfirmCancel.message.changes-not-saved":"Your changes have not been saved to MindTouch.","Dialog.ConfirmCancel.title":"Discard changes?","Dialog.ConfirmDeleteRedirects.label.delete-redirects-help-link":"Learn more about deleting redirects","Dialog.ConfirmSave.error.redirect":"A redirect exists at this location and will be deleted if you continue. This may negatively impact your site and SEO. Please contact CXone Expert support.","Dialog.ConfirmSave.label.cancel":"Cancel","Dialog.ConfirmSave.label.continue":"Continue","Dialog.ConfirmSave.title":"Delete redirect?","Dialog.ConfirmSave.StrictIdf.error.invalid-idf":"This type of article should not exist at the requested location in the site hierarchy. Proceeding with the requested move may negatively impact site navigation and SEO.","Dialog.ConfirmSave.StrictIdf.error.missing-template-reference-insert":"You've removed the template reference, which is required for this page. Click Insert to reinsert the template reference.","Dialog.ConfirmSave.StrictIdf.label.cancel":"Cancel","Dialog.ConfirmSave.StrictIdf.label.continue":"Proceed anyway","Dialog.ConfirmSave.StrictIdf.label.insert":"Insert","Dialog.ConfirmSave.StrictIdf.label.missing-template-reference-help-link":"Learn more about required references","Dialog.ConfirmSave.StrictIdf.label.invalid-idf-help-link":"Learn more about IDF structure","Dialog.ConfirmSave.StrictIdf.title":"Oops!","Dialog.JS.wikibits-edit-section":"Edit section","Dialog.SaveRequired.button.cancel":"Cancel","Dialog.SaveRequired.button.save":"Save and continue","Dialog.SaveRequired.label.change-title-start":"This page needs a different title than","Dialog.SaveRequired.label.change-title-end":"Please make the correction and try again.","Dialog.SaveRequired.label.new-page-alert":"This operation can not be performed on a page that has not yet been created. In order to do that, we need to quickly save what you have.","Dialog.SaveRequired.title":"Save required","Draft.error.save-unpublished":"You cannot save an unpublished draft at {0}. A published page already exists at that location.","GUI.Editor.alert-changes-made-without-saving":"You have made changes to the content without saving your changes. Are you sure you want to exit this page?","GUI.Editor.error.copy-hint":"To avoid losing your work, copy the page contents to a new file and retry saving again.","GUI.Editor.error.server-error":"A server error has occurred.","GUI.Editor.error.unable-to-save":"We are unable to save this page","Redist.CKE.mt-save.save-to-file-link":"Save the page content to a file","Redist.CKE.mt-autosave.contents-autosaved":"The page contents were autosaved to the browser's local storage {0}","System.API.Error.invalid-redirect":"Cannot create a redirect on a page with sub-pages.","System.API.Error.invalid-redirect-target":"The redirect does not point at a valid page."}    </script>    <script type="application/json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" id="mt-localizations-file-uploader">
+{"Dialog.Attach.allowed-types":"Allowed file types:","Dialog.Attach.button.upload":"Upload","Dialog.Attach.choose-files-dad":"Choose files to upload or drag and drop files into this window.","Dialog.Attach.max-size":"Maximum upload file size: {0}"}    </script>    <script type="application/json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" id="mt-localizations-grid-widget">
+{"Article.Common.page-is-restricted-login":"You do not have permission to view this page - please try signing in.","MindTouch.Help.Page.search-unavailable":"Sorry, search is currently unavailable.","MindTouch.Reports.data.empty-grid-text":"No Data Available.","Page.StructuredTags.error-update":"An unknown error occurred."}    </script>    <script type="application/json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" id="mt-localizations-tree-widget">
+{"Skin.Common.home":"Home","Dialog.Common.error.path-not-found":"The requested page or section could not be loaded. Please update the link.","Dialog.JS.loading":"Loading...","Dialog.JS.loading.copy":"Copying page(s)...","Dialog.JS.loading.insertImage":"Inserting image...","Dialog.JS.loading.move":"Moving page(s)...","Dialog.JS.loading.moveFile":"Moving file...","Dialog.JS.loading.search":"Searching...","MindTouch.Help.Page.in":"in","MindTouch.Help.Page.no-search-results":"Sorry, we can't find what you are looking for.","MindTouch.Help.Page.no-search-try":"Try searching for something else, selecting a category, or try creating a ticket.","MindTouch.Help.Page.retrysearch":"Click here to search the whole site.","MindTouch.Help.Page.search-error-try":"Please try again later.","MindTouch.Help.Page.search-unavailable":"Sorry, search is currently unavailable."}    </script>    <script type="application/json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" id="mt-localizations-dialog">
+{"Dialog.Common.button.cancel":"Cancel","Dialog.Common.button.ok":"OK","Dialog.Common.label.home":"Home"}    </script>
+    <script type="text/javascript" data-mindtouch-module="true" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" src="https://a.mtstatic.com/deki/javascript/out/globals.jqueryv2.2.4.polyfill.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="application/json" id="mt-global-settings" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324">{"articleType":"topic","attachFileMax":1000,"baseHref":"https:\/\/documentation.meraki.com","cacheFingerprint":"9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505","canFileBeAttached":false,"cdnHostname":"a.mtstatic.com","clientSideWarnings":false,"dntEditorConfig":false,"draftEditable":false,"followRedirects":1,"idfHideTemplateTags":true,"idfVersion":"IDF3","isAiOptimizationTemplateEnabled":false,"isArticleReviewCommunityMembersEnabled":false,"isDraftAllowed":false,"isDraftManagerReportDownloadEnabled":false,"isDraftRequest":false,"isFindAndReplaceUndoEnabled":false,"isGenerativeSearchEnabled":false,"isGenerativeSearchDisclaimerEnabled":true,"isGenerativeSearchStreamResponseToggleEnabled":false,"isGenerativeSearchSearchIconEnabled":false,"isContentAdequacyEnabled":true,"isGenerativeSearchOnDemandEvaluationEnabled":true,"isEditorAiAssistantShortcutsEnabled":false,"isFileDescriptionCaptionableByLlmEnabled":false,"isGoogleAnalyticsEnabled":true,"isGuideTabMultipleClassificationsEnabled":false,"isHawthornThemeEnabled":false,"isIframeSandboxEnabled":false,"isImportExportEnhancementsEnabled":false,"isImportExportMediaEnabled":false,"isExternalImportEnabled":false,"isInteractionAnalyticsDebugEnabled":false,"isDevelopmentModeEnabled":false,"isInteractionAnalyticsEnabled":true,"isKcsEnabledOnPage":false,"isMediaManagerEnabled":false,"isPinnedPagesEnabled":true,"isPinnedPagesEnhancementsEnabled":true,"isReportDownloadEnabled":false,"isSchedulePublishEnabled":true,"isSearchAsYouTypeEnabled":false,"isTinymceAiAssistantEnabled":false,"isSearchInsightsDownloadEnabled":true,"isSentimentAnalysisEnabled":true,"isShowMoreChildrenNodesEnabled":false,"isShowTerminalNodesEnabled":false,"isSkinResponsive":true,"isSmoothScrollEnabled":true,"isTinyMceEnabled":false,"isTreeArticleIconsEnabled":false,"isXhrF1WebWidgetEnabled":true,"isXhrIEMode":false,"kcsEnabled":false,"kcsV2Enabled":false,"kcsV2GuidePrivacySetting":"Semi-Public","learningPathsEnabled":true,"maxFileSize":268435456,"moduleMode":"global","pageEditable":false,"pageId":10593,"pageIsRedirect":false,"pageLanguageCode":"en-US","pageName":"Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration","pageNamespace":"","pageOrderLimit":1000,"pagePermissions":["LOGIN","BROWSE","READ","SUBSCRIBE"],"pageRevision":"46","pageSectionEditable":false,"pageTitle":"Switching\/Cloud Management with IOS XE\/Install and Get Started\/Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration","pageViewId":"31b8ca8d-71aa-4381-9c3c-5e42a92d04d3","siteId":"site_13505","pathCommon":"\/@style\/common","pathSkin":"\/@style\/elm","relatedArticlesDetailed":true,"removeBlankTemplate":true,"removeDeleteCheckbox":true,"cidWarningOnDelete":true,"scriptParser":2,"sessionId":"N2VlZWI3ZTMtYzI3OC00MGE1LWI4YWItNmU2MzYxZTViNjMwfDIwMjYtMDQtMDJUMDQ6MTk6Mjk=","showAllTemplates":false,"siteAuthoringPageThumbnailManagementEnabled":true,"skinStyle":"columbia.elm","spaceballs2Enabled":false,"strictIdfEnabled":true,"uiLanguage":"en-us","userId":2,"isPageRedirectPermanent":false,"userIsAdmin":false,"userIsAnonymous":true,"userIsSeated":false,"userName":"Anonymous User","userPermissions":["LOGIN","BROWSE","READ","SUBSCRIBE"],"userSystemName":"Anonymous","userTimezone":"GMT","webFontConfig":{"google":{"families":null}},"apiToken":"xhr_2_1775108477_df7b97b7b4030ab2dc8aa811f434be5e0dca92990133f07911b2218b02ad39a0","displayGenerativeSearchDisclaimer":true,"cognigyFlowsEnabled":false}</script><script type="text/javascript" data-mindtouch-module="true" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" src="https://a.mtstatic.com/deki/javascript/out/community.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="text/javascript" data-mindtouch-module="true" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" src="https://a.mtstatic.com/deki/javascript/out/standalone/skin_elm.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="text/javascript" data-mindtouch-module="true" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" src="https://a.mtstatic.com/deki/javascript/out/standalone/pageBootstrap.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script>
+
+    
+        
+<script type="text/javascript" src="https://www.cisco.com/c/dam/cdc/t/ctm-core.js"></script>
+    
+<script type="text/javascript" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-51174192-2','documentation.meraki.com',{allowLinker:true});ga('send','pageview');ga('create','UA-65721316-2','documentation.meraki.com',{name:'mtTracker',allowLinker:true});ga('mtTracker.require','linker');ga('mtTracker.set', 'anonymizeIp', true);ga('mtTracker.send','pageview');document.addEventListener('mindtouch-web-widget:f1:loaded',function(e){var t=e.data||{},d=t.widget;d&&''!==t.embedId&&document.addEventListener('mindtouch-web-widget:f1:clicked',function(e){var t=(e.data||{}).href;if(t){var n=document.createElement('a');n.setAttribute('href',t),'expert-help.nice.com'===n.hostname&&(e.preventDefault(),ga('linker:decorate',n),d.open(n.href))}})});</script>
+</head>
+<body class="elm-user-anonymous columbia-page-main columbia-article-topic columbia-browser-applewebkit columbia-platform-windows columbia-breadcrumb-home-switching-cloudmanagementwithiosxe-installandgetstarted-conversionfromcli-managediosxecatalystswitchestocloudmanagementwithcloudconfiguration columbia-live no-touch columbia-lang-en-us columbia-skin-elm">
+<a class="elm-skip-link" href="#elm-main-content" title="Press enter to skip to the main content">Skip to main content</a><main class="elm-skin-container" data-ga-category="Anonymous | page">
+    <header class="elm-header">
+        <div class="elm-header-custom">
+<script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-NHZZG7QL8R"></script><script>/*<![CDATA[*/
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-NHZZG7QL8R');
+/*]]>*/</script><script src="//use.typekit.net/hum1oye.js"></script><script>/*<![CDATA[*/try{Typekit.load();}catch(e){}/*]]>*/</script>
+
+<div class="mt-header-help"><div class="mt-header-help-container"><div class="mt-logo-container"><div class="mt-logo"><a class="internal" href="https://documentation.meraki.com/" rel="internal"><img class="mt-cdn" src="https://documentation.meraki.com/@api/deki/site/logo?default=https%3A%2F%2Fdocumentation.meraki.com%2F%40cdn%2F%40style%2Fcommon-legacy%2Fimages%2Flogo.png" alt="" /></a></div></div><div id="navcontainer"><ul id="navlist"><li><a href="https://account.meraki.com/secure/login/dashboard_login" target="_blank" rel="external noopener nofollow" class="link-https">Dashboard</a></li><li><a href="https://community.cisco.com/t5/meraki/ct-p/meraki-home" target="_blank" rel="external noopener nofollow" class="link-https">Community</a></li><li><a href="https://meraki.cisco.com/support" target="_blank" rel="external noopener nofollow" class="link-https">Support</a></li><li><a id="current" href="https://meraki.cisco.com/form/contact" target="_blank" rel="external noopener nofollow" class="link-https">Contact Sales</a></li></ul></div></div><div class="mt-header-search"><div class="mt-help-search mt-lsf-search" id="mt-portfolio-search"><script type="application/json" id="mt-localizations-help-widget">/*<![CDATA[*/{"Help.Widget.button.text":"Search","Help.Widget.label.text":"Query","Help.Widget.placeholder.text":"Search Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration"}/*]]>*/</script><div class="mt-inputredirect" data-query-key="q" data-path="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration"></div></div></div></div>
+
+<p>&nbsp;</p>
+</div>
+        <div class="elm-nav mt-translate-module" hidden="true">
+            <div class="elm-nav-container mt-translate-container"></div>
+        </div>
+        <div class="elm-header-logo-container">
+            <a href="https://documentation.meraki.com" title="Cisco Meraki Documentation" aria-label='Link to home'><img src="https://a.mtstatic.com/@public/production/site_13505/1749845593-logo.png" alt="Cisco Meraki Documentation" /></a>
+        </div>
+        
+        <nav class="elm-header-user-nav elm-nav" role="navigation">
+            <div class="elm-nav-container">
+                <ol>
+                    <li class="elm-global-search" data-ga-action="Header search"><a class="mt-icon-site-search mt-toggle-form" href="#" title="Search site">Search site</a>
+<div class="mt-quick-search-container mt-toggle-form-container">
+    <form action="/Special:Search">
+        <input name="qid" id="mt-qid-skin" type="hidden" value="" />
+        <input name="fpid" id="mt-search-filter-id" type="hidden" value="230" />
+        <input name="fpth" id="mt-search-filter-path" type="hidden" />
+        <input name="path" id="mt-search-path" type="hidden" value="" />
+
+        <label class="mt-label" for="mt-site-search-input">
+            Search
+        </label>
+        <input class="mt-text mt-search search-field" name="q" id="mt-site-search-input" placeholder="How can we help you?" type="search" />
+        <button class="mt-button ui-button-icon mt-icon-site-search-button search-button" type="submit">
+            Search
+        </button>
+    </form>
+</div>
+<div class="elm-search-back"><a class="mt-icon-browser-back" data-ga-label="Browse back" href="#" id="mt-browser-back" title="Go back to previous article">Go back to previous article</a></div>
+</li>
+                    <li class="elm-user-menu"><ol class="mt-user-menu">
+
+
+    <li class="mt-user-menu-user">
+        <a class="mt-icon-quick-sign-in "
+           href="https://documentation.meraki.com/@app/auth/4/login?returnto=https%3A%2F%2Fdocumentation.meraki.com%2FSwitching%2FCloud_Management_with_IOS_XE%2FInstall_and_Get_Started%2FConversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration"
+           title="Sign in">Sign in</a>
+
+    </li>
+</ol>
+</li>
+                </ol>
+            </div>
+        </nav>
+        <nav class="elm-header-global-nav elm-nav" data-ga-action="Elm Navigation">
+            <div class="elm-nav-container">
+                <button class="elm-hierarchy-trigger mt-hierarchy-trigger ui-button-icon mt-icon-hierarchy-trigger-closed" title="Expand/collapse global hierarchy" data-ga-label="Hierarchy Toggle - Tree View">
+                    Expand/collapse global hierarchy
+                </button>
+                <ol class="mt-breadcrumbs" data-ga-action="Breadcrumbs">
+                        <li>
+                            <a href="https://documentation.meraki.com/" data-ga-label="Breadcrumb category">
+                                <span class="mt-icon-article-category mt-icon-article-home"></span>
+                                    Home
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://documentation.meraki.com/Switching" data-ga-label="Breadcrumb category">
+                                <span class="mt-icon-article-category"></span>
+                                    Switching
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE" data-ga-label="Breadcrumb category">
+                                <span class="mt-icon-article-category"></span>
+                                    Cloud Management with IOS XE
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started" data-ga-label="Breadcrumb guide">
+                                <span class="mt-icon-article-guide"></span>
+                                    Install and Get Started
+                            </a>
+                        </li>
+                        <li class="mt-breadcrumbs-current-page">
+                            <span class="mt-icon-article-topic"></span>
+                            Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration
+                        </li>
+                </ol>
+                <button class="mt-icon-hierarchy-mobile-view-trigger ui-button-icon mt-icon-hierarchy-mobile-trigger-closed" title="Expand/collapse global location" data-ga-label="Hierarchy Toggle - Breadcrumb Expand/Collapse">
+                    Expand/collapse global location
+                </button>
+            </div>
+        </nav>
+        <nav class="elm-nav elm-header-hierarchy">
+            <div class="elm-nav-container">
+                <div class="elm-hierarchy mt-hierarchy"></div>
+            </div>
+        </nav>    </header>
+    <article class="elm-content-container" id="elm-main-content" tabindex="-1">
+        <header>
+            <div id="flash-messages"><div class="dekiFlash"></div></div>
+            
+                
+<h1 id="title" data-title-editor-available="false">
+        Conversion from CLI-managed IOS XE Catalyst Switches to Cloud Management with Cloud Configuration
+</h1>
+
+                
+
+                
+                    <ol class="elm-meta-data elm-meta-top" data-ga-action="Page actions">
+                        <li class="elm-last-modified"><dl class="mt-last-updated-container">
+    <dt class="mt-last-updated-label">Last updated</dt>
+    <dd>
+        <span class="mt-last-updated" data-timestamp="2026-02-27T15:55:46Z"></span>
+    </dd>
+</dl>
+</li>
+                        <li class="elm-pdf-export"><a data-ga-label="PDF" href="https://documentation.meraki.com/@api/deki/pages/10593/pdf/Conversion%2bfrom%2bCLI-managed%2bIOS%2bXE%2bCatalyst%2bSwitches%2bto%2bCloud%2bManagement%2bwith%2bCloud%2bConfiguration.pdf?stylesheet=default" rel="nofollow" target="_blank" title="Export page as a PDF">
+    <span class="mt-icon-article-pdf"></span>Save as PDF
+</a></li>
+                        <li class="elm-social-share"></li>
+                    </ol>
+                
+            
+        </header>
+                <header class="mt-content-header"></header>
+                <aside class="mt-content-side"></aside>
+            <aside id="mt-toc-container" data-title="Table of contents" data-collapsed="true">
+                <nav class="mt-toc-content mt-collapsible-section">
+                    <ol><li><a href="#Overview" rel="internal">Overview</a></li><li><a href="#Prerequisites" rel="internal">Prerequisites&nbsp;</a><ol><li><a href="#Supported_Models" rel="internal">Supported Models</a></li><li><a href="#Supported_Firmware" rel="internal">Supported Firmware&nbsp;</a></li></ol></li><li><a href="#Conversion_Steps_from_DNA_Management_Mode_to_Cloud_Management_with_Cloud_Configuration" rel="internal">Conversion&nbsp;Steps from DNA Management Mode to Cloud Management with Cloud Configuration</a><ol><li><a href="#Step_1:_Validate_Compatibility_and_Upgrade_to_the_Minimum_IOS-XE_Release" rel="internal">Step 1:&nbsp;Validate Compatibility and Upgrade to the Minimum IOS-XE Release</a></li><li><a href="#Step_2:_Initiate_Registration_with_the_Cloud" rel="internal">Step 2:&nbsp;Initiate Registration with the Cloud</a></li><li><a href="#Step_3:_Claim_the_Switch_to_Meraki_Dashboard_Using_Cloud_ID" rel="internal">Step 3: Claim the Switch to Meraki&nbsp;Dashboard Using&nbsp;Cloud ID</a></li><li><a href="#Step_4:_Add_the_switch_to_the_dashboard_network" rel="internal">Step 4: Add the switch to the dashboard network&nbsp;</a></li></ol></li><li><a href="#Conversion_to_DNA_management_mode" rel="internal">Conversion&nbsp;to DNA management mode</a></li></ol>
+                </nav>
+            </aside>
+            <section class="mt-content-container">
+                <p>Click <a title="CLI&#31649;&#29702;&#12398; IOS XE Catalyst &#12473;&#12452;&#12483;&#12481;&#12434;&#12463;&#12521;&#12454;&#12489;&#35373;&#23450;&#12514;&#12540;&#12489;&#12398;&#12463;&#12521;&#12454;&#12489;&#31649;&#29702;&#12473;&#12452;&#12483;&#12481;&#12408;&#22793;&#25563;&#12377;&#12427;" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Translated_Documents/CLI%E7%AE%A1%E7%90%86%E3%81%AE_IOS_XE_Catalyst_%E3%82%B9%E3%82%A4%E3%83%83%E3%83%81%E3%82%92%E3%82%AF%E3%83%A9%E3%82%A6%E3%83%89%E8%A8%AD%E5%AE%9A%E3%83%A2%E3%83%BC%E3%83%89%E3%81%AE%E3%82%AF%E3%83%A9%E3%82%A6%E3%83%89%E7%AE%A1%E7%90%86%E3%82%B9%E3%82%A4%E3%83%83%E3%83%81%E3%81%B8%E5%A4%89%E6%8F%9B%E3%81%99%E3%82%8B" rel="internal">&#26085;&#26412;&#35486;</a> for Japanese&nbsp;</p>
+
+<div class="note-warning style-wrap"><strong><img alt="Picture1.png" class="internal default" style="width: 19px; height: 19px;" width="19px" height="19px" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/29127/Picture1.png?revision=1&amp;size=bestfit&amp;width=19&amp;height=19" />&nbsp;<span style="font-weight:normal;">Att</span><span style="font-weight:normal;">e</span><span style="font-weight:normal;">mp</span><span style="font-weight:normal;">ting</span><span style="font-weight:normal;"> to migr</span><span style="font-weight:normal;">ate</span><span style="font-weight:normal;">&nbsp;un</span><span style="font-weight:normal;">supported models</span><strong style="display: inline !important;">&nbsp;</strong><span style="font-weight:normal;">m</span><span style="font-weight:normal;">ay</span><span style="font-weight:normal;"> result in an unusable switch. Please review the list of supported models below before proceeding with the u</span><span style="font-weight:normal;">pg</span><span style="font-weight:normal;">rade.</span></strong></div>
+
+<div class="note-info style-wrap">
+<p dir="ltr">If you intend to migrate your Catalyst switches to the legacy container-based management solution (any CS firmware version), please refer to the &ldquo; <a href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Getting_started%3A_Cisco_Catalyst_9300_Management_with_Meraki_Dashboard" rel="internal"><u>Getting Started: Cisco Catalyst 9300 Management with Meraki Dashboard</u></a>&rdquo;<a class="mt-self-link" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" rel="internal"> </a>documentation<strong>.</strong></p>
+</div>
+
+<div class="note-info style-wrap">
+<p dir="ltr">This article covers the migration of Catalyst switches from CLI or DNA-managed mode to cloud operating mode on the Meraki dashboard, supported by the Cloud Management with&nbsp;IOS XE 17.15+.</p>
+
+<p dir="ltr">Check out our latest <a title="Cisco Cloud Entitlement for DNA" href="https://documentation.meraki.com/Platform_Management/Product_Information/Licensing/Meraki_Licensing/Cisco_Cloud_Entitlement_for_DNA" rel="internal">Cloud Entitlement for DNA offer</a>. Eligible devices can migrate to cloud management using your existing DNA license - no additional license migration or transfer required until February 1, 2029.&nbsp;</p>
+</div>
+
+<div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_1"><span id="Overview"></span><h2 dir="ltr" class="editable">Overview</h2>
+
+<p dir="ltr">With the release of cloud management with&nbsp;IOS XE 17.15+, we are introducing cloud management with cloud configuration on IOS XE. This brings several enhancements to your Cisco cloud-managed Catalyst switches. Notably, you will&nbsp;experience improved boot times, especially for stacks compared to previous versions of cloud management. Additionally, you can now access the CLI through the dashboard to run show commands for troubleshooting.&nbsp;</p>
+
+<p dir="ltr">IOS XE 17.15+&nbsp;release comes with the <strong>capability to convert&nbsp;the supported Catalyst 9000 switches </strong>(including the 9200L for the first time ever) from DNA management mode to cloud management with cloud configuration&nbsp;on the Meraki dashboard.&nbsp;This functionality migrates the switch or switch stack to become fully managed by Meraki&nbsp;dashboard. During the migration process the switch's configuration, flash, USB-flash, and all storage will be formatted and reconfigured to the Meraki runtime.&nbsp;</p>
+
+<p dir="ltr">This document gives you a step-by-step explanation on how to migrate your existing supported Catalyst switch to Cloud Management mode. For details on the cloud management with&nbsp;IOS XE architecture and software capabilities of this new release, please refer to the <a title="Cloud Configuration: Release Versions and Highlights" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Product_Information/Overviews_and_Datasheets/Cloud_Management_with_IOS_XE_Overview/Cloud_Configuration%3A_Release_Versions_and_Highlights?mt-draft=true" rel="internal">firmware release highlights</a>&nbsp;or the <a target="_blank" title="Cloud Native IOS XE FAQ" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Product_Information/Overviews_and_Datasheets/Cloud_Managed_Catalyst_Switches_FAQs" rel="internal"><u>FAQ</u></a>&nbsp;document.</p>
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_2"><span id="Prerequisites"></span><h2 dir="ltr" class="editable">Prerequisites&nbsp;</h2>
+
+<div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_3"><span id="Supported_Models"></span><h3 dir="ltr" role="presentation" class="editable">Supported Models</h3>
+
+<p dir="ltr">Migration is available for the following Catalyst 9000 models.&nbsp;</p>
+
+<div class="note-warning style-wrap">
+<p dir="ltr">Full encryption IOS-XE is required for migration. No Payload Encryption (NPE) versions are not supported for this purpose. For example, the NPE version of&nbsp;cat9k_lite_iosxe.17.15.3.SPA.bin&nbsp;is unsupported. Furthermore, install mode is required, attempting to migrate using bundle mode will result in an error.</p>
+</div>
+
+<div class="note-warning style-wrap">
+<p dir="ltr"><span class="mt-color-e74c3c">ATTEMPTING TO CONVERT UNSUPPORTED MODELS WITHOUT MEETING&nbsp;MINIMUM FIRMWARE REQUIREMENT&nbsp;MAY RESULT IN A UNUSABLE SWITCH. PLEASE REVIEW THE LIST OF SUPPORTED MODELS BEFORE PROCEEDING WITH THE UPGRADE.</span></p>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th scope="col"><strong><strong>Family&nbsp;</strong></strong></th>
+            <th scope="col" style="width:497px;"><strong><strong>Models</strong></strong></th>
+            <th scope="col" style="width:123px;"><strong><strong>Minimum Required Version&nbsp;</strong></strong></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong><strong>C9200L</strong></strong></td>
+            <td style="width:497px;">C9200L-24T-4X&#8239;, C9200L-24P-4X, C9200L-48T-4X&#8239;, C9200L-48P-4X&#8239;, C9200L-48PL-4X&#8239;, C9200L-24PXG-4X&#8239;, C9200L-48PXG-4X&#8239;, C9200L-24PXG-2Y&#8239;, C9200L-48PXG-2Y&#8239;, C9200L-24T-4G&#8239;, C9200L-24P-4G&#8239;, C9200L-48T-4G&#8239;, C9200L-48P-4G&#8239;, C9200L-48 PL-4G&nbsp;</td>
+            <td colspan="1" rowspan="3" style="width:123px;"><strong><strong>17.15+</strong></strong></td>
+        </tr>
+        <tr>
+            <td><strong><strong>C9300-M</strong></strong></td>
+            <td style="width:497px;">C9300-24T-M, C9300-24P-M, C9300-24U-M&#8239;, C9300-24UX-M&#8239;, C9300-48T-M&#8239;, C9300-48P-M&#8239;, C9300-48U-M&#8239;, C9300-48UXM-M&#8239;, C9300-48UN-M&#8239;, C9300-24S-M, C9300-48S-M&#8239;, C9300X-12Y-M, C9300X-24Y-M, C9300X-48HXN-M, C9300X-24HX-M, C9300X-48HX-M, C9300X-48TX-M, C9300L-24P-4X-M, C9300L-24T-4X-M, C9300L-24UXG-4X-M, C9300L-48P-4X-M, C9300L-48PF-4X-M, C9300L-48T-4X-M, C9300L-48UXG-4X-M, and its corresponding Catalyst switch SKUs for migration.</td>
+        </tr>
+        <tr>
+            <td colspan="3" style="width:866px;">&nbsp;</td>
+        </tr>
+        <tr>
+            <td><strong><strong>Remaining C9300 models&nbsp;</strong></strong></td>
+            <td style="width:497px;">C9300-24UB, C9300-24UXB, C9300-48UB, C9300-24H, C9300-48H, C9300L-24T-4G, C9300L-48T-4G, C9300L-24P-4G, C9300L-48P-4G, C9300L-48PF-4G, C9300L-24UXG-2Q, C9300L-48UXG-2Q, C9300LM-48UX-4Y, C9300LM-48U-4Y, C9300LM-24U-4Y, C9300LM-48T-4Y&nbsp;</td>
+            <td colspan="1" rowspan="6" style="width:123px;"><strong><strong>17.18</strong></strong>+</td>
+        </tr>
+        <tr>
+            <td><strong><strong>C9200&nbsp;</strong></strong></td>
+            <td style="width:497px;">C9200-24T, C9200-24P, C9200-24PB, C9200-24PXG, C9200-48T, C9200-48P, C9200-48PL, C9200-48PB, C9200-48PXG&nbsp;</td>
+        </tr>
+        <tr>
+            <td><strong><strong>C9200CX&nbsp;</strong></strong></td>
+            <td style="width:497px;">C9200CX-12T-2X2G, C9200CX-12P-2X2G, C9200CX-8P-2X2G, C9200CX-8UXG-2X, C9200CX-12P-2XGH, C9200CX-8P-2XGH, C9200CX-8UXG-2XH&nbsp;</td>
+            <td colspan="1">&nbsp;</td>
+        </tr>
+        <tr>
+            <td>
+            <p><strong><strong>C9500H: high-performance switch with 100G Uplink&nbsp;</strong></strong></p>
+            </td>
+            <td style="width:497px;">C9500-48Y4C, C9500-24Y4C, C9500-32C, C9500-32QC&nbsp;</td>
+        </tr>
+    </tbody>
+</table>
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_4"><span id="Supported_Firmware"></span><h3 dir="ltr" role="presentation" class="editable">Supported Firmware&nbsp;</h3>
+
+<p dir="ltr">For the migration to Meraki cloud operating mode, switches are required to be on&nbsp;IOS-XE 17.15+. The special&nbsp;firmware release can be downloaded from the <strong>software download page</strong>.</p>
+
+<table class="mt-responsive-table">
+    <tbody>
+        <tr>
+            <td class="mt-noheading mt-column-width-25"><strong>Firmware Version</strong></td>
+            <td class="mt-noheading mt-column-width-75"><a title="https://software.cisco.com/" href="https://software.cisco.com/" target="_blank" rel="external noopener nofollow" class="link-https"><strong>Software Download Page</strong></a></td>
+        </tr>
+        <tr>
+            <td class="mt-noheading mt-column-width-25 mt-bgcolor-ffffff" colspan="1" rowspan="2">17.15</td>
+            <td class="mt-noheading mt-column-width-75 mt-bgcolor-ffffff">For C9300/L/X, please use image<strong>&nbsp;</strong><strong>cat9k_iosxe.17.1x.xx.SPA.bin</strong> that can be downloaded from the <a title="https://software.cisco.com/download/home/286315874/type/282046477/release/IOSXE-17.15.4" href="https://software.cisco.com/download/home/286315874/type/282046477/release/IOSXE-17.15.4" target="_blank" rel="external noopener nofollow" class="link-https">software download page</a>.</td>
+        </tr>
+        <tr>
+            <td class="mt-noheading mt-column-width-75 mt-bgcolor-ffffff">For C9200L,&nbsp;please use image<strong>&nbsp;cat9k_lite_iosxe.17.xx.xx.SPA.bin&nbsp;</strong>that can be downloaded from the <a title="https://software.cisco.com/download/home/286325280/type/282046477/release/IOSXE-17.15.4" href="https://software.cisco.com/download/home/286325280/type/282046477/release/IOSXE-17.15.4" target="_blank" rel="external noopener nofollow" class="link-https">software download page</a>.</td>
+        </tr>
+        <tr>
+            <td class="mt-noheading mt-column-width-25 mt-bgcolor-dddddd" colspan="1" rowspan="2">17.18</td>
+            <td class="mt-noheading mt-column-width-75 mt-bgcolor-dddddd">For C9300/C9500H, please use image&nbsp;<strong>cat9k_iosxe.17.18.01.SPA.bin</strong> that can be downloaded from the <a title="https://software.cisco.com/download/home/286315874/type/282046477/release/IOSXE-17.18.2" href="https://software.cisco.com/download/home/286315874/type/282046477/release/IOSXE-17.18.2" target="_blank" rel="external noopener nofollow" class="link-https">software download page</a>.&nbsp;</td>
+        </tr>
+        <tr>
+            <td class="mt-noheading mt-column-width-75 mt-bgcolor-dddddd">For C9200/L/CX, please use image&nbsp;<strong>cat9k_lite_iosxe.17.18.01.SPA.bin</strong> that can be downloaded from the <a title="https://software.cisco.com/download/home/286320865/type/282046477/release/IOSXE-17.18.2" href="https://software.cisco.com/download/home/286320865/type/282046477/release/IOSXE-17.18.2" target="_blank" rel="external noopener nofollow" class="link-https">software download page</a>.&nbsp;</td>
+        </tr>
+    </tbody>
+</table>
+
+</div></div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_5"><span id="Conversion_Steps_from_DNA_Management_Mode_to_Cloud_Management_with_Cloud_Configuration"></span><h2 dir="ltr" class="editable">Conversion&nbsp;Steps from DNA Management Mode to Cloud Management with Cloud Configuration</h2>
+
+<p dir="ltr">To convert&nbsp;to Meraki&nbsp;cloud management with cloud configuration, follow the steps below:</p>
+
+<ol dir="ltr">
+    <li role="presentation">Validate compatibility of the hardware and upgrade to the required minimum IOS-XE release.</li>
+    <li role="presentation">Initiate Meraki registration of the Catalyst switch.</li>
+    <li role="presentation">Claim the switch to a Meraki organization using the cloud ID.</li>
+    <li role="presentation">Add the switch to the respective dashboard network for management.</li>
+</ol>
+
+<p>The following image shows the migration process:</p>
+
+<p><img alt="clipboard_ef4bbec47aff2fa9e4d9ced4fdb0a1a05.png" class="internal" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/33709/clipboard_ef4bbec47aff2fa9e4d9ced4fdb0a1a05.png?revision=1" /></p>
+
+<p>The migration steps are explained in detail in the following sections:</p>
+
+<div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_6"><span id="Step_1:_Validate_Compatibility_and_Upgrade_to_the_Minimum_IOS-XE_Release"></span><h3 dir="ltr" role="presentation" class="editable">Step 1:&nbsp;Validate Compatibility and Upgrade to the Minimum IOS-XE Release</h3>
+
+<p dir="ltr">To validate&nbsp;that your Catalyst switch has the hardware and software configuration compatible with the Meraki cloud operating mode, run the following command from the IOS-XE CLI.</p>
+
+<pre>
+show meraki compatibility
+</pre>
+
+<pre>
+<span class="mt-font-size-(Default)">Switch#show meraki compatibility
+==================================================
+Compatibility Check    Status
+--------------------------------------------------
+Boot Mode        INSTALL  - Compatible
+Stackwise Virtual    Disabled - Compatible
+--------------------------------------------------
+-------------------------------------------------------------------------------------------
+Switch#  SKU                         Bootloader Version          Network Modules
+-------------------------------------------------------------------------------------------
+1        C9300-48U   - Compatible    17.10.1r  - Compatible      C9300-NM-8X    - Compatible
+----------------------------------------------------------------------------------------------------------------------
+Compatible SKUs: C9300-24P, C9300-24T, C9300-24U, C9300-24UX, C9300-48P, C9300-48T, C9300-48U, C9300-48UN, C9300-48UXM
+Compatible NMs : C3850-NM-2-40G, C3850-NM-4-10G, C3850-NM-8-10G, C9300-NM-2Q, C9300-NM-8X, MA-MOD-2X40G, MA-MOD-4X10G,
+                 MA-MOD-8X10G</span>
+<span class="mt-font-size-(Default)">----------------------------------------------------------------------------------------------------------------------</span></pre>
+
+<div class="note-info style-wrap">
+<p dir="ltr">Note: Before attempting to migrate any switch and included network modules, run the Meraki compatibility check first. Ensure the compatibility check passes and that your switch is one of the supported models. Do not attempt to migrate any switches that are not in the supported models list. Failure to follow supported models list may result in an unusable switch. Please review the list of supported models before proceeding with the upgrade.</p>
+</div>
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_7"><span id="Step_2:_Initiate_Registration_with_the_Cloud"></span><h3 dir="ltr" role="presentation" class="editable">Step 2:&nbsp;Initiate Registration with the Cloud</h3>
+
+<p dir="ltr">Ensure that the Catalyst switch&nbsp;is able to connect to the internet and&nbsp;resolving <strong>dashboard.meraki.com</strong>.</p>
+
+<div class="note-info style-wrap">
+<p>To&nbsp;resolve&nbsp;DNS names and communicate with the Meraki Dashboard, the Catalyst switch&nbsp;will need the following configuration.</p>
+
+<ul>
+    <li>A layer 3 interface&nbsp;with an IP address that has connectivity to the internet.</li>
+    <li>A&nbsp;next-hop or default gateway IP which the switch can use to send traffic to the internet.</li>
+    <li>A DNS server which can resolve dashboard.meraki.com.</li>
+    <li>&quot;internet bound&quot; vlan configured as&nbsp;<strong>http client source-interface&nbsp;</strong></li>
+</ul>
+
+<p>Example script while in global configuration mode:</p>
+
+<pre>
+<span class="mt-font-size-(Default)">vlan {vlan used for cloud connectivity}
+exit
+!
+interface vlan {VLAN where DHCP is present}
+ ip address dhcp
+ no shutdown
+exit
+!
+ip route 0.0.0.0 0.0.0.0 dhcp
+ip http client source-interface {vlan-interface}
+!
+ip name-server 8.8.8.8</span>
+</pre>
+
+<p>You can check whether the switch is configured correctly by pinging <strong>dashboard.meraki.com</strong>&nbsp;</p>
+
+<p>Note:</p>
+
+<ul>
+    <li>Do not use the out-of-band (Gig0/0) management port on the rear of the switch for internet connectivity. Front facing ports only.</li>
+    <li>SVIs only, no routed port support at this time.</li>
+</ul>
+</div>
+
+<p>Once you have validated that the switch can reach the Meraki Dashboard, use the following command within the configure terminal to register the switch(es) unit or stack member with dashboard:</p>
+
+<p><strong>Single Member or Stack Active member:</strong></p>
+
+<pre>
+Switch# configure terminal
+Switch(config)# service meraki connect
+</pre>
+
+<p dir="ltr" role="presentation">During the registration process, the switch will communicate with the Meraki Dashboard to register itself and receive its Meraki ID or Cloud ID. Each switch, including switches in a stack<sup>1</sup> will receive an individual Meraki ID. The Catalyst serial number and Meraki ID mapping, along with the registration status, will be displayed on the CLI terminal, as shown in the following image:</p>
+
+<p dir="ltr" role="presentation"><img alt="Migration_steps.png" class="internal default" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/29101/image_(3).png?revision=1" /></p>
+
+<div class="note-info style-wrap">
+<p dir="ltr"><sup>1&nbsp;</sup>C9500s&nbsp;cannot be onboarded as a stack. Please remove the StackWise Virtual configuration, reboot the switches, and onboard as standalone switches.</p>
+</div>
+
+<p dir="ltr">You can also issue the <strong>show meraki connect</strong> command to view the status of the registration and its details as shown below. Once the output of <strong>show meraki connect</strong>&nbsp;indicates that the meraki tunnel&nbsp;config fetch has succeeded, the switch is ready to be claimed on the Meraki dashboard.</p>
+
+<pre>
+Switch# show meraki connect 
+</pre>
+
+<p dir="ltr"><img alt="show meraki connect command" class="internal default" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/28996/show_meraki_connect_command.png?revision=1" /></p>
+
+
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_8"><span id="Step_3:_Claim_the_Switch_to_Meraki_Dashboard_Using_Cloud_ID"></span><h3 dir="ltr" role="presentation" class="editable">Step 3: Claim the Switch to Meraki&nbsp;Dashboard Using&nbsp;Cloud ID</h3>
+
+<p dir="ltr">Once the output of <strong>show meraki connect</strong>&nbsp;indicates that the config fetch has succeeded, the switch is ready to be claimed on the Meraki dashboard. The cloud ID generated as part of the registration process above will be needed to claim the devices to your Meraki dashboard. Navigate to the <strong>Organization&gt;Inventory</strong> page on the Meraki dashboard and claim the switch.</p>
+
+<div class="note-info style-wrap">
+<p dir="ltr">If you need information on creating a Meraki Dashboard account,&nbsp;refer to our documentation on&nbsp;<a target="_blank" title="Creating a Dashboard Account and Organization" href="https://documentation.meraki.com/Platform_Management/Dashboard_Administration/Design_and_Configure/Organizations_and_Networks/Creating_a_Dashboard_Account_and_Organization" rel="internal"><u>Creating a Dashboard Account and Organization</u></a>.</p>
+</div>
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_9"><span id="Step_4:_Add_the_switch_to_the_dashboard_network"></span><h3 dir="ltr" role="presentation" class="editable">Step 4: Add the switch to the dashboard network&nbsp;</h3>
+
+<p dir="ltr">When you are ready to convert&nbsp;the device to cloud operating mode, add the device to a dashboard network. <strong>Conversion&nbsp;to cloud management with cloud configuration&nbsp;will not happen until the device has been added to a dashboard network.</strong></p>
+
+<p dir="ltr">After choosing an eligible Catalyst switch to add to a network, you will be prompted to select which Dashboard network you would like to use. Then, you can select the operating mode.&nbsp;</p>
+
+<p dir="ltr"><img alt="clipboard_e820a8750b33092a4341343f017a60b7a.png" class="internal" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/30731/clipboard_e820a8750b33092a4341343f017a60b7a.png?revision=1" /></p>
+
+<p dir="ltr" role="presentation">After the device has been added to a dashboard network (while still connected to an uplink and able to resolve the cloud),&nbsp;conversion&nbsp;to Meraki&nbsp;cloud operating mode&nbsp;will begin , initiating a factory reset procedure and restricting the console to read-only mode.</p>
+
+<div class="note-warning style-wrap">
+<p dir="ltr">The switch may take up to 15 minutes to factory reset, and reboot, and connect to the dashboard in Meraki cloud operating mode.</p>
+
+<p dir="ltr"><strong>DO NOT power cycle the switches</strong> during the factory reset process. The console connection remains in read-only mode and can be used to monitor the process.</p>
+</div>
+
+<p dir="ltr">Once the migration has been successful, use the local status page to make basic configuration updates. For information on how to access and use the local status page please refer to our documentation on <a target="_blank" title="Using the Cisco Meraki Device Local Status Page" href="https://documentation.meraki.com/Platform_Management/Dashboard_Administration/Troubleshooting_and_Support/Troubleshooting/Using_the_Cisco_Meraki_Device_Local_Status_Page" rel="internal">Using Cisco Meraki Device Local Status Page</a>.&nbsp;</p>
+
+<div class="note-warning style-wrap">
+<p dir="ltr">The conversion&nbsp;process will erase all configuration and files stored locally, or on any attached USB devices. Be sure to back up all necessary data from the local or connected storage, prior to initiating the conversion. It is recommended that USB storage devices be disconnected, as they will not be accessible in Meraki cloud operating mode.</p>
+</div>
+
+<div class="note-info style-wrap">
+<p dir="ltr">During conversion, the switch or switch stack may reboot one or more times to enable 802.3bt. Once the switch has rebooted console access will be restricted to read-only mode, only showing log events. The switch will boot up with default configurations for connecting to Meraki dashboard. Refer to our documentation on&nbsp;<a target="_blank" title="MS390 Series Installation Guide" href="https://documentation.meraki.com/Switching/MS_-_Switches/Install_and_Get_Started/Installation_Guides/MS390_Series_Installation_Guide#MS390_Deployment_Best_Practices" rel="internal">MS390 Deployment Best Practices</a>&nbsp;for more information on how zero-touch deployment works and the best practice configurations.</p>
+</div>
+
+<div class="note-info style-wrap">
+<p dir="ltr">If an RMA is done for a migrated Cisco Catalyst 9300 switch, the replacement will come in the management mode for which the unit was originally purchased.</p>
+</div>
+
+</div></div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration" class="mt-section" id="section_10"><span id="Conversion_to_DNA_management_mode"></span><h2 dir="ltr" class="editable">Conversion&nbsp;to DNA management mode</h2>
+
+<p dir="ltr">To convert&nbsp;your Catalyst switch(es) to DNA management mode, contact Meraki Support. To be converted, a switch must be online and connected to the Meraki dashboard.</p>
+
+<div class="note-warning style-wrap">
+<p>Migration will factory default the switch and all configuration.&nbsp;</p>
+</div>
+
+<div class="note-info style-wrap">
+<p>When operating in the Meraki&nbsp;cloud management mode with cloud configuration, Catalyst switches use firmware customized for cloud connectivity.&nbsp;</p>
+
+<p>Once&nbsp;the migration to DNA or CLI managed mode is complete,&nbsp;please&nbsp;be sure to install&nbsp;a&nbsp;supported Cloud Management with IOS XE software&nbsp;version&nbsp;on the switches&nbsp;before deploying them in production networks in order to support cloud management with device configuration.</p>
+</div>
+
+
+
+<p>&nbsp;</p>
+</div>
+
+                    <footer class="mt-content-footer"></footer>
+            </section>
+
+        
+            <footer class="elm-content-footer">
+                <ol class="elm-meta-data elm-meta-article-navigation">
+                    <li class="elm-back-to-top"><a class="mt-icon-back-to-top" href="#title" id="mt-back-to-top" title="Jump back to top of this article">Back to top</a></li>
+                    <li class="elm-article-pagination"><ul class="mt-article-pagination" data-ga-action="Article pagination bottom">
+    <li class="mt-pagination-previous">
+
+            <a class="mt-icon-previous-article" data-ga-label="Previous page" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Catalyst_9300%2F%2FX%2F%2FL-M_Series_Installation_Guide" title="Catalyst 9300/X/L-M Series Installation Guide"><span>Catalyst 9300/X/L-M Series Installation Guide</span></a>
+    </li>
+        <li class="mt-pagination-next">
+                <a class="mt-icon-next-article" data-ga-label="Next page" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Enable_Cloud_Management_for_Cisco_Switches_with_Device_Configuration" title="Enable Cloud Management for Cisco Switches with Device Configuration"><span>Enable Cloud Management for Cisco Switches with Device Configuration</span></a>
+        </li>
+</ul>
+</li>
+                </ol>
+                    <div class="elm-article-feedback"><div class="mt-feedback-rating-container" data-ga-action="Page rating" data-page-revision="46" data-use-local-storage="true"><ul class="mt-feedback-rating-controls"><li class="mt-feedback-rating-message mt-feedback-rating-item">Was this article helpful?</li><li class="mt-rating-yes mt-feedback-rating-item"><button class="mt-rating-button-yes mt-feedback-rating-button ui-button-icon mt-icon-rating-yes" data-ga-label="Rate">Yes</button></li><li class="mt-rating-no mt-feedback-rating-item"><button class="mt-rating-button-no mt-feedback-rating-button ui-button-icon mt-icon-rating-no" data-ga-label="Rate">No</button></li><li class="mt-last-rating-date mt-feedback-rating-item"></li></ul><div id="mt-feedback-flash-message"></div></div><script type="application/json" id="mt-localizations-feedback-rating">/*<![CDATA[*/{"Page.FeedbackRating.label.last-rated":"-- You last rated this article on {0}","Page.FeedbackRating.message.contact.no":"No","Page.FeedbackRating.message.contact.yes":"Yes","Page.FeedbackRating.message.submit.error":"An error occurred while attempting to send your feedback.  Please try again at a later time.","Page.FeedbackRating.message.submit.success":"Your feedback has been successfully submitted.  You can submit more feedback at any time."}/*]]>*/</script></div>
+                <div class="elm-related-articles-container"><h2 class="mt-related-articles-header">Recommended articles</h2>
+<ol class="mt-related-listings-container"
+    data-ga-action="related"
+    >
+</ol>
+<script type="application/json" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" id="mt-localizations-related-pages">
+{"Skin.Columbia.label.no-recommended-articles":"There are no recommended articles."}</script></div>
+                <ol class="elm-meta-data elm-meta-bottom">
+                    <li class="elm-classifications">        <dl class="mt-classification mt-classification-article-topic" data-ga-action="Tag navigation">
+            <dt class="mt-classification-label">Article type</dt>
+            <dd class="mt-classification-value"><a href="https://documentation.meraki.com/Special:Search?tags=article%3Atopic" data-ga-label="Classification">Topic</a></dd>
+        </dl>
+        <dl class="mt-classification mt-classification-stage-final" data-ga-action="Tag navigation">
+            <dt class="mt-classification-label">Stage</dt>
+            <dd class="mt-classification-value"><a href="https://documentation.meraki.com/Special:Search?tags=stage%3Afinal" data-ga-label="Classification">Final</a></dd>
+        </dl>
+</li>
+                    <li class="elm-tags"><dl class="mt-tags">
+    <dt class="mt-tag-label">Tags</dt>
+    <dd class="mt-tag-value">
+        <ol class="mt-tags-list" data-ga-action="Tag navigation">
+        </ol>
+            This page has no tags.
+    </dd>
+</dl></li>
+                </ol>
+            </footer>
+        
+    </article>
+    <footer class="elm-footer">
+        <nav class="elm-footer-siteinfo-nav elm-nav">
+            <div class="elm-nav-container">
+                <ol>
+                    <li class="elm-footer-copyright">&copy; Copyright 2026 Cisco Meraki Documentation</li>
+                    <li class="elm-footer-powered-by"><a href="https://mindtouch.com/demo" class="mt-poweredby product " title="MindTouch" target="_blank">
+   Powered by CXone Expert
+   <span class="mt-registered">&reg;</span>
+</a></li>
+                </ol>
+            </div>
+        </nav>
+        <div class="elm-footer-custom">
+
+<div class="mt-custom-footer-container"><div class="mt-top-footer"><div class="mt-top-logo"><a href="http://meraki.cisco.com/" target="_blank" rel="external noopener nofollow" class="external"><img class="mt-cdn" src="https://documentation.meraki.com/@api/deki/site/logo?default=https%3A%2F%2Fdocumentation.meraki.com%2F%40cdn%2F%40style%2Fcommon-legacy%2Fimages%2Flogo.png" alt="Cisco-Meraki" /></a></div><div class="mt-top-external-links"><div class="mt-top-ul-container" id="top-Company"><h6 class="mt-top-ul-title">Company</h6><ul class="mt-top-ul"><li class="mt-top-li"><a href="https://meraki.cisco.com/about/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">About Meraki</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/jobs" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Careers</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/support/#policies:privacy" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Privacy</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/trust" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Trust</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/gdpr" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">GDPR</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/support/#policies:tou" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Terms of Use</a></li></ul></div><div class="mt-top-ul-container" id="top-Partners"><h6 class="mt-top-ul-title">Partners</h6><ul class="mt-top-ul"><li class="mt-top-li"><a href="https://www.merakipartners.com/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Partner Portal Login</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/partner/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Become a Partner</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/managedserviceproviders" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Manage Service Providers</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/solutions/serviceprovider" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Service Providers</a></li></ul></div><div class="mt-top-ul-container" id="top-getStarted"><h6 class="mt-top-ul-title">Get Started</h6><ul class="mt-top-ul"><li class="mt-top-li"><a href="https://meraki.cisco.com/form/contact/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Contact Us</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/form/demo/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Get a Demo</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/form/trial/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Start Your Trial</a></li></ul></div><div class="mt-top-ul-container" id="top-Resources"><h6 class="mt-top-ul-title">Resources</h6><ul class="mt-top-ul"><li class="mt-top-li"><a href="https://meraki.cisco.com/webinars/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Webinars</a></li><li class="mt-top-li"><a class="mt-top-a internal" href="https://documentation.meraki.com/" rel="internal">Documentation</a></li><li class="mt-top-li"><a href="https://community.cisco.com/t5/meraki/ct-p/meraki-home" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Community</a></li><li class="mt-top-li"><a href="https://community.cisco.com/t5/networking-learning-hub/ct-p/learninghub-networking" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Learning Hub</a></li></ul></div></div></div><div class="mt-bottom-footer"><div class="mt-social-container"><ul class="mt-social-ul"><li class="mt-social-li"><a href="https://twitter.com/meraki" target="_blank" rel="external noopener nofollow" class="mt-social-a mt-icon-twitter link-https"></a></li><li class="mt-social-li"><a href="https://www.instagram.com/ciscomeraki/?hl=en" target="_blank" rel="external noopener nofollow" class="mt-social-a mt-icon-instagram link-https"></a></li><li class="mt-social-li"><a href="https://www.facebook.com/CiscoMeraki/" target="_blank" rel="external noopener nofollow" class="mt-social-a mt-icon-facebook link-https"></a></li><li class="mt-social-li"><a href="https://www.youtube.com/channel/UCimwNLMzVRMp7SUPVRNaqew" target="_blank" rel="external noopener nofollow" class="mt-social-a mt-icon-youtube link-https"></a></li></ul></div><div class="mt-copyright-container"><p>&copy; 2026 Cisco Systems, Inc.</p></div></div></div>
+
+
+
+<script type="text/javascript">/*<![CDATA[*/
+var feedback_btn = document.querySelector(".mt-feedback-button"); 
+feedback_btn.innerText = "Request Update"/*]]>*/</script>
+
+
+
+<script type="text/javascript">/*<![CDATA[*/
+var feedback_label = document.querySelector(".mt-feedback-improve-label");
+feedback_label.innerText = "What would you like to change on this page? Your request will be sent to the Knowledge and Content team at Cisco Meraki. We are NOT product experts! Include all relevant details: section or exact text to update, new draft language, or related cases/mules.";/*]]>*/</script>
+
+
+</div>
+    </footer>
+</main>
+<div id="mt-modal-container"></div>
+
+    <script type="text/javascript" async="async" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" src="https://documentation.meraki.com/@embed/f1.js"></script>
+
+<script type="text/javascript" data-mindtouch-module="true" src="https://a.mtstatic.com/deki/javascript/out/standalone/ui.widget.helpWidget.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="text/javascript" data-mindtouch-module="true" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" src="https://a.mtstatic.com/deki/javascript/out/standalone/serviceworker-unregister.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="text/javascript" data-mindtouch-module="true" nonce="d741b38ddc779b6b5d0cb54bfce7af116cf890fb171332e566c8fe03ef664324" src="https://a.mtstatic.com/deki/javascript/out/standalone/pageLoaded.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script>
+
+
+</body>
+</html>

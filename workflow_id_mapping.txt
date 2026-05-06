@@ -1,0 +1,245 @@
+Old Name -> New Name
+========================================================================================================================
+category_SDA_DEPLOYMENT_001
+  -> category_02OhbVrpoiVgRV5IfLBcbfnoGMbJmTPSIAoC
+
+definition_activity_SDA_ACT_DEPLOY_P1
+  -> definition_activity_02LrZ3aWZkSBvrjn9Wvgfygw2wMqZcUDIh7y
+
+definition_activity_SDA_ACT_DEPLOY_P2
+  -> definition_activity_02fJs1ON43xKmTecQoXsf2o3gyrDO1xkxwnQ
+
+definition_activity_SDA_ACT_DEPLOY_P3
+  -> definition_activity_02rS7RPeMOkIUpkDyr7OSJoRu1XXdo0cZuzr
+
+definition_activity_SDA_ACT_DEPLOY_P4
+  -> definition_activity_02en68K4TunPFz46PDjqipVJIqVLB5LzxoiG
+
+definition_activity_SDA_ACT_DEPLOY_P5
+  -> definition_activity_02FfWd3hjOkYRBMeyyMDHqJ38aRUhR4IWrXP
+
+definition_activity_SDA_ACT_DEPLOY_P6
+  -> definition_activity_02vhsBkDa9U4UqGWlG6g3Ot1OGMmjxWkI9X7
+
+definition_activity_SDA_ACT_FAILURE_HANDLER
+  -> definition_activity_02H6aMuFbh7x41Ztpdp4K8ffUF0eWIXiiQE8
+
+definition_activity_SDA_ACT_FAILURE_NO
+  -> definition_activity_02JkqH3MB9n7IWUSmTtzQPxC5HChpoevbLJo
+
+definition_activity_SDA_ACT_FAILURE_YES
+  -> definition_activity_02LoaeTOdoe5c3veGprQFnIiU74KKEpYEZAm
+
+definition_activity_SDA_ACT_P1_COND
+  -> definition_activity_02ggQBwBAD3UdRPPgdzUvZ3gpmmICiBlrDp3
+
+definition_activity_SDA_ACT_P1_FAIL
+  -> definition_activity_027eCZ32JgdPI1af7W2pkAFEn3z5dkyayq7Y
+
+definition_activity_SDA_ACT_P1_OK
+  -> definition_activity_02YDsBS9UYJQTFjmsn9dLVIdVuddLEG62Hkd
+
+definition_activity_SDA_ACT_P2_COND
+  -> definition_activity_029Gf2leMeR3pzh84KpLMcNfAQLKHu7qnQTu
+
+definition_activity_SDA_ACT_P2_FAIL
+  -> definition_activity_02pqziQPtDu7W7eaDNKgeInGqi7w4e4pxskC
+
+definition_activity_SDA_ACT_P2_OK
+  -> definition_activity_021ITtNZPHaQ0Jt7Qg84iqh4gVJjrsMnTvnR
+
+definition_activity_SDA_ACT_P3_COND
+  -> definition_activity_02O2qGFq562dfOB1rcavXiOqkVCJTBJahe84
+
+definition_activity_SDA_ACT_P3_FAIL
+  -> definition_activity_02S5jIc1xLJjBictx57Y3c5wnRpQgwXJ43AN
+
+definition_activity_SDA_ACT_P3_OK
+  -> definition_activity_02Vj77p3kZZl4AblV7vY7AZQ3VZprkYSgy3c
+
+definition_activity_SDA_ACT_P4_COND
+  -> definition_activity_022Eom06Dwt0Y3oobQmzvr3e9XrwPGzR1Iv8
+
+definition_activity_SDA_ACT_P4_FAIL
+  -> definition_activity_02bh4qlL9qcgMBwUYuBMGhy5KmqcTBaH7ZIR
+
+definition_activity_SDA_ACT_P4_OK
+  -> definition_activity_02U8VVQmxBe8Q6vNuQ2hU5tGtQAuzSsJimAQ
+
+definition_activity_SDA_ACT_P5_COND
+  -> definition_activity_028yRV5lNKtzJ1atsnBYLMPuDCCRnGEY59YV
+
+definition_activity_SDA_ACT_P5_FAIL
+  -> definition_activity_02kQfsGQONvf08WpRtoZmjbcpEN2XeDA4OKm
+
+definition_activity_SDA_ACT_P5_OK
+  -> definition_activity_02TSyFzpjPSa5W3X4gXBolZ9SHDdJp62hDiZ
+
+definition_activity_SDA_ACT_PHASE1_GATE
+  -> definition_activity_02DQHJMu8W5CN0U5GB16JC5kV3ECqWp1OrXX
+
+definition_activity_SDA_ACT_PHASE1_GO
+  -> definition_activity_02HFOprCeTsprvu5IfijoySjTneAAvIDAdn1
+
+definition_activity_SDA_ACT_PHASE1_GROUP
+  -> definition_activity_02Ay5XL8Sb24WKyEa8wtWy2591AIVVIZM5oF
+
+definition_activity_SDA_ACT_PHASE1_STOP
+  -> definition_activity_02orBFbyvQRZzUk1D6iNIb6zLKQbfPBi3Dld
+
+definition_activity_SDA_ACT_PHASE2_GATE
+  -> definition_activity_02qyunDuvW4yrW81Aq1fEbVId8woPeX9PcWb
+
+definition_activity_SDA_ACT_PHASE2_GO
+  -> definition_activity_028pm1bNjpiEQhK8nDSqXxkMM9VThX0k9tgL
+
+definition_activity_SDA_ACT_PHASE2_GROUP
+  -> definition_activity_02b7tKR69yz8TmeLS1OpgSXt2RMZhYKYcwIB
+
+definition_activity_SDA_ACT_PHASE2_STOP
+  -> definition_activity_02QxeGPva2A0FgB9xO51DTjBlUH9PrNZ6IXE
+
+definition_activity_SDA_ACT_PHASE3_GATE
+  -> definition_activity_02DB0ULru2p17fr4CpWDKNQyvbF2ulFnwZqv
+
+definition_activity_SDA_ACT_PHASE3_GO
+  -> definition_activity_02r4MS4rJaH8mfpUAFJWpSEPTFCYbfsozSpt
+
+definition_activity_SDA_ACT_PHASE3_GROUP
+  -> definition_activity_02QLxEJHwBVJvwSDrtqohUmuhVI8WSlmnVEr
+
+definition_activity_SDA_ACT_PHASE3_STOP
+  -> definition_activity_02ULWHMsg1msoxltaTIircdJsS8iO3WFg3aK
+
+definition_activity_SDA_ACT_PHASE4_GATE
+  -> definition_activity_02sEECvl9dq83Eh0ezFeKORdjjZK8tfphJWA
+
+definition_activity_SDA_ACT_PHASE4_GO
+  -> definition_activity_02MMYNoXHyC6Ct3LBtKNdN9Vg8WnOnqQfkpl
+
+definition_activity_SDA_ACT_PHASE4_GROUP
+  -> definition_activity_02JekaACSMEscosTsS3DeRo7qYYOLQZ7mBhI
+
+definition_activity_SDA_ACT_PHASE4_STOP
+  -> definition_activity_02oPj6r0jedkYtMV0K6sChDStSz8rGIFCfMc
+
+definition_activity_SDA_ACT_PHASE5_GATE
+  -> definition_activity_024BVuMqbfo9R13KL8bWR0rKcWWlEHPC6rlL
+
+definition_activity_SDA_ACT_PHASE5_GO
+  -> definition_activity_02BO0FfEwAvuQg2kvASFsQ8z0WJcDfuquhXz
+
+definition_activity_SDA_ACT_PHASE5_GROUP
+  -> definition_activity_023G0aQ3IDAdmHxNWFOCWdnrJi7sC4SFhbOM
+
+definition_activity_SDA_ACT_PHASE5_STOP
+  -> definition_activity_02ZpTktJaJAfo16hD8hP1jF7TsGTrA1EEpDJ
+
+definition_activity_SDA_ACT_POSTCHECK
+  -> definition_activity_02jym6MGV4i3erXY2Av7YGr0asUt1LLQF3jC
+
+definition_activity_SDA_ACT_POSTCHECK_COND
+  -> definition_activity_02IEwvJWIyD7u3mSpKyo2XAcuVET6ZyyQY0P
+
+definition_activity_SDA_ACT_POSTCHECK_FAIL
+  -> definition_activity_02jF9ciG9Lv3g32CgH6DaUjA3PjeEYqvNSzP
+
+definition_activity_SDA_ACT_POSTCHECK_GATE
+  -> definition_activity_02f2v2R2Iy9uOT4WF3IcNepOR6soVfBgWOT3
+
+definition_activity_SDA_ACT_POSTCHECK_GO
+  -> definition_activity_02gCkSt5bcuYdswxBjpHAKRYlklfN3yNRpF6
+
+definition_activity_SDA_ACT_POSTCHECK_GROUP
+  -> definition_activity_02LjoDOqDqQa5ZD5sRIkeC8wLtO9BSqD2tmy
+
+definition_activity_SDA_ACT_POSTCHECK_PASS
+  -> definition_activity_022EgpyKwKsSsb1QzraK3RXVd6MVF155sXZo
+
+definition_activity_SDA_ACT_POSTCHECK_SKIP
+  -> definition_activity_02MZwoOmNqRWUXQR1iOg5OPctYCcLxUif6su
+
+definition_activity_SDA_ACT_PRECHECK
+  -> definition_activity_02VAlmiYI4xHG6r1kq608E9ZsV3vZhD9ejW9
+
+definition_activity_SDA_ACT_PRECHECK_COND
+  -> definition_activity_02o3RURz92ZJxfYzaqIhDxRVRqLy0O8xgRoE
+
+definition_activity_SDA_ACT_PRECHECK_FAIL
+  -> definition_activity_02bN48Ju6NoPeO0D6StPAhic8ctFhgp4IiyD
+
+definition_activity_SDA_ACT_PRECHECK_PASS
+  -> definition_activity_02xQ8VS8IALVUj4APg1FNA88rcSxnCC8p2xg
+
+definition_activity_SDA_ACT_ROLLBACK_MID
+  -> definition_activity_02RxI5Pwdzrm9h820DfQnPOMbdYvpiYKne1W
+
+definition_activity_SDA_ACT_ROLLBACK_POST
+  -> definition_activity_02JnLn03ovXjY5Mar2jiIqZlhQ3biawYYpLu
+
+definition_activity_SDA_ACT_SEC_GATE
+  -> definition_activity_02blqdiVAHhVeECXxGLgCGo8NcUY63QHtDP9
+
+definition_activity_SDA_ACT_SEC_SKIP
+  -> definition_activity_02bdE2zBRgFT6Ce5fuMjeirNOLJTuyMHsDGM
+
+definition_activity_SDA_ACT_SEC_YES
+  -> definition_activity_02BgYSh2PP4XJU3nBC4oAv0DzAUguBuQqx9j
+
+definition_activity_SDA_ACT_SET_MIDFAIL
+  -> definition_activity_02R7Eef1ffBgVVxZiJdL9JJvQhAw3Q8WB36U
+
+definition_activity_SDA_ACT_SET_P1_FAIL
+  -> definition_activity_02d9sMtwgKGnjQEo2gw2JxhWrKoZB2JX0NNR
+
+definition_activity_SDA_ACT_SET_P2_FAIL
+  -> definition_activity_02PJbM7Q1SrblrSWt6vwal3jKQzejVObfVHn
+
+definition_activity_SDA_ACT_SET_P3_FAIL
+  -> definition_activity_02yADvkxtUuX8KMf4djkWNdRfrCQBFMCArnW
+
+definition_activity_SDA_ACT_SET_P4_FAIL
+  -> definition_activity_02GhwBhsRRLFHQtcozMdant8nXiWqsuhaFVB
+
+definition_activity_SDA_ACT_SET_P5_FAIL
+  -> definition_activity_02liyIToGJ1QZwez3VcBbD6e3uKBKzTOAshz
+
+definition_activity_SDA_ACT_SET_POSTFAIL
+  -> definition_activity_02b9ukZ8ND1S6xfB2gpBLzHfz3tVvovXkeGO
+
+definition_activity_SDA_ACT_SET_PRECHECK_FAIL
+  -> definition_activity_02hHGm5XwwU90P0jpgjqmlMjWWPel8XOFDWK
+
+definition_activity_SDA_ACT_SET_SUCCESS
+  -> definition_activity_02WLCR74KPONu3OujCeECOtYrLdwGetDCcdx
+
+definition_activity_SDA_ACT_VERIFY_P1
+  -> definition_activity_021seP32fNMGyDLJ9YV5cC6ZKPmuMEGj9dCg
+
+definition_activity_SDA_ACT_VERIFY_P2
+  -> definition_activity_02Z51vTfGPlcpTCCHHNkxx6syAXvRMdYOPve
+
+definition_workflow_SDA_FABRIC_DEPLOY_001
+  -> definition_workflow_02vgJRysqU2Q96M3jvfLQj6wt9PSQziMT8ft
+
+variable_workflow_SDA_VAR_DEPLOY_SEC
+  -> variable_workflow_02JyPYv0iQS18VR6HfPQBGxbxtl8nv8XFmoi
+
+variable_workflow_SDA_VAR_FABRIC_NAME
+  -> variable_workflow_02jes2YgGXI1V4HcQv4XNiMyjkl1SXNZ5kUC
+
+variable_workflow_SDA_VAR_FAILED
+  -> variable_workflow_02cAxRUpCNsWVYCoIpt9ZYE51mxR8KCDXsXy
+
+variable_workflow_SDA_VAR_FAILED_PHASE
+  -> variable_workflow_02GHA9k0mZMi3qdPE3xJ7gT2H2hsfWkrC5Gj
+
+variable_workflow_SDA_VAR_FORCE
+  -> variable_workflow_021Bf86o0C4w7bAdzGxpyfxobu7g1TPvYjic
+
+variable_workflow_SDA_VAR_RELAY_URL
+  -> variable_workflow_02s61ES1iWTECNa5fbqn1jJ8UMHBhXspthdp
+
+variable_workflow_SDA_VAR_RESULT_JSON
+  -> variable_workflow_02AOYNDeh15FMIbOGKpTjsBaNwpKAlQQfHxe
+

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html  lang="en">
+<head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta name="google-site-verification" content="ErguAk4wKTpg1tEsWB8uz9HopWuJNT1GCGc0w91yllg"/>
+        <meta name="generator" content="MindTouch"/>
+        <meta name="robots" content="index,follow"/>
+        <meta property="og:title" content="Migrating Switches From CS Firmware to IOS XE Firmware"/>
+        <meta property="og:site_name" content="Cisco Meraki Documentation"/>
+        <meta property="og:type" content="article"/>
+        <meta property="og:locale" content="en_US"/>
+        <meta property="og:url" content="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware"/>
+        <meta property="og:image" content="https://a.mtstatic.com/@public/production/site_13505/1603418441-social-share.png"/>
+        <meta property="og:description" content=""/>
+        <meta property="article:published_time" content="2026-02-20T21:20:59Z"/>
+        <meta property="article:modified_time" content="2026-03-19T16:42:35Z"/>
+        <meta name="twitter:card" content="summary"/>
+        <meta name="twitter:title" content="Migrating Switches From CS Firmware to IOS XE Firmware"/>
+        <meta name="twitter:description" content=""/>
+        <meta name="twitter:image" content="https://a.mtstatic.com/@public/production/site_13505/1603418441-social-share.png"/>
+        <meta name="description" content=""/>
+        <link rel="canonical" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware"/>
+        <link rel="search" type="application/opensearchdescription+xml" title="Cisco Meraki Documentation Search" href="https://documentation.meraki.com/@api/deki/site/opensearch/description"/>
+        <link rel="apple-touch-icon" href="https://a.mtstatic.com/@public/production/site_13505/1749845950-apple-touch-icon.png"/>
+        <link rel="shortcut icon" href="https://a.mtstatic.com/@public/production/site_13505/1756406766-favicon.ico"/>
+
+        <script type="application/ld+json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee">{"@context":"http:\/\/schema.org","@type":"Article","name":"Migrating Switches From CS Firmware to IOS XE Firmware","url":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware","image":{"@type":"ImageObject","url":"https:\/\/a.mtstatic.com\/@public\/production\/site_13505\/1603418441-social-share.png","height":{"@type":"QuantitativeValue","maxValue":315},"width":{"@type":"QuantitativeValue","maxValue":600}},"datePublished":"2026-02-20T21:20:59Z","dateModified":"2026-03-19T16:42:35Z","thumbnailUrl":"https:\/\/documentation.meraki.com\/@api\/deki\/pages\/14683\/thumbnail?default=https%3A%2F%2Fdocumentation.meraki.com%2F%40style%2Fcommon%2Fimages%2Fimage-placeholder.png","mainEntityofPage":{"@type":"WebPage","@id":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware"},"headline":"Migrating Switches From CS Firmware to IOS XE Firmware"}</script>
+        <script type="application/ld+json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee">{"@context":"http:\/\/schema.org","@type":"WebPage","name":"Migrating Switches From CS Firmware to IOS XE Firmware","url":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware","relatedLink":["https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Conversion_from_CLI-managed_IOS_XE_Catalyst_Switches_to_Cloud_Management_with_Cloud_Configuration","https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Upgrading_Cloud-Monitored_Switches_to_Cloud_Management_with_Device_Configuration","https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Enable_Cloud_Management_for_Cisco_Switches_with_Device_Configuration","https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started\/Onboarding_Cloud-Managed_Catalyst_switches_to_the_Meraki_Dashboard"]}</script>
+        <script type="application/ld+json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee">{"@context":"http:\/\/schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https:\/\/documentation.meraki.com\/Switching","name":"Switching"}},{"@type":"ListItem","position":2,"item":{"@id":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE","name":"Cloud Management with IOS XE"}},{"@type":"ListItem","position":3,"item":{"@id":"https:\/\/documentation.meraki.com\/Switching\/Cloud_Management_with_IOS_XE\/Install_and_Get_Started","name":"Install and Get Started"}}]}</script>
+
+        <title>Migrating Switches From CS Firmware to IOS XE Firmware - Cisco Meraki Documentation</title>
+
+
+    <style type="text/css">/*<![CDATA[*/
+/*.mt-foot {
+    display: none;
+}
+
+#contact-support{
+    width: 350px;
+    /*background-image: url('data:image/png;base64,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');
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 5em;*/
+    /*padding-left: 6em;
+    margin-left: 35px;
+    margin-top: -15px;
+}
+#wishFrame{
+    margin-top: 25px;
+    margin-left: 35px;
+    width: 350px;
+}
+
+/* /begin Added 10/20/17 
+#contact-sales{
+    width: 350px;
+    margin-left: 80px;
+    margin-top: -15px;
+}
+#contact-sales h2{
+    color: #999;
+}
+#contact-sales a{
+    font-size: larger;
+    color: #999;
+}
+
+/* /end Added 10/20/17 */
+
+/* /begin Added for testing 8/16/17 
+#ask-community{
+    margin-left: 35px;
+    margin-top: -15px;
+    width: 350px;
+}
+/* /end Added for testing 8/16/17 */
+/*.clearFix{
+   content: " "; /* Older browser do not support empty content 
+   visibility: hidden;
+   display: block;
+   height: 0;
+   clear: both;
+}
+.float-right{
+   display:inline-block;
+   float:right;
+}
+.float-left{
+   display:inline-block;
+   float:left;
+}
+#internal-suggestion {
+    margin: auto;
+    width: 572px;
+    clear: both;
+    margin-top: 2em;
+    border-top: 1px solid rgba(0,0,0,0.2);
+    text-align: center;
+    padding-top: 2em;
+}
+/* Changes for Docs+KB UI */
+/*#footerContent{
+    background: #484848; /* grey background color */
+   /* border-top: 6px solid #282828; /* small black border at the top */
+   /* margin: auto;
+    width: 1280px;
+    color: #999;
+    clear: both;
+    overflow: auto;
+    box-shadow: 0 0 3px rgba(0,0,0,0.4);
+}
+#contact-support a {
+    font-size: larger;
+    color: #999;
+}
+#contact-support a:hover {
+    color: #0097c8;
+}
+
+#contact-support h2{
+    color: #999; /* makes "contact support" a better grey */
+}
+
+/* /begin Added 8/16/17 */
+/*#ask-community a {
+    font-size: larger;
+    color: #999;
+}
+#ask-community a:hover {
+    color: #0097c8;
+}
+
+#ask-community h2{
+    color: #999; /* makes "contact support" a better grey */
+}
+/* /end Added 8/16/17 */
+
+/*#copyright {
+    margin: auto;
+    padding-right: 90px;
+    color: grey;
+    float: right;
+}
+#crfoot {
+    background: #505050;
+    margin: auto;
+    width: 1280px;
+    clear: both;
+    overflow: auto;
+    box-shadow: 0 3px 3px rgba(0,0,0,0.4);
+    height: 20px;
+    padding-top: 10px;
+    padding-bottom: 5px;
+}/*]]>*/</style>
+
+        <link media="screen" type="text/css" rel="stylesheet" href="https://a.mtstatic.com/@cache/layout/anonymous.css?_=3c7f8c51d8defda1cd09ffbefd24156e_ZG9jdW1lbnRhdGlvbi5tZXJha2kuY29t:site_13505" id="mt-screen-css" />
+
+    
+        <link media="print" type="text/css" rel="stylesheet" href="https://a.mtstatic.com/@cache/layout/print.css?_=5c42a1a2337fd8cfe9dd506434fe4035:site_13505" id="mt-print-css" />
+
+
+    <script type="application/json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" id="mt-localizations-draft">
+{"Draft.JS.alert.cancel.button":"OK","Draft.JS.alert.cancel.message":"You can not cancel a draft when the live page is unpublished.","Draft.JS.alert.cancel.title":"This draft cannot be canceled","Draft.JS.alert.publish.button":"OK","Draft.JS.alert.publish.message":"You can not publish a draft of a page with an unpublished parent","Draft.JS.alert.publish.title":"This draft cannot be published","Draft.JS.alert.unpublish.button":"OK","Draft.JS.alert.unpublish.message":"You can not unpublish a page when published subpages are present.","Draft.JS.alert.unpublish.title":"This page cannot be unpublished","Draft.JS.success.cancel":"The draft was successfully deleted.","Draft.JS.success.schedule.publish":"Publication schedule successfully created.","Draft.JS.success.publish":"The draft was successfully published.","Draft.JS.success.unpublish":"The page was successfully unpublished.","Draft.JS.success.unpublish.inherits-schedule\n        Draft.JS.success.unpublish.scheduled-to-publish":"[MISSING: draft.js.success.unpublish.inherits-schedule\n        draft.js.success.unpublish.scheduled-to-publish]","Draft.JS.success.update.schedule.publish":"Publication schedule successfully updated.","Draft.JS.success.update.schedule.unpublish":"[MISSING: draft.js.success.update.schedule.unpublish]","Draft.JS.success.delete.schedule\n        Draft.JS.success.delete.schedule.with.subpages\n        Draft.error.cancel":"[MISSING: draft.js.success.delete.schedule\n        draft.js.success.delete.schedule.with.subpages\n        draft.error.cancel]","Draft.error.publish":"There was an error publishing the draft.","Draft.error.unpublish":"There was an error unpublishing the page.","Draft.message.at":"at","Dialog.ConfirmSave.StrictIdf.title":"Oops!","Dialog.ConfirmSave.StrictIdf.error.missing-template-reference":"This article type requires a template reference widget. Not having one may negatively impact your site and SEO. Please contact CXone Expert support.","Dialog.ConfirmSave.StrictIdf.label.continue":"Proceed anyway","Dialog.ConfirmSave.StrictIdf.label.cancel":"Cancel","Dialog.ConfirmSave.StrictIdf.label.missing-template-reference-help-link":"Learn more about required references","Dialog.ConfirmSave.StrictIdf.error.invalid-idf":"This type of article should not exist at the requested location in the site hierarchy. Proceeding with the requested move may negatively impact site navigation and SEO.","Dialog.ConfirmSave.StrictIdf.label.invalid-idf-help-link":"Learn more about IDF structure","Dialog.EditDraft.page-title":"Create draft","Dialog.Scheduler.Common.label.am":"{0} AM","Dialog.Scheduler.Common.label.pm":"{0} PM","Dialog.Scheduler.Publish.alert-create-draft":"Create","Dialog.Scheduler.Publish.alert-existing-publication-scheduled":"This location has an existing publication schedule applied.  The new page will inherit this new schedule.","Dialog.Scheduler.Publish.alert-modify-message":"This draft is scheduled to be published {0} at {1}. A schedule cannot be modified or deleted less than 15 minutes from its start time.","Dialog.Scheduler.Publish.alert-modify-title":"This schedule cannot be modified","Dialog.Scheduler.Publish.button-close":"Close","Dialog.Scheduler.Publish.button-save":"Save publish schedule","Dialog.Scheduler.Publish.button-go-to-parent":"Go to parent","Dialog.Scheduler.Publish.do-not-have-permission-message":"This page will be published {0} with another page scheduled by {1}. You do not have permission to view this page. Please see {1} to resolve scheduling conflicts.","Dialog.Scheduler.Publish.go-to-parent-message":"This draft will be published {0}, scheduled by {1}. A schedule can only be modified where it was created.","Dialog.Scheduler.Publish.label.f1-link":"Learn about scheduled publishing","Dialog.Scheduler.Publish.page-title":"Publish","Dialog.Scheduler.Unpublish.button-save":"Save unpublish schedule","Dialog.Scheduler.Unpublish.alert-modify-message":"This page is scheduled to be unpublished {0} at {1}. A schedule cannot be modified or deleted less than 15 minutes from its start time.","Dialog.Scheduler.Unpublish.do-not-have-permission-message":"This page will be unpublished {0} with another page scheduled by {1}. You do not have permission to view this page. Please see {1} to resolve scheduling conflicts.","Dialog.Scheduler.Unpublish.go-to-parent-message":"This page will be unpublished {0}, scheduled by {1}. A schedule can only be modified where it was created.","Dialog.Scheduler.Unpublish.page-title":"Unpublish","Page.Dashboard.page-title":"Dashboard"}    </script>    <script type="application/json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" id="mt-localizations-editor">
+{"Article.Attach.file.upload.toobig":"The file \"{1}\" is too large.  The maximum allowed file size is {0}.","Article.Attach.file.upload.notAllowed":"The selected file can not be uploaded because you do not have permission to upload files of that type.","Article.Attach.file.upload.fileExtension":"You picked a file with an unsupported extension.  Please try again with a valid file.","Article.Common.page-is-restricted-login":"You do not have permission to view this page - please try signing in.","Article.Common.page-save-conflict":"You may have overwritten a concurrent editor's changes. Use this page's <a title=\"Revision History\" target=\"_blank\" href=\"{0}\" >Revision History<\/a> to review.","Article.Error.page-couldnt-be-loaded":"The requested page's contents could not be loaded.","Article.Error.page-save-conflict":"A page already exists at {0}. Navigate to the existing page and edit the page if you wish to modify its contents.","Article.Error.page-save-forbidden":"Your session has expired or you do not have permission to edit this page.","Article.Error.page-title-required":"A page title is required.","Article.edit.summary":"Edit summary","Article.edit.summary-reason":"Why are you making this edit?","Article.edit.enter-reason":"Enter reason (viewable in Site History Report)","Component.YoutubeSearch.error.key-invalid":"Your YouTube API Key was improperly configured. Please review the article at the","Component.YoutubeSearch.error.key-missing":"Your CXone Expert deployment needs to update your YouTube API Key. Details on how to update can be found at the","Component.YoutubeSearch.error.search-failed":"Search failed","Component.YoutubeSearch.info.not-found":"No videos found","Component.YoutubeSearch.label.video-url":"Video URL","Component.YoutubeSearch.placeholder.query":"Video URL or YouTube search query","Dialog.ConfirmCancel.button.continue-editing":"Continue editing","Dialog.ConfirmCancel.button.discard-changes":"Discard changes","Dialog.ConfirmCancel.message.changes-not-saved":"Your changes have not been saved to MindTouch.","Dialog.ConfirmCancel.title":"Discard changes?","Dialog.ConfirmDeleteRedirects.label.delete-redirects-help-link":"Learn more about deleting redirects","Dialog.ConfirmSave.error.redirect":"A redirect exists at this location and will be deleted if you continue. This may negatively impact your site and SEO. Please contact CXone Expert support.","Dialog.ConfirmSave.label.cancel":"Cancel","Dialog.ConfirmSave.label.continue":"Continue","Dialog.ConfirmSave.title":"Delete redirect?","Dialog.ConfirmSave.StrictIdf.error.invalid-idf":"This type of article should not exist at the requested location in the site hierarchy. Proceeding with the requested move may negatively impact site navigation and SEO.","Dialog.ConfirmSave.StrictIdf.error.missing-template-reference-insert":"You've removed the template reference, which is required for this page. Click Insert to reinsert the template reference.","Dialog.ConfirmSave.StrictIdf.label.cancel":"Cancel","Dialog.ConfirmSave.StrictIdf.label.continue":"Proceed anyway","Dialog.ConfirmSave.StrictIdf.label.insert":"Insert","Dialog.ConfirmSave.StrictIdf.label.missing-template-reference-help-link":"Learn more about required references","Dialog.ConfirmSave.StrictIdf.label.invalid-idf-help-link":"Learn more about IDF structure","Dialog.ConfirmSave.StrictIdf.title":"Oops!","Dialog.JS.wikibits-edit-section":"Edit section","Dialog.SaveRequired.button.cancel":"Cancel","Dialog.SaveRequired.button.save":"Save and continue","Dialog.SaveRequired.label.change-title-start":"This page needs a different title than","Dialog.SaveRequired.label.change-title-end":"Please make the correction and try again.","Dialog.SaveRequired.label.new-page-alert":"This operation can not be performed on a page that has not yet been created. In order to do that, we need to quickly save what you have.","Dialog.SaveRequired.title":"Save required","Draft.error.save-unpublished":"You cannot save an unpublished draft at {0}. A published page already exists at that location.","GUI.Editor.alert-changes-made-without-saving":"You have made changes to the content without saving your changes. Are you sure you want to exit this page?","GUI.Editor.error.copy-hint":"To avoid losing your work, copy the page contents to a new file and retry saving again.","GUI.Editor.error.server-error":"A server error has occurred.","GUI.Editor.error.unable-to-save":"We are unable to save this page","Redist.CKE.mt-save.save-to-file-link":"Save the page content to a file","Redist.CKE.mt-autosave.contents-autosaved":"The page contents were autosaved to the browser's local storage {0}","System.API.Error.invalid-redirect":"Cannot create a redirect on a page with sub-pages.","System.API.Error.invalid-redirect-target":"The redirect does not point at a valid page."}    </script>    <script type="application/json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" id="mt-localizations-file-uploader">
+{"Dialog.Attach.allowed-types":"Allowed file types:","Dialog.Attach.button.upload":"Upload","Dialog.Attach.choose-files-dad":"Choose files to upload or drag and drop files into this window.","Dialog.Attach.max-size":"Maximum upload file size: {0}"}    </script>    <script type="application/json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" id="mt-localizations-grid-widget">
+{"Article.Common.page-is-restricted-login":"You do not have permission to view this page - please try signing in.","MindTouch.Help.Page.search-unavailable":"Sorry, search is currently unavailable.","MindTouch.Reports.data.empty-grid-text":"No Data Available.","Page.StructuredTags.error-update":"An unknown error occurred."}    </script>    <script type="application/json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" id="mt-localizations-tree-widget">
+{"Skin.Common.home":"Home","Dialog.Common.error.path-not-found":"The requested page or section could not be loaded. Please update the link.","Dialog.JS.loading":"Loading...","Dialog.JS.loading.copy":"Copying page(s)...","Dialog.JS.loading.insertImage":"Inserting image...","Dialog.JS.loading.move":"Moving page(s)...","Dialog.JS.loading.moveFile":"Moving file...","Dialog.JS.loading.search":"Searching...","MindTouch.Help.Page.in":"in","MindTouch.Help.Page.no-search-results":"Sorry, we can't find what you are looking for.","MindTouch.Help.Page.no-search-try":"Try searching for something else, selecting a category, or try creating a ticket.","MindTouch.Help.Page.retrysearch":"Click here to search the whole site.","MindTouch.Help.Page.search-error-try":"Please try again later.","MindTouch.Help.Page.search-unavailable":"Sorry, search is currently unavailable."}    </script>    <script type="application/json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" id="mt-localizations-dialog">
+{"Dialog.Common.button.cancel":"Cancel","Dialog.Common.button.ok":"OK","Dialog.Common.label.home":"Home"}    </script>
+    <script type="text/javascript" data-mindtouch-module="true" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" src="https://a.mtstatic.com/deki/javascript/out/globals.jqueryv2.2.4.polyfill.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="application/json" id="mt-global-settings" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee">{"articleType":"topic","attachFileMax":1000,"baseHref":"https:\/\/documentation.meraki.com","cacheFingerprint":"9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505","canFileBeAttached":false,"cdnHostname":"a.mtstatic.com","clientSideWarnings":false,"dntEditorConfig":false,"draftEditable":false,"followRedirects":1,"idfHideTemplateTags":true,"idfVersion":"IDF3","isAiOptimizationTemplateEnabled":false,"isArticleReviewCommunityMembersEnabled":false,"isDraftAllowed":false,"isDraftManagerReportDownloadEnabled":false,"isDraftRequest":false,"isFindAndReplaceUndoEnabled":false,"isGenerativeSearchEnabled":false,"isGenerativeSearchDisclaimerEnabled":true,"isGenerativeSearchStreamResponseToggleEnabled":false,"isGenerativeSearchSearchIconEnabled":false,"isContentAdequacyEnabled":true,"isGenerativeSearchOnDemandEvaluationEnabled":true,"isEditorAiAssistantShortcutsEnabled":false,"isFileDescriptionCaptionableByLlmEnabled":false,"isGoogleAnalyticsEnabled":true,"isGuideTabMultipleClassificationsEnabled":false,"isHawthornThemeEnabled":false,"isIframeSandboxEnabled":false,"isImportExportEnhancementsEnabled":false,"isImportExportMediaEnabled":false,"isExternalImportEnabled":false,"isInteractionAnalyticsDebugEnabled":false,"isDevelopmentModeEnabled":false,"isInteractionAnalyticsEnabled":true,"isKcsEnabledOnPage":false,"isMediaManagerEnabled":false,"isPinnedPagesEnabled":true,"isPinnedPagesEnhancementsEnabled":true,"isReportDownloadEnabled":false,"isSchedulePublishEnabled":true,"isSearchAsYouTypeEnabled":false,"isTinymceAiAssistantEnabled":false,"isSearchInsightsDownloadEnabled":true,"isSentimentAnalysisEnabled":true,"isShowMoreChildrenNodesEnabled":false,"isShowTerminalNodesEnabled":false,"isSkinResponsive":true,"isSmoothScrollEnabled":true,"isTinyMceEnabled":false,"isTreeArticleIconsEnabled":false,"isXhrF1WebWidgetEnabled":true,"isXhrIEMode":false,"kcsEnabled":false,"kcsV2Enabled":false,"kcsV2GuidePrivacySetting":"Semi-Public","learningPathsEnabled":true,"maxFileSize":268435456,"moduleMode":"global","pageEditable":false,"pageId":14683,"pageIsRedirect":false,"pageLanguageCode":"en-US","pageName":"Migrating Switches From CS Firmware to IOS XE Firmware","pageNamespace":"","pageOrderLimit":1000,"pagePermissions":["LOGIN","BROWSE","READ","SUBSCRIBE"],"pageRevision":"8","pageSectionEditable":false,"pageTitle":"Switching\/Cloud Management with IOS XE\/Install and Get Started\/Migrating Switches From CS Firmware to IOS XE Firmware","pageViewId":"6b5fc351-8d54-4b2f-b42c-90ed6d25921e","siteId":"site_13505","pathCommon":"\/@style\/common","pathSkin":"\/@style\/elm","relatedArticlesDetailed":true,"removeBlankTemplate":true,"removeDeleteCheckbox":true,"cidWarningOnDelete":true,"scriptParser":2,"sessionId":"MWM3OTVjYWEtMWUzYS00ZjkwLTk5YTYtM2E3MzU3NWI0ODEwfDIwMjYtMDQtMDJUMDQ6NTc6Mjk=","showAllTemplates":false,"siteAuthoringPageThumbnailManagementEnabled":true,"skinStyle":"columbia.elm","spaceballs2Enabled":false,"strictIdfEnabled":true,"uiLanguage":"en-us","userId":2,"isPageRedirectPermanent":false,"userIsAdmin":false,"userIsAnonymous":true,"userIsSeated":false,"userName":"Anonymous User","userPermissions":["LOGIN","BROWSE","READ","SUBSCRIBE"],"userSystemName":"Anonymous","userTimezone":"GMT","webFontConfig":{"google":{"families":null}},"apiToken":"xhr_2_1775108482_afa8042915587cf1dae573b2c4f93b2426dfd47f06cca60377cbd59e8655ee03","displayGenerativeSearchDisclaimer":true,"cognigyFlowsEnabled":false}</script><script type="text/javascript" data-mindtouch-module="true" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" src="https://a.mtstatic.com/deki/javascript/out/community.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="text/javascript" data-mindtouch-module="true" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" src="https://a.mtstatic.com/deki/javascript/out/standalone/skin_elm.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="text/javascript" data-mindtouch-module="true" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" src="https://a.mtstatic.com/deki/javascript/out/standalone/pageBootstrap.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script>
+
+    
+        
+<script type="text/javascript" src="https://www.cisco.com/c/dam/cdc/t/ctm-core.js"></script>
+    
+<script type="text/javascript" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-51174192-2','documentation.meraki.com',{allowLinker:true});ga('send','pageview');ga('create','UA-65721316-2','documentation.meraki.com',{name:'mtTracker',allowLinker:true});ga('mtTracker.require','linker');ga('mtTracker.set', 'anonymizeIp', true);ga('mtTracker.send','pageview');document.addEventListener('mindtouch-web-widget:f1:loaded',function(e){var t=e.data||{},d=t.widget;d&&''!==t.embedId&&document.addEventListener('mindtouch-web-widget:f1:clicked',function(e){var t=(e.data||{}).href;if(t){var n=document.createElement('a');n.setAttribute('href',t),'expert-help.nice.com'===n.hostname&&(e.preventDefault(),ga('linker:decorate',n),d.open(n.href))}})});</script>
+</head>
+<body class="elm-user-anonymous columbia-page-main columbia-article-topic columbia-browser-applewebkit columbia-platform-windows columbia-breadcrumb-home-switching-cloudmanagementwithiosxe-installandgetstarted-migratingswitchesfromcsfirmwaretoiosxefirmware columbia-live no-touch columbia-lang-en-us columbia-skin-elm">
+<a class="elm-skip-link" href="#elm-main-content" title="Press enter to skip to the main content">Skip to main content</a><main class="elm-skin-container" data-ga-category="Anonymous | page">
+    <header class="elm-header">
+        <div class="elm-header-custom">
+<script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-NHZZG7QL8R"></script><script>/*<![CDATA[*/
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-NHZZG7QL8R');
+/*]]>*/</script><script src="//use.typekit.net/hum1oye.js"></script><script>/*<![CDATA[*/try{Typekit.load();}catch(e){}/*]]>*/</script>
+
+<div class="mt-header-help"><div class="mt-header-help-container"><div class="mt-logo-container"><div class="mt-logo"><a class="internal" href="https://documentation.meraki.com/" rel="internal"><img class="mt-cdn" src="https://documentation.meraki.com/@api/deki/site/logo?default=https%3A%2F%2Fdocumentation.meraki.com%2F%40cdn%2F%40style%2Fcommon-legacy%2Fimages%2Flogo.png" alt="" /></a></div></div><div id="navcontainer"><ul id="navlist"><li><a href="https://account.meraki.com/secure/login/dashboard_login" target="_blank" rel="external noopener nofollow" class="link-https">Dashboard</a></li><li><a href="https://community.cisco.com/t5/meraki/ct-p/meraki-home" target="_blank" rel="external noopener nofollow" class="link-https">Community</a></li><li><a href="https://meraki.cisco.com/support" target="_blank" rel="external noopener nofollow" class="link-https">Support</a></li><li><a id="current" href="https://meraki.cisco.com/form/contact" target="_blank" rel="external noopener nofollow" class="link-https">Contact Sales</a></li></ul></div></div><div class="mt-header-search"><div class="mt-help-search mt-lsf-search" id="mt-portfolio-search"><script type="application/json" id="mt-localizations-help-widget">/*<![CDATA[*/{"Help.Widget.button.text":"Search","Help.Widget.label.text":"Query","Help.Widget.placeholder.text":"Search Migrating Switches From CS Firmware to IOS XE Firmware"}/*]]>*/</script><div class="mt-inputredirect" data-query-key="q" data-path="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware"></div></div></div></div>
+
+<p>&nbsp;</p>
+</div>
+        <div class="elm-nav mt-translate-module" hidden="true">
+            <div class="elm-nav-container mt-translate-container"></div>
+        </div>
+        <div class="elm-header-logo-container">
+            <a href="https://documentation.meraki.com" title="Cisco Meraki Documentation" aria-label='Link to home'><img src="https://a.mtstatic.com/@public/production/site_13505/1749845593-logo.png" alt="Cisco Meraki Documentation" /></a>
+        </div>
+        
+        <nav class="elm-header-user-nav elm-nav" role="navigation">
+            <div class="elm-nav-container">
+                <ol>
+                    <li class="elm-global-search" data-ga-action="Header search"><a class="mt-icon-site-search mt-toggle-form" href="#" title="Search site">Search site</a>
+<div class="mt-quick-search-container mt-toggle-form-container">
+    <form action="/Special:Search">
+        <input name="qid" id="mt-qid-skin" type="hidden" value="" />
+        <input name="fpid" id="mt-search-filter-id" type="hidden" value="230" />
+        <input name="fpth" id="mt-search-filter-path" type="hidden" />
+        <input name="path" id="mt-search-path" type="hidden" value="" />
+
+        <label class="mt-label" for="mt-site-search-input">
+            Search
+        </label>
+        <input class="mt-text mt-search search-field" name="q" id="mt-site-search-input" placeholder="How can we help you?" type="search" />
+        <button class="mt-button ui-button-icon mt-icon-site-search-button search-button" type="submit">
+            Search
+        </button>
+    </form>
+</div>
+<div class="elm-search-back"><a class="mt-icon-browser-back" data-ga-label="Browse back" href="#" id="mt-browser-back" title="Go back to previous article">Go back to previous article</a></div>
+</li>
+                    <li class="elm-user-menu"><ol class="mt-user-menu">
+
+
+    <li class="mt-user-menu-user">
+        <a class="mt-icon-quick-sign-in "
+           href="https://documentation.meraki.com/@app/auth/4/login?returnto=https%3A%2F%2Fdocumentation.meraki.com%2FSwitching%2FCloud_Management_with_IOS_XE%2FInstall_and_Get_Started%2FMigrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware"
+           title="Sign in">Sign in</a>
+
+    </li>
+</ol>
+</li>
+                </ol>
+            </div>
+        </nav>
+        <nav class="elm-header-global-nav elm-nav" data-ga-action="Elm Navigation">
+            <div class="elm-nav-container">
+                <button class="elm-hierarchy-trigger mt-hierarchy-trigger ui-button-icon mt-icon-hierarchy-trigger-closed" title="Expand/collapse global hierarchy" data-ga-label="Hierarchy Toggle - Tree View">
+                    Expand/collapse global hierarchy
+                </button>
+                <ol class="mt-breadcrumbs" data-ga-action="Breadcrumbs">
+                        <li>
+                            <a href="https://documentation.meraki.com/" data-ga-label="Breadcrumb category">
+                                <span class="mt-icon-article-category mt-icon-article-home"></span>
+                                    Home
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://documentation.meraki.com/Switching" data-ga-label="Breadcrumb category">
+                                <span class="mt-icon-article-category"></span>
+                                    Switching
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE" data-ga-label="Breadcrumb category">
+                                <span class="mt-icon-article-category"></span>
+                                    Cloud Management with IOS XE
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started" data-ga-label="Breadcrumb guide">
+                                <span class="mt-icon-article-guide"></span>
+                                    Install and Get Started
+                            </a>
+                        </li>
+                        <li class="mt-breadcrumbs-current-page">
+                            <span class="mt-icon-article-topic"></span>
+                            Migrating Switches From CS Firmware to IOS XE Firmware
+                        </li>
+                </ol>
+                <button class="mt-icon-hierarchy-mobile-view-trigger ui-button-icon mt-icon-hierarchy-mobile-trigger-closed" title="Expand/collapse global location" data-ga-label="Hierarchy Toggle - Breadcrumb Expand/Collapse">
+                    Expand/collapse global location
+                </button>
+            </div>
+        </nav>
+        <nav class="elm-nav elm-header-hierarchy">
+            <div class="elm-nav-container">
+                <div class="elm-hierarchy mt-hierarchy"></div>
+            </div>
+        </nav>    </header>
+    <article class="elm-content-container" id="elm-main-content" tabindex="-1">
+        <header>
+            <div id="flash-messages"><div class="dekiFlash"></div></div>
+            
+                
+<h1 id="title" data-title-editor-available="false">
+        Migrating Switches From CS Firmware to IOS XE Firmware
+</h1>
+
+                
+
+                
+                    <ol class="elm-meta-data elm-meta-top" data-ga-action="Page actions">
+                        <li class="elm-last-modified"><dl class="mt-last-updated-container">
+    <dt class="mt-last-updated-label">Last updated</dt>
+    <dd>
+        <span class="mt-last-updated" data-timestamp="2026-03-19T16:42:35Z"></span>
+    </dd>
+</dl>
+</li>
+                        <li class="elm-pdf-export"><a data-ga-label="PDF" href="https://documentation.meraki.com/@api/deki/pages/14683/pdf/Migrating%2bSwitches%2bFrom%2bCS%2bFirmware%2bto%2bIOS%2bXE%2bFirmware.pdf?stylesheet=default" rel="nofollow" target="_blank" title="Export page as a PDF">
+    <span class="mt-icon-article-pdf"></span>Save as PDF
+</a></li>
+                        <li class="elm-social-share"></li>
+                    </ol>
+                
+            
+        </header>
+                <header class="mt-content-header"></header>
+                <aside class="mt-content-side"></aside>
+            <aside id="mt-toc-container" data-title="Table of contents" data-collapsed="true">
+                <nav class="mt-toc-content mt-collapsible-section">
+                    <ol><li><a href="#Is_Your_Switch_a_Layer_3_Switch.3F" rel="internal">Is Your Switch a Layer 3 Switch?</a></li><li><a href="#Migrating_a_Layer_2_Switch_.E2.80.93_Static_and_DHCP_Management_IP" rel="internal">
+Migrating a Layer 2 Switch &ndash; Static and DHCP Management IP</a></li><li><a href="#Migrating_a_Layer_3_Switch" rel="internal">Migrating a Layer 3 Switch</a><ol><li><a href="#Scenario_1:_Management_IP_via_DHCP_with_no_subnet_overlap_with_the_SVIs" rel="internal">Scenario 1: Management IP via DHCP with no subnet overlap with the SVIs &nbsp;</a></li><li><a href="#Scenario_2:_Management_IP_via_DHCP_with_subnet_overlap_with_one_of_the_SVIs" rel="internal">Scenario 2: Management IP via DHCP with subnet overlap with one of the SVIs</a></li><li><a href="#Scenario_3:_Management_IP_via_Static_with_no_subnet_overlap_with_the_SVIs" rel="internal">Scenario 3: Management IP via Static with no subnet overlap with the SVIs</a></li><li><a href="#Scenario_4:_Management_IP_via_Static_with_subnet_overlap_with_one_of_the_SVIs" rel="internal">Scenario 4: Management IP via Static with subnet overlap with one of the SVIs</a><ol><li><a href="#Default_Route:" rel="internal">Default Route:</a><ol><li><a href="#Scenario_A" rel="internal">
+Scenario A</a></li></ol></li></ol></li></ol></li></ol>
+                </nav>
+            </aside>
+            <section class="mt-content-container">
+                
+
+<div class="mt-page-summary"><div class="mt-page-overview"></div></div>
+
+<p>&nbsp;</p>
+
+
+
+<p><strong>On CS firmware</strong>, the management IP for catalyst switches configured on the switch page&rsquo;s sidebar (displayed as LAN IP) is pushed to the container running on the device. This IP essentially acts like an out of band management interface to maintain the switch management connectivity to the dashboard. On the other hand, the L3 interfaces (SVIs) configured on Switching &gt; Configure &gt; Routing &amp; DHCP page are used for data traffic on the switch.</p>
+
+<p><strong>On Cloud Management with IOS-XE</strong>, the management IP behavior is inherited from the traditional IOS-XE firmware behavior. One of the L3 interfaces (SVIs) on the Switching &gt; Configure &gt; Routing &amp; DHCP page can now be used as the management IP interface.</p>
+
+<p>Due to this change in management IP behavior, to avoid unexpected loss of connectivity to the switch management or the data traffic, <strong>it is highly recommended to review upgrade behaviors and recommendations before migrating your switches from a CS firmware to IOS-XE firmware.&nbsp;</strong></p>
+
+<p>&nbsp;</p>
+
+<div class="note-info style-wrap">
+<p aria-level="4" lang="EN-US" paraeid="{5599677b-e995-4062-90fd-8adaae96beae}{132}" paraid="685982344" role="heading"><strong>Migrating Layer 3 Switches: Pre-configure L3 switches to reduce reconfiguration after upgrade&nbsp;</strong></p>
+
+<p aria-level="4" lang="EN-US" paraeid="{5599677b-e995-4062-90fd-8adaae96beae}{132}" paraid="685982344" role="heading">We recommend pre-configuring your switch to mirror&nbsp;<a title="Migrating Switches From CS Firmware to IOS XE Firmware" class="mt-self-link" href="#Scenario_A" rel="internal"><strong><strong>Scenario 4a</strong></strong></a>&nbsp;prior to&nbsp;migrating&nbsp;the switch. This will provide the best possible upgrade experience.&nbsp;&nbsp;</p>
+
+<p aria-level="4" lang="EN-US" paraeid="{5599677b-e995-4062-90fd-8adaae96beae}{132}" paraid="685982344" role="heading"><strong><strong>Key points:</strong></strong></p>
+
+<ul role="list">
+    <li aria-setsize="-1" data-aria-level="1" data-aria-posinset="1" data-font="Symbol" data-leveltext="&#61623;" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:0,&quot;335559684&quot;:-2,&quot;335559685&quot;:720,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Symbol&quot;,&quot;469769242&quot;:[8226],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;&#61623;&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+    <p lang="EN-US" paraeid="{1f6b6d84-d584-4919-8992-b042549a84fd}{77}" paraid="169663067">Ensure that an uplink SVI (VLAN interface) exists on the Routing &amp; DHCP page,&nbsp;in the same subnet as your management interface.&nbsp;</p>
+
+    <ul>
+        <li aria-setsize="-1" data-aria-level="1" data-aria-posinset="1" data-font="Symbol" data-leveltext="&#61623;" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:0,&quot;335559684&quot;:-2,&quot;335559685&quot;:720,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Symbol&quot;,&quot;469769242&quot;:[8226],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;&#61623;&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+        <p lang="EN-US" paraeid="{1f6b6d84-d584-4919-8992-b042549a84fd}{77}" paraid="169663067">We recommend moving your management interface into the same VLAN as the switch's default route to the Internet.</p>
+
+        <ul>
+            <li aria-setsize="-1" data-aria-level="1" data-aria-posinset="1" data-font="Symbol" data-leveltext="&#61623;" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:0,&quot;335559684&quot;:-2,&quot;335559685&quot;:720,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Symbol&quot;,&quot;469769242&quot;:[8226],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;&#61623;&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+            <p lang="EN-US" paraeid="{1f6b6d84-d584-4919-8992-b042549a84fd}{77}" paraid="169663067">If the default route to the Internet is via VLAN 10, move the management interface of the switch to VLAN 10.</p>
+            </li>
+            <li aria-setsize="-1" data-aria-level="1" data-aria-posinset="1" data-font="Symbol" data-leveltext="&#61623;" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:0,&quot;335559684&quot;:-2,&quot;335559685&quot;:720,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Symbol&quot;,&quot;469769242&quot;:[8226],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;&#61623;&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+            <p lang="EN-US" paraeid="{1f6b6d84-d584-4919-8992-b042549a84fd}{77}" paraid="169663067">Make sure the default gateway of the management interface is the same as the default&nbsp;gateway in the switch routing table.</p>
+            </li>
+            <li aria-setsize="-1" data-aria-level="1" data-aria-posinset="1" data-font="Symbol" data-leveltext="&#61623;" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:0,&quot;335559684&quot;:-2,&quot;335559685&quot;:720,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Symbol&quot;,&quot;469769242&quot;:[8226],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;&#61623;&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+            <p lang="EN-US" paraeid="{1f6b6d84-d584-4919-8992-b042549a84fd}{77}" paraid="169663067">Make sure DNS is configured properly.</p>
+            </li>
+        </ul>
+        </li>
+    </ul>
+    </li>
+    <li aria-setsize="-1" data-aria-level="1" data-aria-posinset="2" data-font="Symbol" data-leveltext="&#61623;" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:0,&quot;335559684&quot;:-2,&quot;335559685&quot;:720,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Symbol&quot;,&quot;469769242&quot;:[8226],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;&#61623;&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+    <p lang="EN-US" paraeid="{76d1f9ff-12b9-48f1-9830-2c82a72deb4d}{103}" paraid="1781272921">Use static IP address if possible&nbsp;</p>
+
+    <ul>
+        <li aria-setsize="-1" data-aria-level="1" data-aria-posinset="2" data-font="Symbol" data-leveltext="&#61623;" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:0,&quot;335559684&quot;:-2,&quot;335559685&quot;:720,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Symbol&quot;,&quot;469769242&quot;:[8226],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;&#61623;&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+        <p lang="EN-US" paraeid="{76d1f9ff-12b9-48f1-9830-2c82a72deb4d}{103}" paraid="1781272921">Configure the management interface with a static IP address.</p>
+        </li>
+    </ul>
+    </li>
+    <li aria-setsize="-1" data-aria-level="1" data-aria-posinset="2" data-font="Symbol" data-leveltext="&#61623;" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:0,&quot;335559684&quot;:-2,&quot;335559685&quot;:720,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Symbol&quot;,&quot;469769242&quot;:[8226],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;&#61623;&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+    <p lang="EN-US" paraeid="{76d1f9ff-12b9-48f1-9830-2c82a72deb4d}{103}" paraid="1781272921">RADIUS / Syslog / SNMP&nbsp;&nbsp;</p>
+
+    <ul>
+        <li aria-setsize="-1" data-aria-level="2" data-aria-posinset="1" data-font="Courier New" data-leveltext="o" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:1,&quot;335559684&quot;:-2,&quot;335559685&quot;:1440,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Courier New&quot;,&quot;469769242&quot;:[9675],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;o&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+        <p lang="EN-US" paraeid="{221d113b-d169-4115-b046-a74016c5ad6f}{169}" paraid="640332229">Make sure RADIUS / Syslog / SNMP&nbsp;can be sourced from either the management or SVI&nbsp;IP addresses.</p>
+        </li>
+        <li aria-setsize="-1" data-aria-level="2" data-aria-posinset="2" data-font="Courier New" data-leveltext="o" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:1,&quot;335559684&quot;:-2,&quot;335559685&quot;:1440,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Courier New&quot;,&quot;469769242&quot;:[9675],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;o&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+        <p lang="EN-US" paraeid="{8f0e3b85-43ad-4f92-86d7-c1ae8fe59f5f}{66}" paraid="245910878">With CS firmware, that&nbsp;traffic&nbsp;will source from the management interface,&nbsp;post-upgrade&nbsp;it will now source from your uplink SVI.&nbsp;</p>
+        </li>
+        <li aria-setsize="-1" data-aria-level="2" data-aria-posinset="2" data-font="Courier New" data-leveltext="o" data-list-defn-props="{&quot;335552541&quot;:1,&quot;335559683&quot;:1,&quot;335559684&quot;:-2,&quot;335559685&quot;:1440,&quot;335559991&quot;:360,&quot;469769226&quot;:&quot;Courier New&quot;,&quot;469769242&quot;:[9675],&quot;469777803&quot;:&quot;left&quot;,&quot;469777804&quot;:&quot;o&quot;,&quot;469777815&quot;:&quot;hybridMultilevel&quot;}" data-listid="10" role="listitem">
+        <p lang="EN-US" paraeid="{8f0e3b85-43ad-4f92-86d7-c1ae8fe59f5f}{66}" paraid="245910878">If AMI (Alternative Management Interface) is being used, make sure that SVI&nbsp;is created for that AMI VLAN.&nbsp;</p>
+        </li>
+    </ul>
+    </li>
+</ul>
+</div>
+
+<p>&nbsp;</p>
+
+<div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware" class="mt-section" id="section_1"><span id="Is_Your_Switch_a_Layer_3_Switch.3F"></span><h2 class="editable">Is Your Switch a Layer 3 Switch?</h2>
+
+<p>This section provides instructions on how you can gather information about your current Layer 2 and Layer 3 setup on your CS firmware-based switches that you can correlate with one of the scenarios listed in the next section.</p>
+
+<ul>
+    <li>Navigate to <b>Switching &gt; Monitor &gt; Switches &gt; click on one of the switches</b></li>
+    <li>On the sidebar, take a note of LAN IP section. Following is the screenshot of an example switch configuration<br />
+    <br />
+    This is the management IP of the switch that was pushed to the CS firmware switch container as discussed in the earlier section.&nbsp;<b>Take a note of IP address, Type (DHCP/Static), Interface (VLAN number) and Gateway on your switch</b>. In this example, the Management IP is using DHCP IP address on VLAN 10 with a 192.168.10.254 gateway IP address.<br />
+    <br />
+    <img alt="Review L2 &amp; L3 - DHCP IP.png" class="internal" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36548/Review_L2_%2526_L3_-_DHCP_IP.png?revision=1" /><br />
+    <br />
+    &nbsp;</li>
+    <li>Navigate to <b>Switching &gt; Configure &gt; Routing &amp; DHCP</b>. In the following example, the list shows configured L3 interfaces (SVIs) on each switch within this network, used for data traffic as described in the previous section. The highlighted entry is the switch that we looked at earlier. You may have no SVIs which means it is a L2 switch.<br />
+    <br />
+    In this example, there is only one L3 interface (SVI) for this switch, which is on VLAN 20.<br />
+    <br />
+    <img alt="Scenario 0 - Routing &amp; DHCP.png" class="internal" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36549/Scenario_0_-_Routing_%2526_DHCP.png?revision=1" /><br />
+    &nbsp;</li>
+    <li>On the same <strong>Routing &amp; DHCP</strong> page, scroll down to Static routes section and <b>make a note of the default route. </b><br />
+    <br />
+    In this example, the default route&rsquo;s next hop IP address is 192.168.20.254<br />
+    <br />
+    <img alt="Review L2 &amp; L3 - Static routes.png" class="internal" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36550/Review_L2_%2526_L3_-_Static_routes.png?revision=1" /><br />
+    <br />
+    &nbsp;</li>
+    <li>In this example setup, following is the current configuration of switch running CS firmware:
+    <ul>
+        <li><b>Management IP (displayed as LAN IP on side bar):</b> Running on the container. Uses DHCP on VLAN 10 with a gateway of 192.168.10.254</li>
+        <li><b>SVIs:</b> Only one SVI on VLAN 20, which doesn&rsquo;t overlap with Management IP subnet that is on VLAN 10.</li>
+        <li><b>Default route:</b> Next hop IP address of default route is 192.168.20.254, which is on VLAN 20. This IP address is not the same as Management IP gateway (192.168.10.254)</li>
+        <li><b>Corresponding scenario (discussed below):</b> With the above information, we can see that this example scenario corresponds to the following scenario documented in the next section: <b><i>Scenario 1 - Management via DHCP with no subnet overlap with SVIs and Management IP gateway &ne; Default route next hop on Routing &amp; DHCP page.&nbsp;</i></b></li>
+    </ul>
+    </li>
+</ul>
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware" class="mt-section" id="section_2"><span id="Migrating_a_Layer_2_Switch_.E2.80.93_Static_and_DHCP_Management_IP"></span><h2 class="editable"><br />
+Migrating a Layer 2 Switch &ndash; Static and DHCP Management IP</h2>
+
+<p>&nbsp;</p>
+
+<p><b>Pre-migration setup &ndash; on CS firmware:</b></p>
+
+<p>If there are no L3 interfaces (SVIs) for your switch on <strong>Switching &gt; Configure &gt; Routing &amp; DHCP</strong> page, it is a Layer 2 switch.</p>
+
+<div class="note-info style-wrap">
+<p><strong>Alternate Management Interface (AMI) </strong>configuration now requires a dedicated L3 SVI interface to be created on the switch. It is no longer configured from the switches side-bar.&nbsp;If you have configured the network to support AMI on a VLAN (ex. VLAN10), then every switch in that network must have a L3 SVI on the specified VLAN in order to use that interface as an AMI. If there is no L3 SVI interface on a switch that matches the AMI VLAN, then the management/uplink interface will be used as default.&nbsp;</p>
+</div>
+
+<p><br />
+<b>Post-migration behavior &ndash; on IOS-XE firmware:</b></p>
+
+<p>Regardless of whether the Management IP on your Layer 2 switch running CS firmware is configured as static or obtained via DHCP, after migrating to IOS-XE, the switch will inherit the Management IP configuration from the CS firmware. Specifically, the management interface settings transition to a Layer 3 interface (SVI) in IOS-XE.</p>
+
+<p>DHCP management interfaces convert to DHCP L3 interfaces that are only visible on the Cloud&nbsp;CLI and static management interfaces convert to static L3 interfaces (SVIs) that are also only visible on the Cloud&nbsp;CLI. The default route and its next hop IP address is also retained.</p>
+
+<p><img alt="L2 Migration.png" class="internal" style="width: 561.997px; height: 472.986px;" width="561.997px" height="472.986px" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36551/L2_Migration.png?revision=1" /></p>
+
+<p>&nbsp;</p>
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware" class="mt-section" id="section_3"><span id="Migrating_a_Layer_3_Switch"></span><h2 class="editable">Migrating a Layer 3 Switch</h2>
+
+<p>Following are several Layer 3 switch scenarios. Please use the instructions in&nbsp;<a title="Migrating Switches From CS Firmware to IOS XE Firmware" class="mt-self-link" href="#Reviewing_your_Layer_2_and_Layer_3_setup" rel="internal">Migrating Switches From CS Firmware to IOS XE Firmware</a>&nbsp;to determine the applicable scenario for your switches.</p>
+
+<div class="note-info style-wrap">
+<p><strong>Alternate Management Interface (AMI) </strong>configuration now requires a dedicated L3 SVI interface to be created on the switch. It is no longer configured from the switches side-bar.&nbsp;If you have configured the network to support AMI on a VLAN (ex. VLAN10), then every switch in that network must have a L3 SVI on the specified VLAN in order to use that interface as an AMI. If there is no L3 SVI interface on a switch that matches the AMI VLAN, then the management/uplink interface will be used as default.&nbsp;</p>
+</div>
+
+<div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware" class="mt-section" id="section_4"><span id="Scenario_1:_Management_IP_via_DHCP_with_no_subnet_overlap_with_the_SVIs"></span><h3 aria-level="4" lang="EN-US" paraeid="{5599677b-e995-4062-90fd-8adaae96beae}{132}" paraid="685982344" role="heading" class="editable">Scenario 1: Management IP via DHCP with no subnet overlap with the SVIs &nbsp;</h3>
+
+<p><b>Pre-migration setup &ndash; on CS firmware:</b></p>
+
+<p>The switch on CS firmware obtains the management IP (displayed as LAN IP on side bar) via DHCP and the DHCP subnet does not overlap with any L3 interfaces (SVIs) on Routing &amp; DHCP page. Also, gateway IP on the Management VLAN &ne; Default route next hop on the Routing &amp; DHCP page.<br />
+<br />
+<b>Post-migration behavior &ndash; on IOS-XE firmware:</b></p>
+
+<ul>
+    <li><b>Switch Management VLAN:</b> The switch uses the same DHCP VLAN for Management. Note that, while the Routing &amp; DHCP page doesn't show a static L3 interface (SVI) for this VLAN, the running configuration on the Cloud&nbsp;CLI will display DHCP IP details for it.</li>
+</ul>
+
+<p class="mt-indent-2">KB-9300#show run int vlan 10<br />
+Building configuration...<br />
+Current configuration : 196 bytes<br />
+!<br />
+interface Vlan10<br />
+..<br />
+ip address dhcp&nbsp;<br />
+..</p>
+
+<p class="mt-indent-2"><br />
+<i>KB-9300#show ip interface brief | include Vlan10<br />
+Vlan10&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 192.168.10.5&nbsp; &nbsp; &nbsp; YES NVRAM &nbsp;up &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;up</i></p>
+
+<p class="mt-indent-2">&nbsp;</p>
+
+<ul>
+    <li><b>Default route:</b> The original default route next hop is replaced with management VLAN&rsquo;s DHCP gateway - The Cloud CLI reflects this, showing the DHCP gateway as the default route&rsquo;s next hop. Routing &amp; DHCP page still shows default route with old next hop IP address (that is unused) that was previously used on CS firmware.</li>
+</ul>
+
+<div class="note-info style-wrap">
+<p><b>Note:</b> Even if you change the default route&rsquo;s next hop on the dashboard, the device will still use the DHCP gateway as the next hop for default route - the change won&rsquo;t apply to the device.</p>
+</div>
+
+<p><img alt="Migration - Scenario 1.png" class="internal" style="width: 561.997px; height: 473.993px;" width="561.997px" height="473.993px" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36552/Migration_-_Scenario_1.png?revision=1" /></p>
+
+<p>&nbsp;</p>
+
+<p><b>Impact and recommendations:</b></p>
+
+<p>Due to change in default route&rsquo;s next hop IP address, there may be a loss of connectivity to data traffic, especially if your original default route&rsquo;s next hop (used for data traffic) and the next hop inherited from Management IP&rsquo;s DHCP gateway are not on the same device.<br />
+<br />
+Before proceeding with the upgrade, while the switch is on CS firmware, ensure that the Management IP DHCP gateway (from the example image above, 192.168.10.254) and default route&rsquo;s next hop (192.168.20.254) are on the same upstream device.</p>
+
+<div class="note-info style-wrap">
+<p>The ability to use different next hop addresses for management and data will be available soon.</p>
+</div>
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware" class="mt-section" id="section_5"><span id="Scenario_2:_Management_IP_via_DHCP_with_subnet_overlap_with_one_of_the_SVIs"></span><h3 class="editable">Scenario 2: Management IP via DHCP with subnet overlap with one of the SVIs</h3>
+
+<p>&nbsp;</p>
+
+<p><b>Pre-migration setup &ndash; on CS firmware:</b></p>
+
+<p>The switch on CS firmware obtains the management IP (displayed as LAN IP on side bar) via DHCP and the DHCP subnet overlaps with one of the L3 interfaces (SVIs) on Routing &amp; DHCP page.</p>
+
+<p>&nbsp;</p>
+
+<p><b>Post-migration behavior &ndash; on IOS-XE firmware:</b></p>
+
+<ul>
+    <li><b>Switch Management VLAN:</b> The switch uses the same DHCP VLAN for Management and ignores the conflicting static L3 interface (SVI) on the same VLAN that was configured on Routing &amp; DHCP page. Note that, while the Routing &amp; DHCP page still shows a static L3 interface (SVI) for this VLAN, the running configuration on the Cloud&nbsp;CLI will display DHCP IP details for it.</li>
+</ul>
+
+<p class="mt-indent-2"><i>KB-9300#show run int vlan 10<br />
+Building configuration...<br />
+Current configuration : 196 bytes<br />
+!<br />
+interface Vlan10&nbsp;<br />
+..<br />
+ip address dhcp<br />
+..</i></p>
+
+<p class="mt-indent-2"><i>KB-9300#show ip interface brief | include Vlan10<br />
+Vlan10&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 192.168.10.5&nbsp; &nbsp; &nbsp; YES NVRAM &nbsp;up &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;up</i></p>
+
+<p class="mt-indent-2">&nbsp;</p>
+
+<ul>
+    <li><b>Default route:</b> Prior to the migration<b>, </b>if<b> </b>management VLAN&rsquo;s DHCP gateway &ne; Default route next hop on Routing &amp; DHCP page, the original next hop will be replaced by Management VLAN&rsquo;s DHCP gateway - the Cloud&nbsp;CLI reflects this, showing the DHCP gateway as the default route&rsquo;s next hop. Routing &amp; DHCP page still shows default route with old next hop IP address that was previously used on CS firmware.</li>
+</ul>
+
+<p>&nbsp;</p>
+
+<div class="note-info style-wrap">
+<p><b>Note:</b> Even if you change the default route&rsquo;s next hop on the dashboard, the device will still use the DHCP gateway as the next hop for default route - the change won&rsquo;t apply to the device.</p>
+</div>
+
+<p><br />
+<img alt="Migration - Scenario 2.png" class="internal" style="width: 560.99px; height: 475.99px;" width="560.99px" height="475.99px" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36553/Migration_-_Scenario_2.png?revision=1" /><br />
+<b>&nbsp;</b></p>
+
+<p><b>Impact and recommendations</b></p>
+
+<p>Since the switch uses the same DHCP VLAN for Management and ignores the conflicting static L3 interface (SVI) IP, it may impact services such as RADIUS, Syslog, SNMP etc., (that use the original SVI IP) and other routing behavior if the original SVI IP is used as next hop on other devices.</p>
+
+<p>Additionally, due to change in default route&rsquo;s next hop IP address, there may be a loss of connectivity to data traffic, especially if your original default route&rsquo;s next hop (used for data traffic) and the next hop inherited from Management IP&rsquo;s DHCP gateway are not on the same device.</p>
+
+<p><br />
+Before proceeding with the upgrade, while the switch is on CS firmware, It is highly recommended to <b>resolve the overlap to align the setup with Scenario 1 </b>and ensure that the Management IP DHCP gateway (from the example image above, 192.168.10.254) and default route&rsquo;s next hop (192.168.20.254) are on the same upstream device.<br />
+&nbsp;</p>
+
+<div class="note-info style-wrap">
+<p>The ability to use different next hop addresses for management and data will be available soon.</p>
+</div>
+
+<p>&nbsp;</p>
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware" class="mt-section" id="section_6"><span id="Scenario_3:_Management_IP_via_Static_with_no_subnet_overlap_with_the_SVIs"></span><h3 class="editable">Scenario 3: Management IP via Static with no subnet overlap with the SVIs</h3>
+
+<p>&nbsp;</p>
+
+<p><b>Pre-migration setup &ndash; on CS firmware:</b></p>
+
+<p>The switch on CS firmware obtains the management IP (displayed as LAN IP on side bar) via Static assignment and the Static IP subnet does not overlap with any L3 interfaces (SVIs) on Routing &amp; DHCP page. Also, gateway IP on the Management VLAN &ne; Default route next hop on the Routing &amp; DHCP page.<br />
+<br />
+<b>Post-migration behavior &ndash; on IOS-XE firmware:</b></p>
+
+<ul>
+    <li><b>Switch Management VLAN:</b> The switch uses the same Static IP for Management. Note that, while the Routing &amp; DHCP page doesn't show a static L3 interface (SVI) for this VLAN, the running configuration on the Cloud&nbsp;CLI will display the original Management VLAN&rsquo;s Static IP details for it.<br />
+    &nbsp;</li>
+</ul>
+
+<p class="mt-indent-2"><i>KB-9300#show run int vlan 10<br />
+Building configuration...<br />
+Current configuration : 196 bytes<br />
+!<br />
+interface Vlan10<br />
+..<br />
+ip address 192.168.10.5 255.255.255.0<br />
+..<br />
+End</i></p>
+
+<p>&nbsp;</p>
+
+<ul>
+    <li><b>Default route:</b> A new default route is created with Management VLAN&rsquo;s gateway as the next hop - the Cloud&nbsp;CLI reflects this, showing both the routes. Routing &amp; DHCP page still shows only one default route with old next hop IP address that was previously used on CS firmware.<br />
+    &nbsp;</li>
+</ul>
+
+<p class="mt-indent-2"><i>KB-9300#show run | sec route<br />
+..<br />
+ip route 0.0.0.0 0.0.0.0 192.168.10.254 tag 2896997550<br />
+ip route 0.0.0.0 0.0.0.0 192.168.20.254 tag 2896997550<br />
+..</i></p>
+
+<p><img alt="Migration - Scenario 3.png" class="internal" style="width: 562.986px; height: 476.997px;" width="562.986px" height="476.997px" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36554/Migration_-_Scenario_3.png?revision=1" /><br />
+<br />
+&nbsp;</p>
+
+<p><b>Recommendation</b></p>
+
+<p><br />
+Due to the addition of new default route with management VLAN&rsquo;s gateway as the next hop IP address, it may impact data traffic. Following changes are highly recommended before and after the migration:<b>&nbsp;</b></p>
+
+<ul>
+    <li><b>Before migration: </b>Before proceeding with the upgrade, while the switch is on CS firmware, ensure that the Management IP DHCP gateway (from the example image above, 192.168.10.254) and default route&rsquo;s next hop (192.168.20.254) are on the same upstream device.<br />
+    &nbsp;</li>
+    <li><b>After migration:</b> It is highly recommended to create a new SVI for the Management VLAN on the dashboard that matches the configuration on the device.<br />
+    <br />
+    Navigate to <b>Switching &gt; Configure &gt; Routing &amp; DHCP &gt; Add Interface &gt;</b> <b>Enter the details to match the Management VLAN configuration</b>. In the current example, the configuration looks as follows:<br />
+    <br />
+    <img alt="Migration - Scenario 3 - Preferred uplink.png" class="internal" style="width: 700.99px; height: 438.993px;" width="700.99px" height="438.993px" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36555/Migration_-_Scenario_3_-_Preferred_uplink.png?revision=1" /><br />
+    <br />
+    <br />
+    <br />
+    After creating the Management VLAN SVI on the dashboard, the original default route (0.0.0.0/0 via 192.168.20.254 in the example) will be removed from the device and there will be only one default route that points to management VLAN&rsquo;s gateway - both<b> </b>the Cloud&nbsp;CLI and Routing &amp; DHCP page reflect this:</li>
+</ul>
+
+<p class="mt-indent-2"><br />
+<i>KB-9300#show run | sec route<br />
+..<br />
+ip route 0.0.0.0 0.0.0.0 192.168.10.254 tag 2896997550<br />
+..</i></p>
+
+</div><div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware" class="mt-section" id="section_7"><span id="Scenario_4:_Management_IP_via_Static_with_subnet_overlap_with_one_of_the_SVIs"></span><h3 class="editable">Scenario 4: Management IP via Static with subnet overlap with one of the SVIs</h3>
+
+<p><br />
+<b>Pre-migration setup &ndash; on CS firmware:</b><br />
+&nbsp;</p>
+
+<p>The switch on CS firmware obtains the management IP (displayed as LAN IP on side bar) via Static assignment and the Static IP subnet overlaps with one of the L3 interfaces (SVIs) on Routing &amp; DHCP page.</p>
+
+<p><br />
+<b>Post-migration behavior &ndash; on IOS-XE firmware:</b></p>
+
+<ul>
+    <li><b>Switch Management VLAN:</b> Due to an overlapping subnet, the switch ignores the old Management static IP configured from the CS firmware device&rsquo;s sidebar (displayed as LAN IP) and uses already existing SVI&rsquo;s Static IP for Management. Preferred uplink is not checked by default - the running configuration on the Cloud CLI will display the original SVI&rsquo;s Static IP details for it.<br />
+    &nbsp;</li>
+</ul>
+
+<p class="mt-indent-2"><i>KB-9300#show run int vlan 10<br />
+Building configuration...<br />
+Current configuration : 196 bytes<br />
+!<br />
+interface Vlan10<br />
+..<br />
+ip address 192.168.10.1 255.255.255.0<br />
+..<br />
+End</i></p>
+
+<p>&nbsp;</p>
+
+<div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware" class="mt-section" id="section_8"><span id="Default_Route:"></span><h4 class="editable"><b>Default Route:</b></h4>
+
+<div mt-section-origin="Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Migrating_Switches_From_CS_Firmware_to_IOS_XE_Firmware" class="mt-section" id="section_9"><span id="Scenario_A"></span><h5 class="editable"><br />
+<b>Scenario A</b></h5>
+
+<p>Prior to the migration, if management VLAN&rsquo;s gateway = Default route next hop on Routing &amp; DHCP page, there won&rsquo;t be any change to the default route next hop after migration.&nbsp;</p>
+
+<div class="note-info style-wrap">
+<p>When migrating a layer 3 switch we recommend pre-configuring your switch to mirror&nbsp;<strong><strong>Scenario 4a</strong></strong>&nbsp;prior to&nbsp;migrating&nbsp;the switch. This will provide the best possible upgrade experience.&nbsp;&nbsp;</p>
+</div>
+
+<p>&nbsp;<br />
+<img alt="Migration - Scenario 4 - 1 .png" class="internal" style="width: 562.986px; height: 477.986px;" width="562.986px" height="477.986px" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36556/Migration_-_Scenario_4_-_1_.png?revision=1" /><br />
+<br />
+<br />
+<b>Scenario B</b></p>
+
+<p>Prior to the migration, if management VLAN&rsquo;s gateway &ne; Default route next hop on Routing &amp; DHCP page, a new default route is created with Management VLAN&rsquo;s gateway as the next hop - the Cloud&nbsp;CLI reflects this, showing both the routes.<br />
+<br />
+<img alt="Migration - Scenario 4 - 2.png" class="internal" style="width: 561.997px; height: 477.986px;" width="561.997px" height="477.986px" loading="lazy" src="https://documentation.meraki.com/@api/deki/files/36557/Migration_-_Scenario_4_-_2.png?revision=1" /><br />
+<br />
+<br />
+In both the scenarios, Routing &amp; DHCP page still shows only one default route with old next hop IP address that was previously used on CS firmware</p>
+
+<p><b>Impact and recommendations</b></p>
+
+<p>In scenario B, Due to the addition of new default route with management VLAN&rsquo;s gateway as the next hop IP address, it may impact data traffic. There are also many limitations in changing the default route for this particular scenario.<br />
+<br />
+Before proceeding with the upgrade, while the switch is on CS firmware, It is highly recommended to <b>resolve the overlap to align the setup with Scenario 3 </b>and follow the recommendations listed in it.</p>
+
+<div class="note-info style-wrap">
+<p>The ability to use different next hop addresses for management and data will be available soon.</p>
+</div>
+
+<p>&nbsp;</p>
+</div></div></div></div>
+
+                    <footer class="mt-content-footer"></footer>
+            </section>
+
+        
+            <footer class="elm-content-footer">
+                <ol class="elm-meta-data elm-meta-article-navigation">
+                    <li class="elm-back-to-top"><a class="mt-icon-back-to-top" href="#title" id="mt-back-to-top" title="Jump back to top of this article">Back to top</a></li>
+                    <li class="elm-article-pagination"><ul class="mt-article-pagination" data-ga-action="Article pagination bottom">
+    <li class="mt-pagination-previous">
+
+            <a class="mt-icon-previous-article" data-ga-label="Previous page" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Getting_started%3A_Cisco_Catalyst_9300_Management_with_Meraki_Dashboard" title="Getting started: Cisco Catalyst 9300 Management with Meraki Dashboard"><span>Getting started: Cisco Catalyst 9300 Management with Meraki Dashboard</span></a>
+    </li>
+        <li class="mt-pagination-next">
+                <a class="mt-icon-next-article" data-ga-label="Next page" href="https://documentation.meraki.com/Switching/Cloud_Management_with_IOS_XE/Install_and_Get_Started/Onboarding_Cloud-Managed_Catalyst_switches_to_the_Meraki_Dashboard" title="Onboarding Cloud-Managed Catalyst switches to the Meraki Dashboard"><span>Onboarding Cloud-Managed Catalyst switches to the Meraki Dashboard</span></a>
+        </li>
+</ul>
+</li>
+                </ol>
+                    <div class="elm-article-feedback"><div class="mt-feedback-rating-container" data-ga-action="Page rating" data-page-revision="8" data-use-local-storage="true"><ul class="mt-feedback-rating-controls"><li class="mt-feedback-rating-message mt-feedback-rating-item">Was this article helpful?</li><li class="mt-rating-yes mt-feedback-rating-item"><button class="mt-rating-button-yes mt-feedback-rating-button ui-button-icon mt-icon-rating-yes" data-ga-label="Rate">Yes</button></li><li class="mt-rating-no mt-feedback-rating-item"><button class="mt-rating-button-no mt-feedback-rating-button ui-button-icon mt-icon-rating-no" data-ga-label="Rate">No</button></li><li class="mt-last-rating-date mt-feedback-rating-item"></li></ul><div id="mt-feedback-flash-message"></div></div><script type="application/json" id="mt-localizations-feedback-rating">/*<![CDATA[*/{"Page.FeedbackRating.label.last-rated":"-- You last rated this article on {0}","Page.FeedbackRating.message.contact.no":"No","Page.FeedbackRating.message.contact.yes":"Yes","Page.FeedbackRating.message.submit.error":"An error occurred while attempting to send your feedback.  Please try again at a later time.","Page.FeedbackRating.message.submit.success":"Your feedback has been successfully submitted.  You can submit more feedback at any time."}/*]]>*/</script></div>
+                <div class="elm-related-articles-container"><h2 class="mt-related-articles-header">Recommended articles</h2>
+<ol class="mt-related-listings-container"
+    data-ga-action="related"
+    >
+</ol>
+<script type="application/json" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" id="mt-localizations-related-pages">
+{"Skin.Columbia.label.no-recommended-articles":"There are no recommended articles."}</script></div>
+                <ol class="elm-meta-data elm-meta-bottom">
+                    <li class="elm-classifications">        <dl class="mt-classification mt-classification-article-topic" data-ga-action="Tag navigation">
+            <dt class="mt-classification-label">Article type</dt>
+            <dd class="mt-classification-value"><a href="https://documentation.meraki.com/Special:Search?tags=article%3Atopic" data-ga-label="Classification">Topic</a></dd>
+        </dl>
+</li>
+                    <li class="elm-tags"><dl class="mt-tags">
+    <dt class="mt-tag-label">Tags</dt>
+    <dd class="mt-tag-value">
+        <ol class="mt-tags-list" data-ga-action="Tag navigation">
+        </ol>
+            This page has no tags.
+    </dd>
+</dl></li>
+                </ol>
+            </footer>
+        
+    </article>
+    <footer class="elm-footer">
+        <nav class="elm-footer-siteinfo-nav elm-nav">
+            <div class="elm-nav-container">
+                <ol>
+                    <li class="elm-footer-copyright">&copy; Copyright 2026 Cisco Meraki Documentation</li>
+                    <li class="elm-footer-powered-by"><a href="https://mindtouch.com/demo" class="mt-poweredby product " title="MindTouch" target="_blank">
+   Powered by CXone Expert
+   <span class="mt-registered">&reg;</span>
+</a></li>
+                </ol>
+            </div>
+        </nav>
+        <div class="elm-footer-custom">
+
+<div class="mt-custom-footer-container"><div class="mt-top-footer"><div class="mt-top-logo"><a href="http://meraki.cisco.com/" target="_blank" rel="external noopener nofollow" class="external"><img class="mt-cdn" src="https://documentation.meraki.com/@api/deki/site/logo?default=https%3A%2F%2Fdocumentation.meraki.com%2F%40cdn%2F%40style%2Fcommon-legacy%2Fimages%2Flogo.png" alt="Cisco-Meraki" /></a></div><div class="mt-top-external-links"><div class="mt-top-ul-container" id="top-Company"><h6 class="mt-top-ul-title">Company</h6><ul class="mt-top-ul"><li class="mt-top-li"><a href="https://meraki.cisco.com/about/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">About Meraki</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/jobs" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Careers</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/support/#policies:privacy" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Privacy</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/trust" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Trust</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/gdpr" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">GDPR</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/support/#policies:tou" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Terms of Use</a></li></ul></div><div class="mt-top-ul-container" id="top-Partners"><h6 class="mt-top-ul-title">Partners</h6><ul class="mt-top-ul"><li class="mt-top-li"><a href="https://www.merakipartners.com/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Partner Portal Login</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/partner/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Become a Partner</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/managedserviceproviders" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Manage Service Providers</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/solutions/serviceprovider" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Service Providers</a></li></ul></div><div class="mt-top-ul-container" id="top-getStarted"><h6 class="mt-top-ul-title">Get Started</h6><ul class="mt-top-ul"><li class="mt-top-li"><a href="https://meraki.cisco.com/form/contact/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Contact Us</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/form/demo/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Get a Demo</a></li><li class="mt-top-li"><a href="https://meraki.cisco.com/form/trial/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Start Your Trial</a></li></ul></div><div class="mt-top-ul-container" id="top-Resources"><h6 class="mt-top-ul-title">Resources</h6><ul class="mt-top-ul"><li class="mt-top-li"><a href="https://meraki.cisco.com/webinars/" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Webinars</a></li><li class="mt-top-li"><a class="mt-top-a internal" href="https://documentation.meraki.com/" rel="internal">Documentation</a></li><li class="mt-top-li"><a href="https://community.cisco.com/t5/meraki/ct-p/meraki-home" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Community</a></li><li class="mt-top-li"><a href="https://community.cisco.com/t5/networking-learning-hub/ct-p/learninghub-networking" target="_blank" rel="external noopener nofollow" class="mt-top-a link-https">Learning Hub</a></li></ul></div></div></div><div class="mt-bottom-footer"><div class="mt-social-container"><ul class="mt-social-ul"><li class="mt-social-li"><a href="https://twitter.com/meraki" target="_blank" rel="external noopener nofollow" class="mt-social-a mt-icon-twitter link-https"></a></li><li class="mt-social-li"><a href="https://www.instagram.com/ciscomeraki/?hl=en" target="_blank" rel="external noopener nofollow" class="mt-social-a mt-icon-instagram link-https"></a></li><li class="mt-social-li"><a href="https://www.facebook.com/CiscoMeraki/" target="_blank" rel="external noopener nofollow" class="mt-social-a mt-icon-facebook link-https"></a></li><li class="mt-social-li"><a href="https://www.youtube.com/channel/UCimwNLMzVRMp7SUPVRNaqew" target="_blank" rel="external noopener nofollow" class="mt-social-a mt-icon-youtube link-https"></a></li></ul></div><div class="mt-copyright-container"><p>&copy; 2026 Cisco Systems, Inc.</p></div></div></div>
+
+
+
+<script type="text/javascript">/*<![CDATA[*/
+var feedback_btn = document.querySelector(".mt-feedback-button"); 
+feedback_btn.innerText = "Request Update"/*]]>*/</script>
+
+
+
+<script type="text/javascript">/*<![CDATA[*/
+var feedback_label = document.querySelector(".mt-feedback-improve-label");
+feedback_label.innerText = "What would you like to change on this page? Your request will be sent to the Knowledge and Content team at Cisco Meraki. We are NOT product experts! Include all relevant details: section or exact text to update, new draft language, or related cases/mules.";/*]]>*/</script>
+
+
+</div>
+    </footer>
+</main>
+<div id="mt-modal-container"></div>
+
+    <script type="text/javascript" async="async" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" src="https://documentation.meraki.com/@embed/f1.js"></script>
+
+<script type="text/javascript" data-mindtouch-module="true" src="https://a.mtstatic.com/deki/javascript/out/standalone/ui.widget.helpWidget.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="text/javascript" data-mindtouch-module="true" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" src="https://a.mtstatic.com/deki/javascript/out/standalone/serviceworker-unregister.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script><script type="text/javascript" data-mindtouch-module="true" nonce="6b2213fcea3b01cb49d2f9500c9ca1ffedde4c2715992f3f699c8096bfe2a9ee" src="https://a.mtstatic.com/deki/javascript/out/standalone/pageLoaded.js?_=9871e078f6efdaab4a2cc0273c2603c1e1df562c:site_13505"></script>
+
+
+</body>
+</html>

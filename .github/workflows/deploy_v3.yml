@@ -91,6 +91,21 @@ jobs:
               curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase4-access \
                    -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase4.json
               ;;
+            phase5)
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase5-internet \
+                   -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase5.json
+              ;;
+            rollback)
+              echo "==> rollback to flash:pre-sda-backup.cfg on both switches"
+              curl -sS --max-time 240 -X POST http://localhost:5000/api/v3/rollback \
+                   -H 'Content-Type: application/json' -d '{"file":"pre-sda-backup.cfg"}' | tee /tmp/rollback.json
+              ;;
+            list-flash)
+              curl -sS --max-time 60 http://localhost:5000/api/v3/list-flash | tee /tmp/list_flash.json
+              ;;
+            endpoint-map)
+              curl -sS --max-time 30 http://localhost:5000/api/v3/endpoint-map | tee /tmp/endpoint_map.json
+              ;;
             datapath)
               echo "==> deploy/phase4-access (re-push to apply DHCP-on-border move)"
               curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase4-access \
@@ -108,16 +123,25 @@ jobs:
               echo "==> deploy/phase2-lisp"
               curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase2-lisp -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase2.json ; echo
               sleep 3
-              echo "==> verify/phase2-lisp"
-              curl -sS --max-time 120 -X POST http://localhost:5000/api/v3/verify/phase2-lisp | tee /tmp/verify2.json ; echo
               echo "==> deploy/phase3-overlay"
               curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase3-overlay -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase3.json ; echo
               sleep 3
               echo "==> deploy/phase4-access"
               curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase4-access -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase4.json ; echo
+              sleep 30
+              echo "==> verify/phase2-lisp (after phase4 has injected EIDs)"
+              curl -sS --max-time 120 -X POST http://localhost:5000/api/v3/verify/phase2-lisp -H 'Content-Type: application/json' -d '{"settle_seconds":5}' | tee /tmp/verify2.json ; echo
+              echo "==> verify/phase4-access"
+              curl -sS --max-time 120 -X POST http://localhost:5000/api/v3/verify/phase4-access -H 'Content-Type: application/json' -d '{"settle_seconds":5}' | tee /tmp/verify4.json ; echo
+              echo "==> deploy/phase5-internet (no-op if mode=none)"
+              curl -sS --max-time 300 -X POST http://localhost:5000/api/v3/deploy/phase5-internet -H 'Content-Type: application/json' -d '{}' | tee /tmp/phase5.json ; echo
               echo "==> show edge running-config (LISP+SVI sections)"
               curl -sS "http://localhost:5000/api/v3/show?target=edge&cmd=show+run+%7C+sec+router+lisp" | tee /tmp/show_lisp_edge.json ; echo
               curl -sS "http://localhost:5000/api/v3/show?target=border&cmd=show+run+%7C+sec+router+lisp" | tee /tmp/show_lisp_border.json ; echo
+              echo "==> endpoint-map"
+              curl -sS http://localhost:5000/api/v3/endpoint-map | tee /tmp/endpoint_map.json ; echo
+              echo "==> datapath-test"
+              curl -sS --max-time 240 -X POST http://localhost:5000/api/v3/datapath-test | tee /tmp/datapath.json ; echo
               ;;
             show-border-isis)
               curl -sS --max-time 60 "http://localhost:5000/api/v3/show?target=border&cmd=show+run+%7C+sec+router+isis" | tee /tmp/show.json
@@ -258,6 +282,41 @@ jobs:
               echo "## /api/v3/datapath-test"
               echo '```json'
               cat /tmp/datapath.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/rollback.json ]; then
+              echo "## /api/v3/rollback (configure replace flash:pre-sda-backup.cfg)"
+              echo '```json'
+              cat /tmp/rollback.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/list_flash.json ]; then
+              echo "## /api/v3/list-flash"
+              echo '```json'
+              cat /tmp/list_flash.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/phase5.json ]; then
+              echo "## /api/v3/deploy/phase5-internet"
+              echo '```json'
+              cat /tmp/phase5.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/verify4.json ]; then
+              echo "## /api/v3/verify/phase4-access"
+              echo '```json'
+              cat /tmp/verify4.json
+              echo
+              echo '```'
+            fi
+            if [ -f /tmp/endpoint_map.json ]; then
+              echo "## /api/v3/endpoint-map"
+              echo '```json'
+              cat /tmp/endpoint_map.json
               echo
               echo '```'
             fi

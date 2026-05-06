@@ -1,0 +1,388 @@
+╔══════════════════════════════════════════════════════════════════╗
+║   SDA FABRIC FULL DEPLOYMENT - MANUAL BUILD CHEAT SHEET        ║
+║   Meraki Dashboard > Automation > Workspace                    ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Build order: Variables → Pre-Check → Phase 1 (template) → Duplicate for 2-5 → Phase 6 → Post-Check → Mid-Phase Handler
+
+════════════════════════════════════════════════════════════════════
+STEP 1: CREATE NEW WORKFLOW
+════════════════════════════════════════════════════════════════════
+  Name:        SDA Fabric Full Deployment
+  Description: Complete SD-Access fabric deployment (ISIS + LISP + VXLAN + VRF + Access VLANs) via RESTCONF relay server.
+  Target:      No Target
+
+════════════════════════════════════════════════════════════════════
+STEP 2: CREATE VARIABLES (7 total)
+════════════════════════════════════════════════════════════════════
+
+  INPUT VARIABLES (4):
+  ┌─────────────────────┬──────────┬──────────┬──────────────────────────────────────────────┐
+  │ Name                │ Type     │ Required │ Default Value                                │
+  ├─────────────────────┼──────────┼──────────┼──────────────────────────────────────────────┤
+  │ Relay Server URL    │ String   │ Yes      │ (empty)                                      │
+  │ Fabric Name         │ String   │ Yes      │ SJC23_SDA_Fabric                             │
+  │ Deploy Security     │ Boolean  │ No       │ false                                        │
+  │ Force Deploy        │ Boolean  │ No       │ false                                        │
+  └─────────────────────┴──────────┴──────────┴──────────────────────────────────────────────┘
+
+  LOCAL VARIABLES (3):
+  ┌─────────────────────┬──────────┬──────────────────────────────────────────────┐
+  │ Name                │ Type     │ Default Value                                │
+  ├─────────────────────┼──────────┼──────────────────────────────────────────────┤
+  │ Deployment Failed   │ Boolean  │ false                                        │
+  │ Failed Phase        │ String   │ (empty)                                      │
+  │ Phase Result JSON   │ String   │ (empty)  [set format to JSON if available]   │
+  └─────────────────────┴──────────┴──────────────────────────────────────────────┘
+
+════════════════════════════════════════════════════════════════════
+STEP 3: ACTIVITY 1 — Pre-Check (Execute Python Script)
+════════════════════════════════════════════════════════════════════
+  Title:             Pre-Check - Device Health
+  Timeout:           120s
+  Continue on fail:  YES
+  Script Arguments:  Relay Server URL, Fabric Name, Force Deploy
+  Output Variables:  succeeded (boolean), status (string), result_json (string)
+
+  ── SCRIPT BODY (copy exactly) ──
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+force = sys.argv[3] if len(sys.argv) > 3 else "false"
+
+url = f"{relay_url}/api/v2/precheck"
+payload = {"fabric_name": fabric_name, "force": force.lower() == "true"}
+
+try:
+    resp = requests.post(url, json=payload, timeout=60, verify=False)
+    result = resp.json()
+    status = result.get("status", "fail")
+    succeeded = status == "pass"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    status = "error"
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+  ── END SCRIPT ──
+
+════════════════════════════════════════════════════════════════════
+STEP 4: ACTIVITY 2 — Pre-Check Pass/Fail (Condition Block)
+════════════════════════════════════════════════════════════════════
+  Title:  Pre-Check Pass/Fail
+
+  Branch 1: "Pre-Check Passed"
+    Condition: [Pre-Check - Device Health].output.succeeded  NOT EQUAL TO  (empty)
+    Actions:   (none - just continues)
+
+  Branch 2: "Pre-Check Failed"
+    Condition: [Pre-Check - Device Health].output.succeeded  EQUAL TO  (empty)
+    Actions:   Add "Set Variables" activity:
+               Title: "Set Pre-Check Failed"
+               • Deployment Failed = true
+               • Failed Phase = "Pre-Check"
+
+════════════════════════════════════════════════════════════════════
+STEP 5: PHASE TEMPLATE — Build Phase 1, then duplicate for 2-5
+════════════════════════════════════════════════════════════════════
+
+Each phase has this IDENTICAL structure:
+  1. Condition Block: "Continue to Phase N?"
+     ├── Branch: "Continue - Deploy Phase N"
+     │   Condition: Deployment Failed == false
+     │   └── Group: "Phase N - Deploy & Verify [Name]"
+     │       ├── Python Script: "Deploy Phase N - [Name]"
+     │       └── Condition Block: "Phase N Deploy Success?"
+     │           ├── Branch: "Phase N Succeeded - Verify"
+     │           │   Condition: [Deploy].succeeded != (empty)
+     │           │   └── Python Script: "Verify Phase N - [Name]"
+     │           └── Branch: "Phase N Failed"
+     │               Condition: [Deploy].succeeded == (empty)
+     │               └── Set Variables: Deployment Failed=true, Failed Phase="Phase N"
+     └── Branch: "Stop - Skip Phase N"
+         Condition: Deployment Failed == true
+         (no actions)
+
+──────────────────────────────────────────────────
+PHASE 1: Underlay (ISIS + BFD + PIM + Loopbacks)
+──────────────────────────────────────────────────
+  Deploy Script:
+    Title:            Deploy Phase 1 - Underlay
+    Timeout:          180s
+    Continue on fail: YES
+    Arguments:        Relay Server URL, Fabric Name
+    Outputs:          succeeded (boolean), result_json (string)
+
+  ── DEPLOY SCRIPT ──
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/deploy/phase1-underlay"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    succeeded = resp.status_code == 200 and result.get("status") != "error"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+  ── END ──
+
+  Verify Script:
+    Title:            Verify Phase 1 - Underlay Health
+    Timeout:          120s
+    Continue on fail: YES
+    Arguments:        Relay Server URL, Fabric Name
+    Outputs:          succeeded (boolean), result_json (string)
+
+  ── VERIFY SCRIPT ──
+import sys
+import json
+import requests
+import time
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+time.sleep(15)
+
+url = f"{relay_url}/api/v2/verify/phase1-underlay"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=60, verify=False)
+    result = resp.json()
+    succeeded = result.get("status") == "pass"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+  ── END ──
+
+  Set Variables on failure:
+    • Deployment Failed = true
+    • Failed Phase = "Phase 1 - Underlay Deploy"
+
+──────────────────────────────────────────────────
+PHASE 2: LISP     ← DUPLICATE Phase 1, change:
+──────────────────────────────────────────────────
+  Deploy URL:   /api/v2/deploy/phase2-lisp
+  Verify URL:   /api/v2/verify/phase2-lisp
+  Verify sleep: time.sleep(10)  ← changed from 15 to 10
+  Failed Phase: "Phase 2 - LISP Deploy"
+
+──────────────────────────────────────────────────
+PHASE 3: VXLAN    ← DUPLICATE Phase 1, change:
+──────────────────────────────────────────────────
+  Deploy URL:   /api/v2/deploy/phase3-vxlan-vni
+  Verify:       NO VERIFY SCRIPT (Phase 3 has no separate verify)
+                Just Succeeded branch (empty) and Failed branch (Set Variables)
+  Failed Phase: "Phase 3 - VXLAN"
+
+──────────────────────────────────────────────────
+PHASE 4: VRF/BGP  ← DUPLICATE Phase 3 (no verify), change:
+──────────────────────────────────────────────────
+  Deploy URL:   /api/v2/deploy/phase4-vrf-bgp
+  Failed Phase: "Phase 4 - VRF/BGP"
+
+──────────────────────────────────────────────────
+PHASE 5: Access   ← DUPLICATE Phase 3 (no verify), change:
+──────────────────────────────────────────────────
+  Deploy URL:   /api/v2/deploy/phase5-access
+  Failed Phase: "Phase 5 - Access Layer"
+
+════════════════════════════════════════════════════════════════════
+STEP 6: PHASE 6 — Security (Conditional)
+════════════════════════════════════════════════════════════════════
+  Condition Block: "Deploy Security Phase?"
+
+  Branch 1: "Yes - Deploy Security"
+    Condition: Deploy Security == true
+    Action: Python Script
+
+    Title:            Deploy Phase 6 - Security
+    Timeout:          180s
+    Continue on fail: YES
+    Arguments:        Relay Server URL, Fabric Name
+    Outputs:          succeeded (boolean), result_json (string)
+
+  ── SCRIPT ──
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/deploy/phase6-security"
+payload = {"fabric_name": fabric_name, "deploy_security": True}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    succeeded = resp.status_code == 200 and result.get("status") != "error"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+  ── END ──
+
+  Branch 2: "Skip Security"
+    Condition: Deploy Security != true
+    (no actions)
+
+════════════════════════════════════════════════════════════════════
+STEP 7: POST-CHECK (Condition Block → Group)
+════════════════════════════════════════════════════════════════════
+  Condition Block: "Any Failure Before Post-Check?"
+
+  Branch 1: "No Failure - Run Post-Check"
+    Condition: Deployment Failed == false
+    Action: Group "Post-Check & Finalize"
+
+    Inside Group:
+    ┌─ Python Script: "Post-Check - 22 Validations"
+    │  Timeout: 180s, Continue on fail: YES
+    │  Arguments: Relay Server URL, Fabric Name
+    │  Outputs: succeeded (boolean), score (string), result_json (string)
+    │
+    │  ── SCRIPT ──
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/postcheck"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=120, verify=False)
+    result = resp.json()
+    status = result.get("status", "fail")
+    score = result.get("score", "0/22")
+    succeeded = status == "pass"
+    result_json = json.dumps(result)
+except Exception as e:
+    succeeded = False
+    score = "error"
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+    │  ── END ──
+    │
+    └─ Condition Block: "Post-Check Pass/Fail?"
+       ├── Branch: "Post-Check Passed"
+       │   Condition: [Post-Check].succeeded != (empty)
+       │   └── (nothing needed - workflow completes successfully)
+       │
+       └── Branch: "Post-Check Failed - Rollback"
+           Condition: [Post-Check].succeeded == (empty)
+           ├── Python Script: "Rollback - Reverse All Config"
+           │   Timeout: 300s, Continue on fail: YES
+           │   Arguments: Relay Server URL, Fabric Name
+           │   Outputs: result_json (string)
+           │
+           │   ── SCRIPT ──
+import sys
+import json
+import requests
+
+relay_url = sys.argv[1] if len(sys.argv) > 1 else ""
+fabric_name = sys.argv[2] if len(sys.argv) > 2 else ""
+
+url = f"{relay_url}/api/v2/rollback"
+payload = {"fabric_name": fabric_name}
+
+try:
+    resp = requests.post(url, json=payload, timeout=180, verify=False)
+    result = resp.json()
+    result_json = json.dumps(result)
+except Exception as e:
+    result_json = json.dumps({"status": "error", "error": str(e)})
+
+print(result_json)
+           │   ── END ──
+           │
+           └── (Post-Check failed - workflow ends)
+
+  Branch 2: "Skip Post-Check (Already Failed)"
+    Condition: Deployment Failed == true
+    (no actions)
+
+════════════════════════════════════════════════════════════════════
+STEP 8: MID-PHASE FAILURE HANDLER
+════════════════════════════════════════════════════════════════════
+  Condition Block: "Handle Mid-Phase Failure"
+
+  Branch 1: "Deployment Failed - Rollback"
+    Condition: Deployment Failed == true
+
+    ├── Python Script: "Rollback - Mid-Phase Failure"
+    │   Timeout: 300s, Continue on fail: YES
+    │   Arguments: Relay Server URL, Fabric Name
+    │   Outputs: result_json (string)
+    │   (same rollback script as Step 7)
+    │
+    └── (Rollback complete - workflow ends)
+
+  Branch 2: "No Failure - Already Handled"
+    Condition: Deployment Failed == false
+    (no actions)
+
+════════════════════════════════════════════════════════════════════
+QUICK REFERENCE — ALL RELAY ENDPOINTS
+════════════════════════════════════════════════════════════════════
+  POST {relay}/api/v2/precheck          → Pre-Check
+  POST {relay}/api/v2/deploy/phase1-underlay    → Phase 1
+  POST {relay}/api/v2/verify/phase1-underlay    → Verify 1
+  POST {relay}/api/v2/deploy/phase2-lisp        → Phase 2
+  POST {relay}/api/v2/verify/phase2-lisp        → Verify 2
+  POST {relay}/api/v2/deploy/phase3-vxlan-vni   → Phase 3
+  POST {relay}/api/v2/deploy/phase4-vrf-bgp     → Phase 4
+  POST {relay}/api/v2/deploy/phase5-access      → Phase 5
+  POST {relay}/api/v2/deploy/phase6-security    → Phase 6
+  POST {relay}/api/v2/postcheck                 → Post-Check
+  POST {relay}/api/v2/rollback                  → Rollback
+
+════════════════════════════════════════════════════════════════════
+VISUAL FLOW — TOP-LEVEL ACTIVITIES (10 blocks)
+════════════════════════════════════════════════════════════════════
+  1. [Python]    Pre-Check - Device Health
+  2. [Condition] Pre-Check Pass/Fail
+  3. [Condition] Continue to Phase 1? → Group(Deploy→Condition(Verify|Fail))
+  4. [Condition] Continue to Phase 2? → Group(Deploy→Condition(Verify|Fail))
+  5. [Condition] Continue to Phase 3? → Group(Deploy→Condition(Pass|Fail))
+  6. [Condition] Continue to Phase 4? → Group(Deploy→Condition(Pass|Fail))
+  7. [Condition] Continue to Phase 5? → Group(Deploy→Condition(Pass|Fail))
+  8. [Condition] Deploy Security Phase?
+  9. [Condition] Any Failure Before Post-Check? → Group(PostCheck→Condition(Pass|Rollback))
+ 10. [Condition] Handle Mid-Phase Failure → Rollback
+
+════════════════════════════════════════════════════════════════════
+BUILD TIPS
+════════════════════════════════════════════════════════════════════
+  • Build Phase 1 FULLY first (with Group, Deploy, Condition, Verify, Set Variables)
+  • Then duplicate Phase 1 for Phases 2-5 and just change URLs + titles
+  • Phase 1 & 2 have Verify scripts; Phases 3-5 don't (Succeeded branch is empty)
+  • All Deploy scripts are IDENTICAL except the URL endpoint
+  • All "Set Variables on failure" are IDENTICAL except the Failed Phase string
+  • Script Arguments always use the variable picker — select from workflow variables
+  • The Rollback script appears twice (Post-Check and Mid-Phase) — same script body

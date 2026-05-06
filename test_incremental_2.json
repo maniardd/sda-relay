@@ -1,0 +1,102 @@
+{
+  "workflow": {
+    "unique_name": "definition_workflow_6UjA9tCfWMEQzrtPlGxq35XkKglupG",
+    "name": "Test 2 - Group Activity",
+    "title": "Test 2 - Group Activity",
+    "type": "generic.workflow",
+    "base_type": "workflow",
+    "variables": [
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "hello",
+          "scope": "input",
+          "name": "Test Variable",
+          "type": "datatype.string",
+          "description": "A test variable",
+          "is_required": false,
+          "display_on_wizard": false,
+          "is_invisible": false,
+          "variable_string_format": ""
+        },
+        "unique_name": "variable_workflow_xxRo4bgkIowPFBQfP8cHpy0lWlvgyK",
+        "object_type": "variable_workflow"
+      }
+    ],
+    "properties": {
+      "atomic": {
+        "is_atomic": false
+      },
+      "delete_workflow_instance": false,
+      "description": "Incremental test 2: Test 2 - Group Activity",
+      "display_name": "Test 2 - Group Activity",
+      "runtime_user": {
+        "override_target_runtime_user": false,
+        "specify_on_workflow_start": false,
+        "target_default": true
+      },
+      "target": {
+        "no_target": true
+      }
+    },
+    "object_type": "definition_workflow",
+    "actions": [
+      {
+        "unique_name": "definition_activity_1Z6XO1g78CUq373AyaMCNgGtxOHPm1",
+        "name": "Group",
+        "title": "Test Group",
+        "type": "logic.group",
+        "base_type": "activity",
+        "properties": {
+          "continue_on_failure": false,
+          "description": "Group containing a Python activity",
+          "display_name": "Test Group",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "actions": [
+          {
+            "unique_name": "definition_activity_L2Rnl1yOLnVZAIIe75Z7yqxRK2L8sf",
+            "name": "Execute Python Script",
+            "title": "Nested Script",
+            "type": "python3.script",
+            "base_type": "activity",
+            "properties": {
+              "action_timeout": 60,
+              "continue_on_failure": false,
+              "description": "Nested Script",
+              "display_name": "Nested Script",
+              "script_arguments": [
+                "$workflow.definition_workflow_6UjA9tCfWMEQzrtPlGxq35XkKglupG.input.variable_workflow_xxRo4bgkIowPFBQfP8cHpy0lWlvgyK$"
+              ],
+              "script_body": "import sys\nval = sys.argv[1] if len(sys.argv) > 1 else 'none'\nresult = f'Inside group: {val}'\nprint(result)",
+              "script_queries": [
+                {
+                  "script_query_name": "result",
+                  "script_query_type": "string"
+                }
+              ],
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      }
+    ],
+    "categories": [
+      "category_BwAuLEWQg8MFpbedAEEDHjYyPeYMuT"
+    ]
+  },
+  "categories": {
+    "category_BwAuLEWQg8MFpbedAEEDHjYyPeYMuT": {
+      "unique_name": "category_BwAuLEWQg8MFpbedAEEDHjYyPeYMuT",
+      "name": "SDA Test",
+      "title": "SDA Test",
+      "type": "basic.category",
+      "base_type": "category",
+      "description": "Incremental import test",
+      "category_type": "custom",
+      "object_type": "category"
+    }
+  }
+}

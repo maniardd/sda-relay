@@ -278,6 +278,120 @@ def status():
     return jsonify(STATE)
 
 
+# ── ROLLBACK / DAY-0 RESTORE ─────────────────────────────────────────
+# User has a known-good config saved on each switch's flash named
+# 'pre-sda-backup.cfg'. We restore it via 'configure replace ... force'
+# which is non-disruptive (no reload) and atomic. After restore,
+# fabric/LISP/VRFs/SVIs are gone and the switch is back to the pre-SDA
+# baseline (mgmt + RESTCONF + service meraki connect still present).
+DEFAULT_ROLLBACK_FILE = os.getenv("ROLLBACK_FILE", "pre-sda-backup.cfg")
+
+
+@app.route("/api/v3/rollback", methods=["POST"])
+def rollback():
+    """Restore each switch from a saved flash config.
+    Body (optional):
+      { "file": "pre-sda-backup.cfg",
+        "targets": ["border","edge"],
+        "save_after": true }
+    """
+    form = request.get_json(silent=True) or {}
+    fname = form.get("file", DEFAULT_ROLLBACK_FILE)
+    targets = form.get("targets", ["border", "edge"])
+    save_after = form.get("save_after", True)
+
+    out = {"timestamp": datetime.utcnow().isoformat()+"Z",
+           "file": fname, "targets": {}}
+    overall_ok = True
+    for tgt in targets:
+        if tgt not in DEVS:
+            out["targets"][tgt] = {"status":"fail","error":f"unknown target {tgt}"}
+            overall_ok = False
+            continue
+        try:
+            conn = _connect(tgt)
+            try: conn.enable()
+            except Exception: pass
+            # Confirm the file actually exists on flash
+            dir_out = _show(conn, f"dir flash:{fname}")
+            if "No such file" in dir_out or "Error opening" in dir_out:
+                out["targets"][tgt] = {"status":"fail",
+                    "error":f"flash:{fname} not found",
+                    "dir_output": dir_out[-400:]}
+                overall_ok = False
+                conn.disconnect()
+                continue
+            # Run config replace; uses send_command_timing because it returns
+            # a confirmation prompt and lots of progress output
+            cmd = f"configure replace flash:{fname} force"
+            log.info(f"[rollback/{tgt}] {cmd}")
+            replace_out = conn.send_command_timing(cmd, read_timeout=180,
+                                                   strip_prompt=False, strip_command=False)
+            ok_marker = "completed successfully" in replace_out.lower() \
+                        or "rollback done" in replace_out.lower()
+            # save startup
+            save_out = ""
+            if save_after:
+                save_out = conn.send_command_timing("write memory", read_timeout=60)
+            conn.disconnect()
+            out["targets"][tgt] = {
+                "status": "pass" if ok_marker else "fail",
+                "replace_output": replace_out[-2000:],
+                "save_output": save_out[-400:],
+            }
+            if not ok_marker:
+                overall_ok = False
+        except Exception as e:
+            log.error(f"rollback/{tgt} failed: {e}\n{traceback.format_exc()}")
+            out["targets"][tgt] = {"status":"fail","error":str(e)}
+            overall_ok = False
+    out["overall"] = "pass" if overall_ok else "fail"
+    return jsonify(out), (200 if overall_ok else 502)
+
+
+@app.route("/api/v3/list-flash", methods=["GET"])
+def list_flash():
+    """Helper for the user to discover what config files exist on flash."""
+    out = {"targets": {}}
+    for tgt in ("border", "edge"):
+        try:
+            conn = _connect(tgt)
+            try: conn.enable()
+            except Exception: pass
+            txt = _show(conn, "dir flash: | inc .cfg")
+            conn.disconnect()
+            out["targets"][tgt] = {"output": txt}
+        except Exception as e:
+            out["targets"][tgt] = {"error": str(e)}
+    return jsonify(out)
+
+
+# ── ENDPOINT MAP (post-deploy summary) ───────────────────────────────
+@app.route("/api/v3/endpoint-map", methods=["GET"])
+def endpoint_map():
+    """Print 'plug X into port Y to get IP from Z' so a user can hand the
+    workflow output to a lab tech without explaining LISP."""
+    lines = ["SDA Fabric Endpoint Map", "=" * 40]
+    for v in FABRIC.get("access_vlans", []):
+        p = v.get("dhcp_pool", {})
+        lines.append(f"\nVN: {v['vrf']}  (instance-id {v['l3_instance_id']}, "
+                     f"VLAN {v['vlan_id']}, subnet {p.get('network','?')}/24)")
+        lines.append(f"  Anycast gateway: {v['svi']['ip']}")
+        lines.append(f"  DHCP pool      : {p.get('pool_name')}  "
+                     f"(excludes {p.get('excluded_start','-')}..{p.get('excluded_end','-')})")
+        lines.append(f"  East-west test : ping {v.get('east_west_test_ip','-')} (Border /32)")
+        # ports for this VN
+        port_list = [pa for pa in FABRIC.get("port_assignments",[])
+                     if pa.get("vn") == v["vrf"]]
+        if port_list:
+            lines.append("  Plug into:")
+            for pa in port_list:
+                lines.append(f"    {pa['device']}  {pa['port']}   <- {pa.get('label','')}")
+        else:
+            lines.append("  (no ports assigned to this VN)")
+    return jsonify({"endpoint_map": "\n".join(lines)})
+
+
 @app.route("/api/v3/datapath-test", methods=["POST", "GET"])
 def datapath_test():
     """Run a curated set of show commands on both switches that prove the

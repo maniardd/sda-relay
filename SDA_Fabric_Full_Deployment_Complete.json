@@ -1,0 +1,1773 @@
+{
+  "workflow": {
+    "unique_name": "definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat",
+    "name": "SDA Fabric Full Deployment",
+    "title": "SDA Fabric Full Deployment",
+    "type": "generic.workflow",
+    "base_type": "workflow",
+    "variables": [
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "",
+          "scope": "local",
+          "name": "Phase Result JSON",
+          "type": "datatype.string",
+          "description": "JSON response from last relay call",
+          "is_required": false,
+          "display_on_wizard": false,
+          "is_invisible": false,
+          "variable_string_format": "json"
+        },
+        "unique_name": "variable_workflow_02UP41KOCK1NP1qC9DCsEJMtIQPnKM9HRBn",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.boolean",
+        "properties": {
+          "value": false,
+          "scope": "local",
+          "name": "Deployment Failed",
+          "type": "datatype.boolean",
+          "description": "Tracks if any phase failed",
+          "is_required": false,
+          "display_on_wizard": false,
+          "is_invisible": false,
+          "variable_string_format": ""
+        },
+        "unique_name": "variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "",
+          "scope": "input",
+          "name": "Relay Server URL",
+          "type": "datatype.string",
+          "description": "ngrok public HTTPS URL for the relay server (e.g. https://abc123.ngrok-free.app)",
+          "is_required": true,
+          "display_on_wizard": true,
+          "is_invisible": false,
+          "variable_string_format": ""
+        },
+        "unique_name": "variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.boolean",
+        "properties": {
+          "value": false,
+          "scope": "input",
+          "name": "Deploy Security",
+          "type": "datatype.boolean",
+          "description": "Deploy Phase 6 (dot1x, RADIUS, CTS)? Default false.",
+          "is_required": false,
+          "display_on_wizard": false,
+          "is_invisible": false,
+          "variable_string_format": ""
+        },
+        "unique_name": "variable_workflow_02UP3ZH558V035v483eKs7B9kDcjCn0tS6J",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.boolean",
+        "properties": {
+          "value": false,
+          "scope": "input",
+          "name": "Force Deploy",
+          "type": "datatype.boolean",
+          "description": "Skip existing config check? Default false.",
+          "is_required": false,
+          "display_on_wizard": false,
+          "is_invisible": false,
+          "variable_string_format": ""
+        },
+        "unique_name": "variable_workflow_02UP4012MLDU23eqRBmoO94jZGCdyhvCMxr",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "SJC23_SDA_Fabric",
+          "scope": "input",
+          "name": "Fabric Name",
+          "type": "datatype.string",
+          "description": "Name of the SDA Fabric",
+          "is_required": true,
+          "display_on_wizard": false,
+          "is_invisible": false,
+          "variable_string_format": ""
+        },
+        "unique_name": "variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "",
+          "scope": "local",
+          "name": "Failed Phase",
+          "type": "datatype.string",
+          "description": "Name of the phase that failed",
+          "is_required": false,
+          "display_on_wizard": false,
+          "is_invisible": false,
+          "variable_string_format": ""
+        },
+        "unique_name": "variable_workflow_02UP4112OG57D6SUDjeNE4KMllbKMINinKi",
+        "object_type": "variable_workflow"
+      }
+    ],
+    "properties": {
+      "atomic": {
+        "is_atomic": false
+      },
+      "delete_workflow_instance": false,
+      "description": "Complete SD-Access fabric deployment via RESTCONF relay server.\n\n",
+      "display_name": "SDA Fabric Full Deployment",
+      "runtime_user": {
+        "target_default": true
+      },
+      "target": {
+        "no_target": true
+      }
+    },
+    "object_type": "definition_workflow",
+    "actions": [
+      {
+        "unique_name": "definition_activity_02UP4604KJH8S5MWBzTToiZsFZf6d6aXsME",
+        "name": "Execute Python Script",
+        "title": "Pre-Check - Device Health",
+        "type": "python3.script",
+        "base_type": "activity",
+        "properties": {
+          "action_timeout": 120,
+          "continue_on_failure": true,
+          "description": "Verify RESTCONF reachability on both switches via relay server.",
+          "display_name": "Pre-Check - Device Health",
+          "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\nforce = sys.argv[3] if len(sys.argv) > 3 else \"false\"\n\nurl = f\"{relay_url}/api/v2/precheck\"\npayload = {\"fabric_name\": fabric_name, \"force\": force.lower() == \"true\"}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=60, verify=False)\n    result = resp.json()\n    status = result.get(\"status\", \"fail\")\n    succeeded = status == \"pass\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    status = \"error\"\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+          "script_arguments": [
+            "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+            "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$",
+            "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP4012MLDU23eqRBmoO94jZGCdyhvCMxr$"
+          ],
+          "script_queries": [
+            {
+              "script_query": "succeeded",
+              "script_query_name": "succeeded",
+              "script_query_type": "boolean"
+            },
+            {
+              "script_query": "status",
+              "script_query_name": "status",
+              "script_query_type": "string"
+            },
+            {
+              "script_query": "result_json",
+              "script_query_name": "result_json",
+              "script_query_type": "string"
+            }
+          ],
+          "skip_execution": false
+        },
+        "object_type": "definition_activity"
+      },
+      {
+        "unique_name": "definition_activity_02UP4MQKVDJJX2KmGw41vGeAuG6jgZpo05p",
+        "name": "Condition Block",
+        "title": "Pre-Check Pass/Fail",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Check if pre-check passed or failed",
+          "display_name": "Pre-Check Pass/Fail",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_02UP4MQOMQZEE7mPaapFyUFWit0I5AxSgil",
+            "name": "Condition Branch",
+            "title": "Pre-Check Passed",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$activity.definition_activity_02UP4604KJH8S5MWBzTToiZsFZf6d6aXsME.output.succeeded$",
+                "operator": "eq",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Pre-Check Passed",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_02UP4MQRD4OAN1SDdiSegHHtMUct4CyAzSy",
+            "name": "Condition Branch",
+            "title": "Pre-Check Failed",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$activity.definition_activity_02UP4604KJH8S5MWBzTToiZsFZf6d6aXsME.output.succeeded$",
+                "operator": "eq",
+                "right_operand": false
+              },
+              "continue_on_failure": false,
+              "description": "Pre-Check Failed",
+              "display_name": "Pre-Check Failed",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_02UP6XVTDGWM23uQiCQyNIiGdSiGE7TYEIh",
+                "name": "Set Variables",
+                "title": "Set Pre-Check Failed",
+                "type": "core.set_multiple_variables",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "description": "Set Variables",
+                  "display_name": "Set Pre-Check Failed",
+                  "skip_execution": false,
+                  "variables_to_update": [
+                    {
+                      "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                      "variable_value_new": true
+                    },
+                    {
+                      "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP4112OG57D6SUDjeNE4KMllbKMINinKi$",
+                      "variable_value_new": "Pre-Check"
+                    }
+                  ]
+                },
+                "object_type": "definition_activity"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_02UP50HXR9XXW5y0gTfbFlDMtRSV3Q2ZTtf",
+        "name": "Condition Block",
+        "title": "Continue to Phase 1?",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Check if deployment can continue to Phase 1",
+          "display_name": "Continue to Phase 1?",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_02UP50I0AR8SG29YhGr0jnHJxiVVkI8XrT2",
+            "name": "Condition Branch",
+            "title": "Continue - Deploy Phase 1",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": false
+              },
+              "continue_on_failure": false,
+              "display_name": "Continue - Deploy Phase 1",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_02UP5DWZMBIAI2lZw0N1PaaEaHbXVEqJLH7",
+                "name": "Group",
+                "title": "Phase 1 - Deploy & Verify Underlay",
+                "type": "logic.group",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "description": "ISIS + BFD + PIM + Loopbacks + P2P Links",
+                  "display_as_suggestion": false,
+                  "display_name": "Phase 1 - Deploy & Verify Underlay",
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity",
+                "actions": [
+                  {
+                    "unique_name": "definition_activity_02UP5FKI7UI2O1qmEYDTm2xohSR9mT35X7E",
+                    "name": "Execute Python Script",
+                    "title": "Deploy Phase 1 - Underlay",
+                    "type": "python3.script",
+                    "base_type": "activity",
+                    "properties": {
+                      "action_timeout": 180,
+                      "continue_on_failure": true,
+                      "description": "Deploy ISIS underlay via RESTCONF relay.",
+                      "display_name": "Deploy Phase 1 - Underlay",
+                      "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\nurl = f\"{relay_url}/api/v2/deploy/phase1-underlay\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=120, verify=False)\n    result = resp.json()\n    succeeded = resp.status_code == 200 and result.get(\"status\") != \"error\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                      "script_arguments": [
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                      ],
+                      "script_queries": [
+                        {
+                          "script_query": "succeeded",
+                          "script_query_name": "succeeded",
+                          "script_query_type": "boolean"
+                        },
+                        {
+                          "script_query": "result_json",
+                          "script_query_name": "result_json",
+                          "script_query_type": "string"
+                        }
+                      ],
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity"
+                  },
+                  {
+                    "unique_name": "definition_activity_02UP5LEWYD4DS4GFz5a54D6Gjh4EtY5zeH7",
+                    "name": "Condition Block",
+                    "title": "Phase 1 Deploy Success?",
+                    "type": "logic.if_else",
+                    "base_type": "activity",
+                    "properties": {
+                      "conditions": [],
+                      "continue_on_failure": false,
+                      "description": "Check Phase 1 deploy result",
+                      "display_name": "Phase 1 Deploy Success?",
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity",
+                    "blocks": [
+                      {
+                        "unique_name": "definition_activity_02UP5LF0GVPW22VvJxUKW7IThbGC9TWA8tc",
+                        "name": "Condition Branch",
+                        "title": "Phase 1 Succeeded - Verify",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UP5FKI7UI2O1qmEYDTm2xohSR9mT35X7E.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": true
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 1 Succeeded - Verify",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity",
+                        "actions": [
+                          {
+                            "unique_name": "definition_activity_02UP6HU2RCBSY5x82ctDcX4zB8rW3DDljFJ",
+                            "name": "Execute Python Script",
+                            "title": "Verify Phase 1 - Underlay Health",
+                            "type": "python3.script",
+                            "base_type": "activity",
+                            "properties": {
+                              "action_timeout": 120,
+                              "continue_on_failure": true,
+                              "description": "Wait 15s then verify ISIS/BFD/PIM neighbors.",
+                              "display_name": "Verify Phase 1 - Underlay Health",
+                              "script": "import sys\nimport json\nimport requests\nimport time\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\ntime.sleep(15)\n\nurl = f\"{relay_url}/api/v2/verify/phase1-underlay\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=60, verify=False)\n    result = resp.json()\n    succeeded = result.get(\"status\") == \"pass\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                              "script_arguments": [
+                                "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                                "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                              ],
+                              "script_queries": [
+                                {
+                                  "script_query": "succeeded",
+                                  "script_query_name": "succeeded",
+                                  "script_query_type": "boolean"
+                                },
+                                {
+                                  "script_query": "result_json",
+                                  "script_query_name": "result_json",
+                                  "script_query_type": "string"
+                                }
+                              ],
+                              "skip_execution": false
+                            },
+                            "object_type": "definition_activity"
+                          },
+                          {
+                            "unique_name": "definition_activity_02UPBUG2FIX01VerifyCondP1",
+                            "name": "Condition Block",
+                            "title": "Phase 1 Verify Success?",
+                            "type": "logic.if_else",
+                            "base_type": "activity",
+                            "properties": {
+                              "conditions": [],
+                              "continue_on_failure": false,
+                              "description": "Check Phase 1 verification result",
+                              "display_name": "Phase 1 Verify Success?",
+                              "skip_execution": false
+                            },
+                            "object_type": "definition_activity",
+                            "blocks": [
+                              {
+                                "unique_name": "definition_activity_02UPBUG2FIX02VerifyPassP1",
+                                "name": "Condition Branch",
+                                "title": "Phase 1 Verify Passed",
+                                "type": "logic.condition_block",
+                                "base_type": "activity",
+                                "properties": {
+                                  "condition": {
+                                    "left_operand": "$activity.definition_activity_02UP6HU2RCBSY5x82ctDcX4zB8rW3DDljFJ.output.succeeded$",
+                                    "operator": "eq",
+                                    "right_operand": true
+                                  },
+                                  "continue_on_failure": false,
+                                  "display_name": "Phase 1 Verify Passed",
+                                  "skip_execution": false
+                                },
+                                "object_type": "definition_activity"
+                              },
+                              {
+                                "unique_name": "definition_activity_02UPBUG2FIX03VerifyFailP1",
+                                "name": "Condition Branch",
+                                "title": "Phase 1 Verify Failed",
+                                "type": "logic.condition_block",
+                                "base_type": "activity",
+                                "properties": {
+                                  "condition": {
+                                    "left_operand": "$activity.definition_activity_02UP6HU2RCBSY5x82ctDcX4zB8rW3DDljFJ.output.succeeded$",
+                                    "operator": "eq",
+                                    "right_operand": false
+                                  },
+                                  "continue_on_failure": false,
+                                  "display_name": "Phase 1 Verify Failed",
+                                  "skip_execution": false
+                                },
+                                "object_type": "definition_activity",
+                                "actions": [
+                                  {
+                                    "unique_name": "definition_activity_02UPBUG2FIX04SetVerifyFailP1",
+                                    "name": "Set Variables",
+                                    "title": "Set Phase 1 Verify Failed",
+                                    "type": "core.set_multiple_variables",
+                                    "base_type": "activity",
+                                    "properties": {
+                                      "continue_on_failure": false,
+                                      "description": "Mark deployment failed due to Phase 1 verification failure",
+                                      "display_name": "Set Phase 1 Verify Failed",
+                                      "skip_execution": false,
+                                      "variables_to_update": [
+                                        {
+                                          "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                                          "variable_value_new": true
+                                        },
+                                        {
+                                          "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP4112OG57D6SUDjeNE4KMllbKMINinKi$",
+                                          "variable_value_new": "Phase 1 - Underlay Verify"
+                                        }
+                                      ]
+                                    },
+                                    "object_type": "definition_activity"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "unique_name": "definition_activity_02UP5LF3ZURTO1DhpZYfJrGX37gzdxat68L",
+                        "name": "Condition Branch",
+                        "title": "Phase 1 Failed",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UP5FKI7UI2O1qmEYDTm2xohSR9mT35X7E.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": false
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 1 Failed",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity",
+                        "actions": [
+                          {
+                            "unique_name": "definition_activity_02UP6QSSWEXKP2tGaJLFvV0hgvUfZHzPtDs",
+                            "name": "Set Variables",
+                            "title": "Set Phase 1 Failed",
+                            "type": "core.set_multiple_variables",
+                            "base_type": "activity",
+                            "properties": {
+                              "continue_on_failure": false,
+                              "description": "Set Variables",
+                              "display_name": "Set Phase 1 Failed",
+                              "skip_execution": false,
+                              "variables_to_update": [
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                                  "variable_value_new": true
+                                },
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP4112OG57D6SUDjeNE4KMllbKMINinKi$",
+                                  "variable_value_new": "Phase 1 - Underlay Deploy"
+                                }
+                              ]
+                            },
+                            "object_type": "definition_activity"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "unique_name": "definition_activity_02UP50I3CRJJD1KBcSEkECZQdjuAC57jHHY",
+            "name": "Condition Branch",
+            "title": "Stop - Deployment Failed",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Stop - Deployment Failed",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_02UPPH2A01ContToPhase2",
+        "name": "Condition Block",
+        "title": "Continue to Phase 2?",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Check if deployment can continue to Phase 2",
+          "display_name": "Continue to Phase 2?",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_02UPPH2A02DeployP2Branch",
+            "name": "Condition Branch",
+            "title": "Continue - Deploy Phase 2",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": false
+              },
+              "continue_on_failure": false,
+              "display_name": "Continue - Deploy Phase 2",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_02UPPH2A03GroupP2",
+                "name": "Group",
+                "title": "Phase 2 - Deploy & Verify LISP",
+                "type": "logic.group",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "description": "LISP Map-Server/Map-Resolver + xTR",
+                  "display_as_suggestion": false,
+                  "display_name": "Phase 2 - Deploy & Verify LISP",
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity",
+                "actions": [
+                  {
+                    "unique_name": "definition_activity_02UPPH2A04DeployP2Script",
+                    "name": "Execute Python Script",
+                    "title": "Deploy Phase 2 - LISP",
+                    "type": "python3.script",
+                    "base_type": "activity",
+                    "properties": {
+                      "action_timeout": 180,
+                      "continue_on_failure": true,
+                      "description": "Deploy LISP overlay via RESTCONF relay.",
+                      "display_name": "Deploy Phase 2 - LISP",
+                      "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\nurl = f\"{relay_url}/api/v2/deploy/phase2-lisp\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=120, verify=False)\n    result = resp.json()\n    succeeded = resp.status_code == 200 and result.get(\"status\") != \"error\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                      "script_arguments": [
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                      ],
+                      "script_queries": [
+                        {
+                          "script_query": "succeeded",
+                          "script_query_name": "succeeded",
+                          "script_query_type": "boolean"
+                        },
+                        {
+                          "script_query": "result_json",
+                          "script_query_name": "result_json",
+                          "script_query_type": "string"
+                        }
+                      ],
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity"
+                  },
+                  {
+                    "unique_name": "definition_activity_02UPPH2A05CondP2Deploy",
+                    "name": "Condition Block",
+                    "title": "Phase 2 Deploy Success?",
+                    "type": "logic.if_else",
+                    "base_type": "activity",
+                    "properties": {
+                      "conditions": [],
+                      "continue_on_failure": false,
+                      "description": "Check Phase 2 deploy result",
+                      "display_name": "Phase 2 Deploy Success?",
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity",
+                    "blocks": [
+                      {
+                        "unique_name": "definition_activity_02UPPH2A06P2SuccVerify",
+                        "name": "Condition Branch",
+                        "title": "Phase 2 Succeeded - Verify",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPH2A04DeployP2Script.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": true
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 2 Succeeded - Verify",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity",
+                        "actions": [
+                          {
+                            "unique_name": "definition_activity_02UPPH2A07VerifyP2Script",
+                            "name": "Execute Python Script",
+                            "title": "Verify Phase 2 - LISP Sessions",
+                            "type": "python3.script",
+                            "base_type": "activity",
+                            "properties": {
+                              "action_timeout": 120,
+                              "continue_on_failure": true,
+                              "description": "Wait 10s then verify LISP sessions.",
+                              "display_name": "Verify Phase 2 - LISP Sessions",
+                              "script": "import sys\nimport json\nimport requests\nimport time\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\ntime.sleep(10)\n\nurl = f\"{relay_url}/api/v2/verify/phase2-lisp\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=60, verify=False)\n    result = resp.json()\n    succeeded = result.get(\"status\") == \"pass\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                              "script_arguments": [
+                                "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                                "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                              ],
+                              "script_queries": [
+                                {
+                                  "script_query": "succeeded",
+                                  "script_query_name": "succeeded",
+                                  "script_query_type": "boolean"
+                                },
+                                {
+                                  "script_query": "result_json",
+                                  "script_query_name": "result_json",
+                                  "script_query_type": "string"
+                                }
+                              ],
+                              "skip_execution": false
+                            },
+                            "object_type": "definition_activity"
+                          },
+                          {
+                            "unique_name": "definition_activity_02UPPH2A08CondP2Verify",
+                            "name": "Condition Block",
+                            "title": "Phase 2 Verify Success?",
+                            "type": "logic.if_else",
+                            "base_type": "activity",
+                            "properties": {
+                              "conditions": [],
+                              "continue_on_failure": false,
+                              "description": "Check Phase 2 verification result",
+                              "display_name": "Phase 2 Verify Success?",
+                              "skip_execution": false
+                            },
+                            "object_type": "definition_activity",
+                            "blocks": [
+                              {
+                                "unique_name": "definition_activity_02UPPH2A09P2VerifyPass",
+                                "name": "Condition Branch",
+                                "title": "Phase 2 Verify Passed",
+                                "type": "logic.condition_block",
+                                "base_type": "activity",
+                                "properties": {
+                                  "condition": {
+                                    "left_operand": "$activity.definition_activity_02UPPH2A07VerifyP2Script.output.succeeded$",
+                                    "operator": "eq",
+                                    "right_operand": true
+                                  },
+                                  "continue_on_failure": false,
+                                  "display_name": "Phase 2 Verify Passed",
+                                  "skip_execution": false
+                                },
+                                "object_type": "definition_activity"
+                              },
+                              {
+                                "unique_name": "definition_activity_02UPPH2A10P2VerifyFail",
+                                "name": "Condition Branch",
+                                "title": "Phase 2 Verify Failed",
+                                "type": "logic.condition_block",
+                                "base_type": "activity",
+                                "properties": {
+                                  "condition": {
+                                    "left_operand": "$activity.definition_activity_02UPPH2A07VerifyP2Script.output.succeeded$",
+                                    "operator": "eq",
+                                    "right_operand": false
+                                  },
+                                  "continue_on_failure": false,
+                                  "display_name": "Phase 2 Verify Failed",
+                                  "skip_execution": false
+                                },
+                                "object_type": "definition_activity",
+                                "actions": [
+                                  {
+                                    "unique_name": "definition_activity_02UPPH2A11SetP2VerifyFail",
+                                    "name": "Set Variables",
+                                    "title": "Set Phase 2 Verify Failed",
+                                    "type": "core.set_multiple_variables",
+                                    "base_type": "activity",
+                                    "properties": {
+                                      "continue_on_failure": false,
+                                      "description": "Mark deployment failed due to Phase 2 verification failure",
+                                      "display_name": "Set Phase 2 Verify Failed",
+                                      "skip_execution": false,
+                                      "variables_to_update": [
+                                        {
+                                          "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                                          "variable_value_new": true
+                                        },
+                                        {
+                                          "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP4112OG57D6SUDjeNE4KMllbKMINinKi$",
+                                          "variable_value_new": "Phase 2 - LISP Verify"
+                                        }
+                                      ]
+                                    },
+                                    "object_type": "definition_activity"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "unique_name": "definition_activity_02UPPH2A12P2DeployFail",
+                        "name": "Condition Branch",
+                        "title": "Phase 2 Failed",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPH2A04DeployP2Script.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": false
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 2 Failed",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity",
+                        "actions": [
+                          {
+                            "unique_name": "definition_activity_02UPPH2A13SetP2DeployFail",
+                            "name": "Set Variables",
+                            "title": "Set Phase 2 Failed",
+                            "type": "core.set_multiple_variables",
+                            "base_type": "activity",
+                            "properties": {
+                              "continue_on_failure": false,
+                              "description": "Mark deployment failed due to Phase 2 deploy failure",
+                              "display_name": "Set Phase 2 Failed",
+                              "skip_execution": false,
+                              "variables_to_update": [
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                                  "variable_value_new": true
+                                },
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP4112OG57D6SUDjeNE4KMllbKMINinKi$",
+                                  "variable_value_new": "Phase 2 - LISP Deploy"
+                                }
+                              ]
+                            },
+                            "object_type": "definition_activity"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "unique_name": "definition_activity_02UPPH2A14StopP2",
+            "name": "Condition Branch",
+            "title": "Stop - Skip Phase 2",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Stop - Skip Phase 2",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_02UPPH3A01ContToPhase3",
+        "name": "Condition Block",
+        "title": "Continue to Phase 3?",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Check if deployment can continue to Phase 3",
+          "display_name": "Continue to Phase 3?",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_02UPPH3A02DeployP3Branch",
+            "name": "Condition Branch",
+            "title": "Continue - Deploy Phase 3",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": false
+              },
+              "continue_on_failure": false,
+              "display_name": "Continue - Deploy Phase 3",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_02UPPH3A03GroupP3",
+                "name": "Group",
+                "title": "Phase 3 - Deploy VXLAN + VNI",
+                "type": "logic.group",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "description": "L3 and L2 VNI instance configuration",
+                  "display_as_suggestion": false,
+                  "display_name": "Phase 3 - Deploy VXLAN + VNI",
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity",
+                "actions": [
+                  {
+                    "unique_name": "definition_activity_02UPPH3A04DeployP3Script",
+                    "name": "Execute Python Script",
+                    "title": "Deploy Phase 3 - VXLAN",
+                    "type": "python3.script",
+                    "base_type": "activity",
+                    "properties": {
+                      "action_timeout": 180,
+                      "continue_on_failure": true,
+                      "description": "Deploy VXLAN and VNI via RESTCONF relay.",
+                      "display_name": "Deploy Phase 3 - VXLAN",
+                      "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\nurl = f\"{relay_url}/api/v2/deploy/phase3-vxlan-vni\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=120, verify=False)\n    result = resp.json()\n    succeeded = resp.status_code == 200 and result.get(\"status\") != \"error\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                      "script_arguments": [
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                      ],
+                      "script_queries": [
+                        {
+                          "script_query": "succeeded",
+                          "script_query_name": "succeeded",
+                          "script_query_type": "boolean"
+                        },
+                        {
+                          "script_query": "result_json",
+                          "script_query_name": "result_json",
+                          "script_query_type": "string"
+                        }
+                      ],
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity"
+                  },
+                  {
+                    "unique_name": "definition_activity_02UPPH3A05CondP3Deploy",
+                    "name": "Condition Block",
+                    "title": "Phase 3 Deploy Success?",
+                    "type": "logic.if_else",
+                    "base_type": "activity",
+                    "properties": {
+                      "conditions": [],
+                      "continue_on_failure": false,
+                      "description": "Check Phase 3 deploy result",
+                      "display_name": "Phase 3 Deploy Success?",
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity",
+                    "blocks": [
+                      {
+                        "unique_name": "definition_activity_02UPPH3A06P3Succeeded",
+                        "name": "Condition Branch",
+                        "title": "Phase 3 Succeeded",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPH3A04DeployP3Script.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": true
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 3 Succeeded",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity"
+                      },
+                      {
+                        "unique_name": "definition_activity_02UPPH3A07P3Failed",
+                        "name": "Condition Branch",
+                        "title": "Phase 3 Failed",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPH3A04DeployP3Script.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": false
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 3 Failed",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity",
+                        "actions": [
+                          {
+                            "unique_name": "definition_activity_02UPPH3A08SetP3Failed",
+                            "name": "Set Variables",
+                            "title": "Set Phase 3 Failed",
+                            "type": "core.set_multiple_variables",
+                            "base_type": "activity",
+                            "properties": {
+                              "continue_on_failure": false,
+                              "description": "Mark deployment failed due to Phase 3 failure",
+                              "display_name": "Set Phase 3 Failed",
+                              "skip_execution": false,
+                              "variables_to_update": [
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                                  "variable_value_new": true
+                                },
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP4112OG57D6SUDjeNE4KMllbKMINinKi$",
+                                  "variable_value_new": "Phase 3 - VXLAN"
+                                }
+                              ]
+                            },
+                            "object_type": "definition_activity"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "unique_name": "definition_activity_02UPPH3A09StopP3",
+            "name": "Condition Branch",
+            "title": "Stop - Skip Phase 3",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Stop - Skip Phase 3",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_02UPPH4A01ContToPhase4",
+        "name": "Condition Block",
+        "title": "Continue to Phase 4?",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Check if deployment can continue to Phase 4",
+          "display_name": "Continue to Phase 4?",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_02UPPH4A02DeployP4Branch",
+            "name": "Condition Branch",
+            "title": "Continue - Deploy Phase 4",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": false
+              },
+              "continue_on_failure": false,
+              "display_name": "Continue - Deploy Phase 4",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_02UPPH4A03GroupP4",
+                "name": "Group",
+                "title": "Phase 4 - Deploy VRF + BGP",
+                "type": "logic.group",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "description": "VRF and BGP for overlay routing",
+                  "display_as_suggestion": false,
+                  "display_name": "Phase 4 - Deploy VRF + BGP",
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity",
+                "actions": [
+                  {
+                    "unique_name": "definition_activity_02UPPH4A04DeployP4Script",
+                    "name": "Execute Python Script",
+                    "title": "Deploy Phase 4 - VRF/BGP",
+                    "type": "python3.script",
+                    "base_type": "activity",
+                    "properties": {
+                      "action_timeout": 180,
+                      "continue_on_failure": true,
+                      "description": "Deploy VRF and BGP via RESTCONF relay.",
+                      "display_name": "Deploy Phase 4 - VRF/BGP",
+                      "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\nurl = f\"{relay_url}/api/v2/deploy/phase4-vrf-bgp\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=120, verify=False)\n    result = resp.json()\n    succeeded = resp.status_code == 200 and result.get(\"status\") != \"error\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                      "script_arguments": [
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                      ],
+                      "script_queries": [
+                        {
+                          "script_query": "succeeded",
+                          "script_query_name": "succeeded",
+                          "script_query_type": "boolean"
+                        },
+                        {
+                          "script_query": "result_json",
+                          "script_query_name": "result_json",
+                          "script_query_type": "string"
+                        }
+                      ],
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity"
+                  },
+                  {
+                    "unique_name": "definition_activity_02UPPH4A05CondP4Deploy",
+                    "name": "Condition Block",
+                    "title": "Phase 4 Deploy Success?",
+                    "type": "logic.if_else",
+                    "base_type": "activity",
+                    "properties": {
+                      "conditions": [],
+                      "continue_on_failure": false,
+                      "description": "Check Phase 4 deploy result",
+                      "display_name": "Phase 4 Deploy Success?",
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity",
+                    "blocks": [
+                      {
+                        "unique_name": "definition_activity_02UPPH4A06P4Succeeded",
+                        "name": "Condition Branch",
+                        "title": "Phase 4 Succeeded",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPH4A04DeployP4Script.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": true
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 4 Succeeded",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity"
+                      },
+                      {
+                        "unique_name": "definition_activity_02UPPH4A07P4Failed",
+                        "name": "Condition Branch",
+                        "title": "Phase 4 Failed",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPH4A04DeployP4Script.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": false
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 4 Failed",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity",
+                        "actions": [
+                          {
+                            "unique_name": "definition_activity_02UPPH4A08SetP4Failed",
+                            "name": "Set Variables",
+                            "title": "Set Phase 4 Failed",
+                            "type": "core.set_multiple_variables",
+                            "base_type": "activity",
+                            "properties": {
+                              "continue_on_failure": false,
+                              "description": "Mark deployment failed due to Phase 4 failure",
+                              "display_name": "Set Phase 4 Failed",
+                              "skip_execution": false,
+                              "variables_to_update": [
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                                  "variable_value_new": true
+                                },
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP4112OG57D6SUDjeNE4KMllbKMINinKi$",
+                                  "variable_value_new": "Phase 4 - VRF/BGP"
+                                }
+                              ]
+                            },
+                            "object_type": "definition_activity"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "unique_name": "definition_activity_02UPPH4A09StopP4",
+            "name": "Condition Branch",
+            "title": "Stop - Skip Phase 4",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Stop - Skip Phase 4",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_02UPPH5A01ContToPhase5",
+        "name": "Condition Block",
+        "title": "Continue to Phase 5?",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Check if deployment can continue to Phase 5",
+          "display_name": "Continue to Phase 5?",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_02UPPH5A02DeployP5Branch",
+            "name": "Condition Branch",
+            "title": "Continue - Deploy Phase 5",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": false
+              },
+              "continue_on_failure": false,
+              "display_name": "Continue - Deploy Phase 5",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_02UPPH5A03GroupP5",
+                "name": "Group",
+                "title": "Phase 5 - Deploy Access Layer",
+                "type": "logic.group",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "description": "VLANs, SVIs, DHCP relay on Edge",
+                  "display_as_suggestion": false,
+                  "display_name": "Phase 5 - Deploy Access Layer",
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity",
+                "actions": [
+                  {
+                    "unique_name": "definition_activity_02UPPH5A04DeployP5Script",
+                    "name": "Execute Python Script",
+                    "title": "Deploy Phase 5 - Access",
+                    "type": "python3.script",
+                    "base_type": "activity",
+                    "properties": {
+                      "action_timeout": 180,
+                      "continue_on_failure": true,
+                      "description": "Deploy Access Layer VLANs/SVIs via RESTCONF relay.",
+                      "display_name": "Deploy Phase 5 - Access",
+                      "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\nurl = f\"{relay_url}/api/v2/deploy/phase5-access\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=120, verify=False)\n    result = resp.json()\n    succeeded = resp.status_code == 200 and result.get(\"status\") != \"error\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                      "script_arguments": [
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                      ],
+                      "script_queries": [
+                        {
+                          "script_query": "succeeded",
+                          "script_query_name": "succeeded",
+                          "script_query_type": "boolean"
+                        },
+                        {
+                          "script_query": "result_json",
+                          "script_query_name": "result_json",
+                          "script_query_type": "string"
+                        }
+                      ],
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity"
+                  },
+                  {
+                    "unique_name": "definition_activity_02UPPH5A05CondP5Deploy",
+                    "name": "Condition Block",
+                    "title": "Phase 5 Deploy Success?",
+                    "type": "logic.if_else",
+                    "base_type": "activity",
+                    "properties": {
+                      "conditions": [],
+                      "continue_on_failure": false,
+                      "description": "Check Phase 5 deploy result",
+                      "display_name": "Phase 5 Deploy Success?",
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity",
+                    "blocks": [
+                      {
+                        "unique_name": "definition_activity_02UPPH5A06P5Succeeded",
+                        "name": "Condition Branch",
+                        "title": "Phase 5 Succeeded",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPH5A04DeployP5Script.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": true
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 5 Succeeded",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity"
+                      },
+                      {
+                        "unique_name": "definition_activity_02UPPH5A07P5Failed",
+                        "name": "Condition Branch",
+                        "title": "Phase 5 Failed",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPH5A04DeployP5Script.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": false
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Phase 5 Failed",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity",
+                        "actions": [
+                          {
+                            "unique_name": "definition_activity_02UPPH5A08SetP5Failed",
+                            "name": "Set Variables",
+                            "title": "Set Phase 5 Failed",
+                            "type": "core.set_multiple_variables",
+                            "base_type": "activity",
+                            "properties": {
+                              "continue_on_failure": false,
+                              "description": "Mark deployment failed due to Phase 5 failure",
+                              "display_name": "Set Phase 5 Failed",
+                              "skip_execution": false,
+                              "variables_to_update": [
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                                  "variable_value_new": true
+                                },
+                                {
+                                  "variable_to_update": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP4112OG57D6SUDjeNE4KMllbKMINinKi$",
+                                  "variable_value_new": "Phase 5 - Access Layer"
+                                }
+                              ]
+                            },
+                            "object_type": "definition_activity"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "unique_name": "definition_activity_02UPPH5A09StopP5",
+            "name": "Condition Branch",
+            "title": "Stop - Skip Phase 5",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Stop - Skip Phase 5",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_02UPPH6A01SecurityCond",
+        "name": "Condition Block",
+        "title": "Deploy Security Phase?",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Check if security phase should be deployed",
+          "display_name": "Deploy Security Phase?",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_02UPPH6A02YesSecurity",
+            "name": "Condition Branch",
+            "title": "Yes - Deploy Security",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3ZH558V035v483eKs7B9kDcjCn0tS6J$",
+                "operator": "eq",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Yes - Deploy Security",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_02UPPH6A03DeployP6Script",
+                "name": "Execute Python Script",
+                "title": "Deploy Phase 6 - Security",
+                "type": "python3.script",
+                "base_type": "activity",
+                "properties": {
+                  "action_timeout": 180,
+                  "continue_on_failure": true,
+                  "description": "Deploy dot1x, RADIUS, CTS via RESTCONF relay.",
+                  "display_name": "Deploy Phase 6 - Security",
+                  "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\nurl = f\"{relay_url}/api/v2/deploy/phase6-security\"\npayload = {\"fabric_name\": fabric_name, \"deploy_security\": True}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=120, verify=False)\n    result = resp.json()\n    succeeded = resp.status_code == 200 and result.get(\"status\") != \"error\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                  "script_arguments": [
+                    "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                    "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                  ],
+                  "script_queries": [
+                    {
+                      "script_query": "succeeded",
+                      "script_query_name": "succeeded",
+                      "script_query_type": "boolean"
+                    },
+                    {
+                      "script_query": "result_json",
+                      "script_query_name": "result_json",
+                      "script_query_type": "string"
+                    }
+                  ],
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity"
+              }
+            ]
+          },
+          {
+            "unique_name": "definition_activity_02UPPH6A04SkipSecurity",
+            "name": "Condition Branch",
+            "title": "Skip Security",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3ZH558V035v483eKs7B9kDcjCn0tS6J$",
+                "operator": "ne",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Skip Security",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_02UPPOSTCHK01Cond",
+        "name": "Condition Block",
+        "title": "Any Failure Before Post-Check?",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Check if any phase failed before running post-check",
+          "display_name": "Any Failure Before Post-Check?",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_02UPPOSTCHK02NoFailBranch",
+            "name": "Condition Branch",
+            "title": "No Failure - Run Post-Check",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": false
+              },
+              "continue_on_failure": false,
+              "display_name": "No Failure - Run Post-Check",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_02UPPOSTCHK03Group",
+                "name": "Group",
+                "title": "Post-Check & Finalize",
+                "type": "logic.group",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "description": "Run 22 validation checks and rollback if failed",
+                  "display_as_suggestion": false,
+                  "display_name": "Post-Check & Finalize",
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity",
+                "actions": [
+                  {
+                    "unique_name": "definition_activity_02UPPOSTCHK04PostChkScript",
+                    "name": "Execute Python Script",
+                    "title": "Post-Check - 22 Validations",
+                    "type": "python3.script",
+                    "base_type": "activity",
+                    "properties": {
+                      "action_timeout": 180,
+                      "continue_on_failure": true,
+                      "description": "Run 22 post-deployment validation checks.",
+                      "display_name": "Post-Check - 22 Validations",
+                      "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\nurl = f\"{relay_url}/api/v2/postcheck\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=120, verify=False)\n    result = resp.json()\n    status = result.get(\"status\", \"fail\")\n    score = result.get(\"score\", \"0/22\")\n    succeeded = status == \"pass\"\n    result_json = json.dumps(result)\nexcept Exception as e:\n    succeeded = False\n    score = \"error\"\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                      "script_arguments": [
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                        "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                      ],
+                      "script_queries": [
+                        {
+                          "script_query": "succeeded",
+                          "script_query_name": "succeeded",
+                          "script_query_type": "boolean"
+                        },
+                        {
+                          "script_query": "score",
+                          "script_query_name": "score",
+                          "script_query_type": "string"
+                        },
+                        {
+                          "script_query": "result_json",
+                          "script_query_name": "result_json",
+                          "script_query_type": "string"
+                        }
+                      ],
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity"
+                  },
+                  {
+                    "unique_name": "definition_activity_02UPPOSTCHK05PostChkCond",
+                    "name": "Condition Block",
+                    "title": "Post-Check Pass/Fail?",
+                    "type": "logic.if_else",
+                    "base_type": "activity",
+                    "properties": {
+                      "conditions": [],
+                      "continue_on_failure": false,
+                      "description": "Check post-check result",
+                      "display_name": "Post-Check Pass/Fail?",
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity",
+                    "blocks": [
+                      {
+                        "unique_name": "definition_activity_02UPPOSTCHK06PostChkPass",
+                        "name": "Condition Branch",
+                        "title": "Post-Check Passed",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPOSTCHK04PostChkScript.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": true
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Post-Check Passed",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity"
+                      },
+                      {
+                        "unique_name": "definition_activity_02UPPOSTCHK07PostChkFail",
+                        "name": "Condition Branch",
+                        "title": "Post-Check Failed - Rollback",
+                        "type": "logic.condition_block",
+                        "base_type": "activity",
+                        "properties": {
+                          "condition": {
+                            "left_operand": "$activity.definition_activity_02UPPOSTCHK04PostChkScript.output.succeeded$",
+                            "operator": "eq",
+                            "right_operand": false
+                          },
+                          "continue_on_failure": false,
+                          "display_name": "Post-Check Failed - Rollback",
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity",
+                        "actions": [
+                          {
+                            "unique_name": "definition_activity_02UPPOSTCHK08RollbackScript",
+                            "name": "Execute Python Script",
+                            "title": "Rollback - Reverse All Config",
+                            "type": "python3.script",
+                            "base_type": "activity",
+                            "properties": {
+                              "action_timeout": 300,
+                              "continue_on_failure": true,
+                              "description": "Rollback all deployed configuration.",
+                              "display_name": "Rollback - Reverse All Config",
+                              "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\nurl = f\"{relay_url}/api/v2/rollback\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=180, verify=False)\n    result = resp.json()\n    result_json = json.dumps(result)\nexcept Exception as e:\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                              "script_arguments": [
+                                "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                                "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                              ],
+                              "script_queries": [
+                                {
+                                  "script_query": "result_json",
+                                  "script_query_name": "result_json",
+                                  "script_query_type": "string"
+                                }
+                              ],
+                              "skip_execution": false
+                            },
+                            "object_type": "definition_activity"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "unique_name": "definition_activity_02UPPOSTCHK09SkipPostChk",
+            "name": "Condition Branch",
+            "title": "Skip Post-Check (Already Failed)",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Skip Post-Check (Already Failed)",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_02UPMIDPHFAIL01Cond",
+        "name": "Condition Block",
+        "title": "Handle Mid-Phase Failure",
+        "type": "logic.if_else",
+        "base_type": "activity",
+        "properties": {
+          "conditions": [],
+          "continue_on_failure": false,
+          "description": "Catch failures from Phases 1-5 that skipped Post-Check",
+          "display_name": "Handle Mid-Phase Failure",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "blocks": [
+          {
+            "unique_name": "definition_activity_02UPMIDPHFAIL02FailBranch",
+            "name": "Condition Branch",
+            "title": "Deployment Failed - Rollback",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": true
+              },
+              "continue_on_failure": false,
+              "display_name": "Deployment Failed - Rollback",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_02UPMIDPHFAIL03RollbackScript",
+                "name": "Execute Python Script",
+                "title": "Rollback - Mid-Phase Failure",
+                "type": "python3.script",
+                "base_type": "activity",
+                "properties": {
+                  "action_timeout": 300,
+                  "continue_on_failure": true,
+                  "description": "Rollback all deployed configuration due to mid-phase failure.",
+                  "display_name": "Rollback - Mid-Phase Failure",
+                  "script": "import sys\nimport json\nimport requests\n\nrelay_url = sys.argv[1] if len(sys.argv) > 1 else \"\"\nfabric_name = sys.argv[2] if len(sys.argv) > 2 else \"\"\n\nurl = f\"{relay_url}/api/v2/rollback\"\npayload = {\"fabric_name\": fabric_name}\n\ntry:\n    resp = requests.post(url, json=payload, timeout=180, verify=False)\n    result = resp.json()\n    result_json = json.dumps(result)\nexcept Exception as e:\n    result_json = json.dumps({\"status\": \"error\", \"error\": str(e)})\n\nprint(result_json)",
+                  "script_arguments": [
+                    "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3OILZXQFC4aT5FWrHDlZLJWfx5IQGiR$",
+                    "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.input.variable_workflow_02UP3YXNN21U32LucPagotCQNwPWynBzVob$"
+                  ],
+                  "script_queries": [
+                    {
+                      "script_query": "result_json",
+                      "script_query_name": "result_json",
+                      "script_query_type": "string"
+                    }
+                  ],
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity"
+              }
+            ]
+          },
+          {
+            "unique_name": "definition_activity_02UPMIDPHFAIL04NoFailBranch",
+            "name": "Condition Branch",
+            "title": "No Failure - Already Handled",
+            "type": "logic.condition_block",
+            "base_type": "activity",
+            "properties": {
+              "condition": {
+                "left_operand": "$workflow.definition_workflow_02UP35U6XZOM17QTEpj6x2sevEr4LGrXVat.local.variable_workflow_02UP40FIS31V94wjuTB2AKBPLPfFwWjBsdF$",
+                "operator": "eq",
+                "right_operand": false
+              },
+              "continue_on_failure": false,
+              "display_name": "No Failure - Already Handled",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      }
+    ],
+    "categories": [
+      "category_02UP1OK7W53YM6QXvV9AC2A3EhZTzg8kDG5"
+    ]
+  },
+  "categories": {
+    "category_02UP1OK7W53YM6QXvV9AC2A3EhZTzg8kDG5": {
+      "unique_name": "category_02UP1OK7W53YM6QXvV9AC2A3EhZTzg8kDG5",
+      "name": "SDA Deployment",
+      "title": "SDA Deployment",
+      "type": "basic.category",
+      "base_type": "category",
+      "category_type": "custom",
+      "object_type": "category"
+    }
+  }
+}
